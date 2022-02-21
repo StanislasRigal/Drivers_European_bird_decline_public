@@ -2,6 +2,10 @@
 
 R scripts and data for the following article: "Farmland practices are driving bird populations decline across Europe."
 
+## R
+
+The R scripts have been implemented on R version 3.4.4.
+
 ### Loading R packages
 
 ```{r setup, include=FALSE}
@@ -10,25 +14,22 @@ R scripts and data for the following article: "Farmland practices are driving bi
 
 source("R_packages")
 
-# Define document options
-
-knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 ```
 
 
-# Bird data
+## Bird data
 
 ### Loading data
 
+#### Relative abundance indices
 
 ```{r}
-# Import data
 
-## Species national indices from Brlik et al. (2021)
-### Downlad data
+# Downlad Species national indices from Brlik et al. (2021)
+
 df <- fread('https://zenodo.org/record/4590199/files/national_indices2017.csv?download=1')
 
-### Pass from wide to long format
+# Pass from wide to long format
 df <- melt(df, id.vars=c("species","euring_code","scheme","type"))
 df <- dcast(df, species+euring_code+scheme+variable~type, fun.aggregate = sum)
 df <- df[,c("euring_code","species","scheme","variable","index","se")]
@@ -38,19 +39,33 @@ df$Species <- as.factor(df$Species)
 df$CountryGroup <- as.factor(df$CountryGroup)
 df$Year <- as.numeric(as.character(df$Year))
 
-## Abundance data
-abd <- setDT(read.table("Abundance_data_PECBMS.txt", header = T, sep="\t")) 
-theme_set(theme_light())
+```
 
-S <- levels(df$Species)
-C <- levels(df$CountryGroup)
+#### Abundance data
+```{r}
+
+# Load data from the EU Bird Directive Reporting (see Supplementary material for more details)
+
+abd <- setDT(read.table("Abundance_data_PECBMS.txt", header = T, sep="\t")) 
+
 
 ```
 
 ### Preparing data
+
+#### Species and coutry names
+
 ```{r}
-# update species names
+# Get species and coutry names
+
+S <- levels(df$Species)
+C <- levels(df$CountryGroup)
+
+# Update species names
+
 diff_name <- merge(data.frame(sp=levels(as.factor(abd$Species)),num=1),data.frame(sp=levels(as.factor(df$Species)),num2=2), by="sp",all=T)
+diff_name
+
 df$Species <- as.character(df$Species)
 df$Species[df$Species=="Carduelis cannabina"] <- "Linaria cannabina"
 df$Species[df$Species=="Carduelis chloris"] <- "Chloris chloris"
@@ -74,6 +89,11 @@ df$Species[df$Species=="Serinus citrinella"] <- "Carduelis citrinella"
 df$Species[df$Species=="Tetrao tetrix"] <- "Lyrurus tetrix"
 df$Species <- as.factor(df$Species)
 
+```
+
+#### Merge relative abundance indices and bird abundance
+```{r}
+
 # Generate abundance estimates (for a given year)
 for (i in 1:nrow(abd)){
   abd[i,estimate := round((geoMean(c(Count_min,Count_max),na.rm=T))*2)]
@@ -82,6 +102,7 @@ for (i in 1:nrow(abd)){
 # Create sub-estimates for Belgium and Germany regions
 # assuming populations to be uniformely distributed across these countries
 # frac corresponds to the fraction surface of the region
+
 subd <- data.table(reg = c("Belgium-Brussels", "Belgium-Wallonia", "Germany East", "Germany West"), 
                    frac = c(161/30528, 16901/30528, 108333/357022, 248577/357022))
 Country_subd <- abd[Country=="Belgium" | Country=="Germany"][rep(1:340,each=2)]
