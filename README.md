@@ -1,53 +1,14 @@
----
-title: "Investigating the causes of the European bird decline."
-output:
-  html_document:
-    toc: true
-    toc_float: true
+# Farmland practices are driving bird populations decline across Europe.
 
-  pdf_document: default
----
+R scripts and data for the following article: "Farmland practices are driving bird populations decline across Europe."
+
+### Loading R packages
 
 ```{r setup, include=FALSE}
 
 # Load packages
 
-library(reshape2)
-library(plyr)
-library(dplyr)
-library(lattice)
-library(ggplot2)
-library(compare)
-library(nlme)
-library(classInt)
-library(maptools)
-library(stringr)
-library(rgeos)
-library(rgdal)
-library(sp)
-library(mgcv)
-library(data.table)
-library(automap)
-library(glmnet)
-library(raster)
-library(viridis)
-library(see)
-library(netassoc)
-library(picante)
-library(doParallel)
-library(igraph)
-library(ggraph)
-library(spgwr)
-library(entropart)
-library(data.table)
-library(EnvStats)
-library(rtrim)
-require(multispatialCCM)
-require(rEDM)
-require(pforeach)
-require(RVAideMemoire)
-require(kimisc)
-library(plsRglm)
+source("R_packages")
 
 # Define document options
 
