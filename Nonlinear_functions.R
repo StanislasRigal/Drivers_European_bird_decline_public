@@ -562,3 +562,8 @@ msi_fun3 <-  function(dataset, ref_year, niter, ref_value="Index"){
               coef = data.frame(alpha2, alpha1,sd_alpha1, inter, strd, p_1, sd_p_1, p_2, sd_p_2, p_3, sd_p_3,
                                 second_order_pvalue, first_order_pvalue, slope, slope_sd, max_shape = as.factor(max_shape))))
 }
+
+res_trend2 <- function(dataset, niter, ref_year=NULL, mid, correction){tryCatch(res_trend(dataset, niter, ref_year=NULL, mid, correction),
+                                                                                error=function(e) data.frame(alpha2=NA, alpha1=NA,sd_alpha1=NA, inter=NA, strd=NA, p_1=NA, 
+                                                                                                             sd_p_1=NA, p_2=NA, sd_p_2=NA, p_3=NA, sd_p_3=NA, second_order_pvalue=NA,
+                                                                                                             first_order_pvalue=NA,slope=NA, slope_sd=NA, ref_year=NA, max_shape=NA))}

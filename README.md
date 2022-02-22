@@ -551,7 +551,7 @@ for (k in Code){
 
 ### Functions accounting for non-linearity and sampling error
 
-See details in Rigal et al. (2020).
+See Rigal et al. (2020) for more details about the following functions.
 ```{r}
 
 # Load functions to estimate dynamics
@@ -725,105 +725,142 @@ ggplot(msi_temp_ab3, aes(x = year, y = mean_msi_final)) +
   labs(x ="Year", y = "Abundance")
 ```
 
-# Trend analysis
+## Trend analysis
 
-### Species trends
+### Estimate trends for each species
 
 ```{r}
-res_trend2<-function(dataset, niter, ref_year=NULL, mid, correction){tryCatch(res_trend(dataset, niter, ref_year=NULL, mid, correction),
-                                            error=function(e) data.frame(alpha2=NA, alpha1=NA,sd_alpha1=NA, inter=NA, strd=NA, p_1=NA, 
-                                                                         sd_p_1=NA, p_2=NA, sd_p_2=NA, p_3=NA, sd_p_3=NA, second_order_pvalue=NA,
-                                                                         first_order_pvalue=NA,slope=NA, slope_sd=NA, ref_year=NA, max_shape=NA))}
+# Select species with data bewteen 1995 and 2016 (+- tw0 years)
 
-df_trend<-droplevels(subset(df, start_year<=1997))
-df_trend<-droplevels(subset(df_trend, end_year>=2014))
-df_trend<-droplevels(subset(df_trend, Year %in% c(1995:2016)))
-trend_sp_cty_1995<-ddply(df_trend, .(Species, CountryGroup), .fun=res_trend2, niter=1000, correction=T, mid="first", .parallel = F, .progress = "text")
-trend_sp_cty_1995$linear<-substr(trend_sp_cty_1995$max_shape, 1, 8)
-trend_sp_cty_1995$linear[trend_sp_cty_1995$linear=="stable_c"]<-"stable"
+df_trend <- droplevels(subset(df, start_year<=1997))
+df_trend <- droplevels(subset(df_trend, end_year>=2014))
+df_trend <- droplevels(subset(df_trend, Year %in% c(1995:2016)))
 
-y<-trend_sp_cty_1995
+# Estimate trends
+
+trend_species <- ddply(df_trend, .(Species, CountryGroup), .fun=res_trend2, niter=1000, correction=T, mid="first", .parallel = F, .progress = "text")
+
+# Clean up outputs
+
+trend_species$linear <- substr(trend_species$max_shape, 1, 8)
+trend_species$linear[trend_species$linear=="stable_c"] <- "stable"
 ```
 
-### Pressure data and trends
+### Pressures
+
+#### Geographical data
 
 ```{r}
-# county boundaries
+# Select countries involved in the PECBMS
+
 country_name <- c("Austria","Bulgaria","Croatia","Cyprus","Germany","France","UK", "Belgium","Netherlands","Switzerland","Greece","Hungary","Iceland","Ireland","Italy","Latvia","Lithuania","Luxembourg","Malta","Norway","Poland","Portugal","Romania","Slovakia","Denmark", "Czech Republic","Finland", "Sweden", "Estonia","Slovenia","Spain")
 
+# County boundaries in WGS84 and Lambert II
+
 country <- droplevels(subset(map_data("world"), region %in% country_name))
-coordinates(country)=~long+lat
-proj4string(country)<- CRS("+proj=longlat +datum=WGS84")
-country<-spTransform(country,CRS("+init=epsg:27572"))
-country2<-droplevels(subset(map_data("world"), region %in% country_name))
-country2$long<-country$long
-country2$lat<-country$lat
-country3<-lapply(split(country2[,c(1:2)], country2$group), Polygon)
-country3<-SpatialPolygons(lapply(seq_along(country3),function(i){Polygons(list(country3[[i]]),ID=row.names(country2[!duplicated(country2$group),])[i])}))
-country_id<-country2 %>% group_by(region,group) %>% summarize(count=n()) %>% data.frame()
-country_id<-country_id[order(country_id$group),]
-country3<-unionSpatialPolygons(country3,country_id[,1])
-proj4string(country3)<-CRS("+init=epsg:27572")
+coordinates(country) = ~long+lat
+proj4string(country) <- CRS("+proj=longlat +datum=WGS84")
+country <- spTransform(country,CRS("+init=epsg:27572"))
 
-# artificialisation
-clc_1990<-raster("U2000_CLC1990_V2020_20u1.tif") # from https://land.copernicus.eu/pan-european/corine-land-cover
-clc_2000<-raster("U2006_CLC2000_V2020_20u1.tif")
-clc_2006<-raster("U2012_CLC2006_V2020_20u1.tif")
-clc_2012<-raster("U2018_CLC2012_V2020_20u1.tif")
-clc_2018<-raster("U2018_CLC2018_V2020_20u1.tif")
-country4b<-spTransform(country3, CRS(proj4string(clc_1990)))
+country2 <- droplevels(subset(map_data("world"), region %in% country_name))
+country2$long <- country$long
+country2$lat <- country$lat
 
-country_data<-data.frame(t(rep(NA,length(country4b))))
-names(country_data)<-levels(as.factor(country_id$region))
+country3 <- lapply(split(country2[,c(1:2)], country2$group), Polygon)
+country3 <- SpatialPolygons(lapply(seq_along(country3),function(i){Polygons(list(country3[[i]]),ID=row.names(country2[!duplicated(country2$group),])[i])}))
+
+country_id <- country2 %>% group_by(region,group) %>% summarize(count=n()) %>% data.frame()
+country_id <- country_id[order(country_id$group),]
+
+country3 <- unionSpatialPolygons(country3,country_id[,1])
+proj4string(country3) <- CRS("+init=epsg:27572")
+```
+
+#### Urban cover
+
+```{r}
+# Load data
+# from https://land.copernicus.eu/pan-european/corine-land-cover
+
+clc_1990 <- raster("U2000_CLC1990_V2020_20u1.tif") 
+clc_2000 <- raster("U2006_CLC2000_V2020_20u1.tif")
+clc_2006 <- raster("U2012_CLC2006_V2020_20u1.tif")
+clc_2012 <- raster("U2018_CLC2012_V2020_20u1.tif")
+clc_2018 <- raster("U2018_CLC2018_V2020_20u1.tif")
+
+# Reproject country boundaries
+
+country4b <- spTransform(country3, CRS(proj4string(clc_1990)))
+
+# Extract urban cover
+
+country_data <- data.frame(t(rep(NA,length(country4b))))
+names(country_data) <- levels(as.factor(country_id$region))
+
 for(i in 1:length(country4b)){
   print(i)
   b <- extent(country4b[i])
-  test<-crop(clc_1990, b)
-  test[test>39]<-NA
-  test[test<=11]<-1
-  test[test>11]<-0
-  test2<-mask(test,country4b[i])
-  country_data[3,i]<-extract(test2,extent(test2), fun=mean, na.rm=T)
+  test <- crop(clc_1990, b)
+  test[test > 39] <- NA # water bodies
+  test[test <= 11] <- 1 # artificial surface: continuous urban fabric, discontinuous urban fabric, industrial or commercial units, road and rail networks
+  test[test > 11] <- 0 # agricultural areas, forest and seminatural areas
+  test2 <- mask(test,country4b[i])
+  country_data[3, i] <- extract(test2,extent(test2), fun=mean, na.rm=T)
   
-  test<-crop(clc_2000, b)
-  test[test>39]<-NA
-  test[test<=11]<-1
-  test[test>11]<-0
-  test2<-mask(test,country4b[i])
-  country_data[4,i]<-extract(test2,extent(test2), fun=mean, na.rm=T)
+  test <- crop(clc_2000, b)
+  test[test > 39] <- NA
+  test[test <= 11] <- 1
+  test[test > 11] <- 0
+  test2 <- mask(test, country4b[i])
+  country_data[4, i] <- extract(test2,extent(test2), fun=mean, na.rm=T)
   
-  test<-crop(clc_2006, b)
-  test[test>39]<-NA
-  test[test<=11]<-1
-  test[test>11]<-0
-  test2<-mask(test,country4b[i])
-  country_data[5,i]<-extract(test2,extent(test2), fun=mean, na.rm=T)
+  test <- crop(clc_2006, b)
+  test[test > 39] <- NA
+  test[test <= 11] <- 1
+  test[test > 11] <- 0
+  test2 <- mask(test, country4b[i])
+  country_data[5, i] <- extract(test2, extent(test2), fun=mean, na.rm=T)
   
-  test<-crop(clc_2012, b)
-  test[test>39]<-NA
-  test[test<=11]<-1
-  test[test>11]<-0
-  test2<-mask(test,country4b[i])
-  country_data[6,i]<-extract(test2,extent(test2), fun=mean, na.rm=T)
+  test <- crop(clc_2012, b)
+  test[test > 39] <- NA
+  test[test <= 11] <- 1
+  test[test > 11] <- 0
+  test2 <- mask(test, country4b[i])
+  country_data[6, i] <- extract(test2, extent(test2), fun=mean, na.rm=T)
   
-  test<-crop(clc_2018, b)
-  test[test>39]<-NA
-  test[test<=11]<-1
-  test[test>11]<-0
-  test2<-mask(test,country4b[i])
-  country_data[7,i]<-extract(test2,extent(test2), fun=mean, na.rm=T)
+  test <- crop(clc_2018, b)
+  test[test > 39] <- NA
+  test[test <= 11] <- 1
+  test[test > 11] <- 0
+  test2 <- mask(test, country4b[i])
+  country_data[7, i] <- extract(test2, extent(test2), fun=mean, na.rm=T)
 }
-row.names(country_data)[1:5]<-c("clc_1990","clc_2000","clc_2006","clc_2012","clc_2018")
+row.names(country_data)[1:5] <- c("clc_1990", "clc_2000", "clc_2006", "clc_2012", "clc_2018")
 
-country_data[6,]<-apply(country_data[2:5,],2,function(x){mean(x, na.rm=T)})
-row.names(country_data)[6]<-"clc_mean"
-country_data[7,]<-apply(country_data[2:5,],2,function(x){
+# Mean value over the period
+
+country_data[6,] <- apply(country_data[2:5,],2,function(x){mean(x, na.rm=T)})
+row.names(country_data)[6] <- "clc_mean"
+
+# Trend over the period
+
+country_data[7,] <- apply(country_data[2:5,],2,function(x){
   summary(lm(x~c(2000,2006,2012,2018)))$coef[2,1]})
-row.names(country_data)[7]<-"d_clc"
-country_data[7,]<-unlist(country_data[7,])/unlist(country_data[2,])
+row.names(country_data)[7] <- "d_clc"
+country_data[7,] <- unlist(country_data[7,])/unlist(country_data[2,])
 
-# temperature
-r_temp<-brick("tg_ens_mean_0.1deg_reg_v20.0e.nc") # from http://surfobs.climate.copernicus.eu/dataaccess/access_eobs.php
+```
+
+#### Temperature
+
+```{r}
+# Load data
+# from http://surfobs.climate.copernicus.eu/dataaccess/access_eobs.php
+
+r_temp<-brick("tg_ens_mean_0.1deg_reg_v20.0e.nc") 
+
+# Average daily data by year
+
 end_year<-0
 for(i in 1:(2019-1950)){
   print(i)
@@ -835,6 +872,7 @@ for(i in 1:(2019-1950)){
   }
   assign(year, mean(r_temp[[beg_year:end_year]], na.rm=T))
 }
+
 
 country5<-spTransform(country3, CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0" ))
 country6a<-droplevels(subset(map_data("world"), region %in% country_name))
@@ -979,7 +1017,7 @@ ssi_eu<-read.csv("SSI_EU.csv") # LeViol 2012
 sxi<-read.csv("SXI_EU.csv")
 species_name_data<-read.csv("species_name_data.csv", header=T)
 
-global_data2<-merge(y,sxi, by.x="Species", by.y="Nom_Europe",all.x=T)
+global_data2<-merge(trend_species,sxi, by.x="Species", by.y="Nom_Europe",all.x=T)
 global_data2<-merge(global_data2,sti, by.x="Species", by.y="SPECIES",all.x=T)
 global_data2<-merge(global_data2,pecbms_hab, by="Species",all.x=T)
 global_data2<-merge(global_data2,synanthrop, by.x="Species", by.y="sp_name",all.x=T)
