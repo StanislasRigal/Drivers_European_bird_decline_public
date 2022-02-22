@@ -1,0 +1,243 @@
+code_sp,french_name,scientific_name,trop_level,troph,habitat,Annexe1,Annexe2,France1981,Annexe11986
+ACCGEN,Autour des palombes,Accipiter gentilis,3,3,NA,Y,N,N,N
+ACCNIS,Epervier d'Europe,Accipiter nisus,3,3,NA,Y,N,N,N
+ACRARU,Rousserolle turdoide,Acrocephalus arundinaceus,2,2,NA,N,N,Y,N
+ACRRIS,Rousserolle verderolle,Acrocephalus palustris,2,2,NA,N,N,Y,N
+ACRSCH,Phragmite des joncs,Acrocephalus schoenobaenus,2,2,NA,N,N,Y,N
+ACRSCI,Rousserolle effarvate,Acrocephalus scirpaceus,2,2,NA,N,N,Y,N
+ACTHYP,Chevalier guignette,Actitis hypoleucos,2,2,NA,N,N,Y,N
+AEGCAU,Mesange a longue queue,Aegithalos caudatus,2,2,NA,N,N,Y,N
+AIXGAL,Canard mandarin,Aix galericulata,2,7,NA,N,N,N,N
+AIXSPO,Canard carolin,Aix sponsa,1.5,4,NA,N,N,N,N
+ALAARV,Alouette des champs,Alauda arvensis,1.5,4,A,N,Y,Y,N
+ALCATT,Martin-pecheur d'Europe,Alcedo atthis,3,3,NA,Y,N,Y,Y
+ALEGRA,Perdrix bartavelle,Alectoris graeca,1,1,NA,Y,N,N,N
+ALERUF,Perdrix rouge,Alectoris rufa,1,1,A,Y,N,N,Y
+ALOAEG,Ouette d'Egypte,Alopochen aegyptiaca,1,1,NA,N,N,N,N
+ANAACU,Canard pilet,Anas acuta,1.5,4,NA,N,Y,N,N
+ANACLY,Canard souchet,Spatula clypeata,1.5,4,NA,N,Y,N,N
+ANACRE,Sarcelle d'hiver,Anas crecca,1.5,4,NA,N,Y,N,N
+ANAPEN,Canard siffleur,Mareca penelope,1,1,NA,N,Y,N,N
+ANAPLA,Canard colvert,Anas platyrhynchos,1.5,4,NA,N,Y,N,N
+ANAQUE,Sarcelle d'ete,Spatula querquedula,1.5,4,NA,N,Y,N,N
+ANASTR,Canard chipeau,Mareca strepera,1,1,NA,N,Y,N,N
+ANSANS,Oie cendree,Anser anser,1,1,NA,N,Y,N,N
+ANTCAM,Pipit rousseline,Anthus campestris,2,2,A,Y,N,Y,Y
+ANTCER,Pipit a gorge rousse,Anthus cervinus,2,2,NA,N,N,Y,N
+ANTPRA,Pipit farlouse,Anthus pratensis,2,2,A,N,N,Y,N
+ANTSPI,Pipit spioncelle,Anthus spinoletta ssp,2,2,NA,N,N,Y,N
+ANTTRI,Pipit des arbres,Anthus trivialis,2,2,NA,N,N,Y,N
+APUAPU,Martinet noir,Apus apus,2,2,B,N,N,Y,N
+APUMEL,Martinet a ventre blanc,Tachymarptis melba,2,2,NA,N,N,Y,N
+APUPAL,Martinet pale,Apus pallidus,2,2,NA,N,N,Y,N
+AQUCHR,Aigle royal,Aquila chrysaetos,3,3,NA,Y,N,Y,Y
+ARDCIN,Heron cendre,Ardea cinerea,2.5,6,NA,N,N,Y,N
+ARDPUR,Heron pourpre,Ardea purpurea,2.5,6,NA,Y,N,Y,Y
+AREINT,Tournepierre a collier,Arenaria interpres,2,2,NA,N,N,Y,N
+ASIOTU,Hibou moyen-duc,Asio otus,3,3,NA,N,N,Y,N
+ATHNOC,Cheveche d'Athena,Athene noctua,2.5,6,NA,N,N,Y,N
+AYTFER,Fuligule milouin,Aythya ferina,1.5,4,NA,N,Y,N,N
+AYTFUL,Fuligule morillon,Aythya fuligula,1.5,4,NA,N,Y,N,N
+BRABER,Bernache cravant,Branta bernicla,1,1,NA,N,N,Y,N
+BRACAN,Bernache du Canada,Branta canadensis,1,1,NA,N,Y,Y,N
+BUBBUB,Grand-duc d'Europe,Bubo bubo,3,3,NA,Y,N,Y,Y
+BUBIBI,Heron garde-boeufs,Bubulcus ibis,2,2,NA,N,N,Y,N
+BUROED,Oedicneme criard,Burhinus oedicnemus,2,2,NA,Y,N,Y,Y
+BUTBUT,Buse variable,Buteo buteo,2.5,6,A,N,N,Y,N
+CALALB,Becasseau sanderling,Calidris alba,2,2,NA,N,N,N,N
+CALALP,Becasseau variable,Calidris alpina,2,2,NA,Y,N,N,N
+CALBRA,Alouette calandrelle,Calandrella brachydactyla,1.5,4,NA,Y,N,Y,Y
+CALMIN,Becasseau minute,Calidris minuta,2,2,NA,N,N,N,N
+CAPEUR,Engoulevent d'Europe,Caprimulgus europaeus,2,2,NA,Y,N,Y,Y
+CARCAN,Linotte melodieuse,Linaria cannabina,1,1,A,N,N,Y,N
+CARCAR,Chardonneret elegant,Carduelis carduelis,1,1,B,N,N,Y,N
+CARCHL,Verdier d'Europe,Chloris chloris,1,1,B,N,N,Y,N
+CARSPI,Tarin des aulnes,Spinus spinus,1,1,NA,N,N,Y,N
+CERBRA,Grimpereau des jardins,Certhia brachydactyla,2,2,F,Y,N,Y,N
+CERFAM,Grimpereau des bois,Certhia familiaris,1.5,4,F,N,N,Y,N
+CETCET,Bouscarle de Cetti,Cettia cetti,2,2,NA,N,N,N,N
+CHADUB,Petit Gravelot,Charadrius dubius,2,2,NA,N,N,Y,N
+CHAHIA,Grand Gravelot,Charadrius hiaticula,2,2,NA,N,N,Y,N
+CHLHYB,Guifette moustac,Chlidonias hybrida,2.5,6,NA,N,Y,Y,Y
+CHLNIG,Guifette noire,Chlidonias niger,2,2,NA,N,Y,Y,Y
+CICCIC,Cigogne blanche,Ciconia ciconia,2.5,6,NA,Y,N,Y,Y
+CICNIG,Cigogne noire,Ciconia nigra,3,3,NA,Y,N,Y,Y
+CINCIN,Cincle plongeur,Cinclus cinclus,2,2,NA,N,N,Y,N
+CIRAER,Busard des roseaux,Circus aeruginosus,3,3,NA,Y,N,Y,Y
+CIRCYA,Busard Saint-Martin,Circus cyaneus,3,3,NA,Y,N,Y,Y
+CIRGAL,Circaete Jean-le-blanc,Circaetus gallicus,3,3,NA,N,N,Y,Y
+CIRPYG,Busard cendre,Circus pygargus,3,3,NA,Y,N,Y,Y
+CISJUN,Cisticole des joncs,Cisticola juncidis,2,2,NA,N,N,N,N
+CLAGLA,Coucou geai,Clamator glandarius,2,2,NA,N,N,Y,N
+COCCOC,Grosbec casse-noyaux,Coccothraustes coccothraustes,1.5,4,F,N,N,Y,N
+COLLIV,Pigeon biset,Columba livia,1,1,NA,N,N,N,N
+COLOEN,Pigeon colombin,Columba oenas,1,1,NA,N,Y,N,N
+COLPAL,Pigeon ramier,Columba palumbus,1,1,G,N,N,N,N
+CORCOR,Corneille noire,Corvus corone,2,7,G,N,Y,N,N
+CORFRU,Corbeau freux,Corvus frugilegus,2,7,A,N,Y,N,N
+CORGAR,Rollier d'Europe,Coracias garrulus,2,2,NA,Y,N,Y,Y
+CORMON,Choucas des tours,Corvus monedula,2,7,B,N,N,Y,N
+CORRAX,Grand Corbeau,Corvus corax,2,7,NA,N,N,Y,N
+COTCOT,Caille des bles,Coturnix coturnix,1.5,4,A,N,Y,N,N
+CRECRE,Rale des genets,Crex crex,1.5,4,NA,Y,N,Y,Y
+CUCCAN,Coucou gris,Cuculus canorus,2,2,G,N,N,Y,N
+CYGATR,Cygne noir,Cygnus atratus,NA,NA,NA,N,N,Y,N
+CYGOLO,Cygne tubercule,Cygnus olor,1,1,NA,N,N,Y,N
+DELURB,Hirondelle de fenetre,Delichon urbicum,2,2,B,N,N,Y,N
+DENMAJ,Pic epeiche,Dendrocopos major,1.5,4,F,Y,N,Y,N
+DENMED,Pic mar,Dendrocoptes medius,NA,NA,F,Y,N,Y,Y
+DENMIN,Pic epeichette,Dryobates minor,NA,NA,NA,N,N,Y,N
+DRYMAR,Pic noir,Dryocopus martius,2,2,F,Y,N,Y,Y
+EGRALB,Grande Aigrette,Ardea alba,2.5,6,NA,Y,N,Y,Y
+EGRGAR,Aigrette garzette,Egretta garzetta,2.5,6,NA,Y,N,Y,Y
+ELACAE,Elanion blanc,Elanus caeruleus,2.5,6,NA,Y,N,N,N
+EMBCIA,Bruant fou,Emberiza cia,1.5,4,NA,N,N,Y,N
+EMBCIR,Bruant zizi,Emberiza cirlus,1.5,4,A,N,N,Y,N
+EMBCIT,Bruant jaune,Emberiza citrinella,1.5,4,A,N,N,Y,N
+EMBHOR,Bruant ortolan,Emberiza hortulana,1.5,4,A,Y,N,Y,Y
+EMBSCH,Bruant des roseaux,Emberiza schoeniclus,1.5,4,NA,N,N,Y,N
+ERIRUB,Rougegorge familier,Erithacus rubecula,1.5,4,F,N,N,Y,N
+FALCOL,Faucon emerillon,Falco columbarius,3,3,NA,Y,N,Y,Y
+FALPER,Faucon pelerin,Falco peregrinus,3,3,NA,Y,N,Y,Y
+FALSUB,Faucon hobereau,Falco subbuteo,2.5,6,NA,N,N,Y,N
+FALTIN,Faucon crecerelle,Falco tinnunculus,2.5,6,A,N,N,Y,N
+FALVES,Faucon kobez,Falco vespertinus,2,2,NA,Y,N,Y,N
+FICALB,Gobemouche a collier,Ficedula albicollis,2,2,NA,Y,N,Y,Y
+FICHYP,Gobemouche noir,Ficedula hypoleuca,1.5,4,NA,N,N,Y,N
+FRICOE,Pinson des arbres,Fringilla coelebs,1.5,4,G,Y,N,Y,N
+FRIMON,Pinson du Nord,Fringilla montifringilla,1.5,4,NA,N,N,Y,N
+FULATR,Foulque macroule,Fulica atra,1.5,4,NA,N,Y,N,N
+GALCHL,Gallinule poule-d'eau,Gallinula chloropus,1.5,4,NA,N,Y,N,N
+GALCRI,Cochevis huppe,Galerida cristata,1.5,4,A,N,N,Y,N
+GALGAL,Becassine des marais,Gallinago gallinago,2,2,NA,N,Y,N,N
+GARGLA,Geai des chenes,Garrulus glandarius,1.5,4,G,N,Y,N,N
+GRIVES,Grive sp,Turdus,NA,NA,NA,N,N,N,N
+GRUGRU,Grue cendree,Grus grus,1.5,4,NA,Y,N,Y,Y
+GYPFUL,Vautour fauve,Gyps fulvus,3,3,NA,Y,N,Y,Y
+HIEPEN,Aigle botte,Hieraaetus pennatus,3,3,NA,Y,N,Y,Y
+HIMHIM,Echasse blanche,Himantopus himantopus,2,2,NA,Y,N,Y,Y
+HIPICT,Hypolais icterine,Hippolais icterina,2,2,NA,N,N,Y,N
+HIPPOL,Hypolais polyglotte,Hippolais polyglotta,2,2,G,N,N,Y,N
+HIRRUS,Hirondelle rustique,Hirundo rustica,2,2,B,N,N,Y,N
+IXOMIN,Blongios nain,Ixobrychus minutus,2.5,6,NA,Y,N,Y,Y
+JYNTOR,Torcol fourmilier,Jynx torquilla,2,2,NA,N,N,Y,N
+LANCOL,Pie-grieche ecorcheur,Lanius collurio,2,2,A,Y,N,Y,Y
+LANEXC,Pie-grieche grise,Lanius excubitor,2.5,6,NA,N,N,Y,N
+LANMER,Pie-grieche meridionale,Lanius meridionalis,NA,NA,NA,N,N,Y,N
+LANSEN,Pie-grieche a tete rousse,Lanius senator,2,2,NA,N,N,Y,N
+LARARG,Goeland argente,Larus argentatus,2,7,NA,N,N,Y,N
+LARCAC,Goeland pontique,Larus armenicus,2,7,NA,N,N,Y,N
+LARFUS,Goeland brun,Larus fuscus,2,7,NA,N,N,Y,N
+LARMAR,Goeland marin,Larus marinus,2,7,NA,N,N,Y,N
+LARMEL,Mouette melanocephale,Larus melanocephalus,2.5,6,NA,Y,N,Y,Y
+LARRID,Mouette rieuse,Larus ridibundus,2.5,6,NA,N,N,Y,N
+LEILUT,Leiothrix jaune,Leiothrix lutea,NA,NA,NA,N,N,N,N
+LIMLIM,Barge a queue noire,Limosa limosa,2,2,NA,N,Y,N,N
+LOCLUS,Locustelle luscinioide,Locustella luscinioides,2,2,NA,N,N,Y,N
+LOCNAE,Locustelle tachetee,Locustella naevia,2,2,NA,N,N,Y,N
+LOXCUR,Bec-croise des sapins,Loxia curvirostra,1,1,NA,N,N,Y,N
+LULARB,Alouette lulu,Lullula arborea,1.5,4,A,Y,N,Y,Y
+LUSMEG,Rossignol philomele,Luscinia megarhynchos,1.5,4,G,N,N,Y,N
+LUSSVE,Gorgebleue a miroir,Luscinia svecica,NA,NA,NA,Y,N,Y,Y
+MERAPI,Guepier d'Europe,Merops apiaster,2,2,NA,N,N,Y,N
+MERMER,Harle bievre,Mergus merganser,3,3,NA,N,N,Y,N
+MILCAL,Bruant proyer,Emberiza calandra,1.5,4,A,N,N,Y,N
+MILMIG,Milan noir,Milvus migrans,2.5,6,NA,Y,N,Y,Y
+MILMIL,Milan royal,Milvus milvus,2.5,6,NA,Y,N,Y,Y
+MONSAX,Monticole de roche,Monticola saxatilis,2,2,NA,N,N,Y,N
+MONSOL,Monticole bleu,Monticola solitarius,2.5,6,NA,N,N,Y,N
+MOTALB,Bergeronnette grise,Motacilla alba,2,2,NA,N,N,Y,N
+MOTCIN,Bergeronnette des ruisseaux,Motacilla cinerea,2,2,NA,N,N,Y,N
+MOTFLA,Bergeronnette printaniere,Motacilla flava,2,2,A,N,N,Y,N
+MOTIMA,Bergeronnette flaveole,Motacilla flava ssp,NA,NA,A,N,N,Y,N
+MUSSTR,Gobemouche gris,Muscicapa striata,1.5,4,NA,N,N,Y,N
+NEOPER,Vautour percnoptere,Neophron percnopterus,2.5,6,NA,Y,N,Y,Y
+NETRUF,Nette rousse,Netta rufina,1,1,NA,N,Y,N,N
+NUCCAR,Cassenoix mouchete,Nucifraga caryocatactes,1.5,4,NA,N,N,Y,N
+NUMARQ,Courlis cendre,Numenius arquata,1.5,4,NA,N,Y,N,N
+NUMPHA,Courlis corlieu,Numenius phaeopus,1.5,4,NA,N,Y,N,N
+NYCNYC,Bihoreau gris,Nycticorax nycticorax,2.5,6,NA,Y,N,Y,N
+OENHIS,Traquet oreillard,Oenanthe hispanica,2,2,NA,N,N,Y,N
+OENOEN,Traquet motteux,Oenanthe oenanthe,2,2,A,N,N,Y,N
+ORIORI,Loriot d'Europe,Oriolus oriolus,1.5,4,G,N,N,Y,N
+OTUSCO,Petit-duc scops,Otus scops,2,2,NA,N,N,Y,N
+PANHAL,Balbuzard pecheur,Pandion haliaetus,3,3,NA,Y,N,Y,Y
+PARATE,Mesange noire,Periparus ater,1.5,4,F,N,N,Y,N
+PARCAE,Mesange bleue,Cyanistes caeruleus,1.5,4,G,N,N,Y,N
+PARCRI,Mesange huppee,Lophophanes cristatus,1.5,4,F,N,N,Y,N
+PARMAJ,Mesange charbonniere,Parus major,1.5,4,G,N,N,Y,N
+PARMON,Mesange boreale,Poecile montanus,1.5,4,F,N,N,Y,N
+PARPAL,Mesange nonnette,Poecile palustris,1.5,4,F,N,N,Y,N
+PASDOM,Moineau domestique,Passer domesticus,1.5,4,B,N,N,Y,N
+PASMON,Moineau friquet,Passer montanus,1.5,4,B,N,N,Y,N
+PERAPI,Bondree apivore,Pernis apivorus,2.5,6,NA,Y,N,Y,Y
+PERPER,Perdrix grise,Perdix perdix,1,1,A,N,Y,N,N
+PETPET,Moineau soulcie,Petronia petronia,1.5,4,NA,N,N,Y,N
+PHACAR,Grand Cormoran,Phalacrocorax carbo,3,3,NA,N,N,Y,Y
+PHACOL,Faisan de Colchide,Phasianus colchicus,1.5,4,NA,N,Y,N,N
+PHIPUG,Combattant varie,Calidris pugnax,1.5,4,NA,Y,Y,N,Y
+PHOOCH,Rougequeue noir,Phoenicurus ochruros,1.5,4,B,N,N,Y,N
+PHOPHO,Rougequeue a front blanc,Phoenicurus phoenicurus,2,2,B,N,N,Y,N
+PHYBON,Pouillot de Bonelli,Phylloscopus bonelli,2,2,F,N,N,Y,N
+PHYCOL,Pouillot veloce,Phylloscopus collybita,2,2,F,N,N,Y,N
+PHYSIB,Pouillot siffleur,Phylloscopus sibilatrix,2,2,F,N,N,Y,N
+PHYTRO,Pouillot fitis,Phylloscopus trochilus,2,2,F,N,N,Y,N
+PICCAN,Pic cendre,Picus canus,2,2,NA,Y,N,Y,Y
+PICPIC,Pie bavarde,Pica pica,2,7,B,N,Y,N,N
+PICVIR,Pic vert,Picus viridis,2,2,G,N,N,Y,N
+PLALEU,Spatule blanche,Platalea leucorodia,2.5,6,NA,Y,N,Y,Y
+PLUAPR,Pluvier dore,Pluvialis apricaria,1.5,4,NA,Y,Y,N,Y
+PODCRI,Grebe huppe,Podiceps cristatus,3,3,NA,N,N,Y,N
+PRUCOL,Accenteur alpin,Prunella collaris,1.5,4,NA,N,N,Y,N
+PRUMOD,Accenteur mouchet,Prunella modularis,1.5,4,G,N,N,Y,N
+PSIKRA,Perruche a collier,Psittacula krameri,1,1,NA,N,N,N,N
+PTYRUP,Hirondelle de rochers,Ptyonoprogne rupestris,2,2,NA,N,N,Y,N
+PYRGRA,Chocard a bec jaune,Pyrrhocorax graculus,1.5,4,NA,N,N,Y,N
+PYRPYR,Bouvreuil pivoine,Pyrrhula pyrrhula,1,1,F,Y,N,Y,N
+PYRRAX,Crave a bec rouge,Pyrrhocorax pyrrhocorax,1.5,4,NA,Y,N,Y,Y
+RALAQU,Rale d'eau,Rallus aquaticus,2,7,NA,N,Y,N,N
+RAPACE,Rapace sp,NA,NA,NA,NA,N,N,N,N
+RECAVO,Avocette elegante,Recurvirostra avosetta,2,2,NA,Y,N,Y,Y
+REGIGN,Roitelet a triple bandeau,Regulus ignicapilla,2,2,F,N,N,Y,N
+REGREG,Roitelet huppe,Regulus regulus,2,2,F,N,N,Y,N
+RIPRIP,Hirondelle de rivage,Riparia riparia,2,2,NA,N,N,Y,N
+SAXRUB,Tarier des pres,Saxicola rubetra,1.5,4,A,N,N,Y,N
+SAXTOR,Tarier patre,Saxicola torquatus,NA,NA,A,N,N,Y,N
+SCORUS,Becasse des bois,Scolopax rusticola,1.5,4,NA,N,Y,N,N
+SERCIT,Venturon montagnard,Carduelis citrinella,1,1,NA,N,N,Y,N
+SERSER,Serin cini,Serinus serinus,1,1,B,N,N,Y,N
+SITEUR,Sittelle torchepot,Sitta europaea,1.5,4,F,N,N,Y,N
+STEALB,Sterne naine,Sternula albifrons,2.5,6,NA,Y,N,Y,Y
+STEHIR,Sterne pierregarin,Sterna hirundo,2.5,6,NA,Y,N,Y,Y
+STRALU,Chouette hulotte,Strix aluco,2.5,6,NA,N,N,Y,N
+STRDEC,Tourterelle turque,Streptopelia decaocto,1,1,B,N,Y,N,N
+STRTUR,Tourterelle des bois,Streptopelia turtur,1,1,NA,N,Y,N,N
+STUVUL,etourneau sansonnet,Sturnus vulgaris,1.5,4,NA,N,Y,N,N
+SYLATR,Fauvette a tete noire,Sylvia atricapilla,1.5,4,G,N,N,Y,N
+SYLBOR,Fauvette des jardins,Sylvia borin,1.5,4,NA,N,N,Y,N
+SYLCAN,Fauvette passerinette,Sylvia cantillans,1.5,4,NA,N,N,Y,N
+SYLCOM,Fauvette grisette,Sylvia communis,1.5,4,A,N,N,Y,N
+SYLCUR,Fauvette babillarde,Sylvia curruca,2,2,NA,N,N,Y,N
+SYLHOR,Fauvette orphee,Sylvia hortensis,2,2,NA,N,N,Y,N
+SYLMEL,Fauvette melanocephale,Sylvia melanocephala,1.5,4,F,N,N,Y,N
+SYLUND,Fauvette pitchou,Sylvia undata,2,2,NA,Y,N,Y,Y
+SYRREE,Faisan venere,Syrmaticus reevesii,1.5,4,NA,N,N,N,N
+TACRUF,Grebe castagneux,Tachybaptus ruficollis,2.5,6,NA,N,N,Y,N
+TADFER,Tadorne casarca,Tadorna ferruginea,1.5,4,NA,Y,N,Y,Y
+TADTAD,Tadorne de Belon,Tadorna tadorna,2,2,NA,N,N,Y,N
+TETRAX,Outarde canepetiere,Tetrax tetrax,1.5,4,NA,Y,N,Y,Y
+THRAET,Ibis sacre,Threskiornis aethiopicus,NA,NA,NA,N,N,N,N
+TRIERY,Chevalier arlequin,Tringa erythropus,2.5,6,NA,N,Y,N,N
+TRINEB,Chevalier aboyeur,Tringa nebularia,2.5,6,NA,N,Y,N,N
+TRIOCH,Chevalier culblanc,Tringa ochropus,2,2,NA,N,N,Y,N
+TRITOT,Chevalier gambette,Tringa totanus,2,2,NA,N,Y,N,N
+TROTRO,Troglodyte mignon,Troglodytes troglodytes,2,2,F,N,N,Y,N
+TURILI,Grive mauvis,Turdus iliacus,1.5,4,NA,N,Y,N,N
+TURMER,Merle noir,Turdus merula,1.5,4,G,N,Y,N,N
+TURPHI,Grive musicienne,Turdus philomelos,1.5,4,F,N,Y,N,N
+TURPIL,Grive litorne,Turdus pilaris,1.5,4,NA,N,Y,N,N
+TURTOR,Merle a plastron,Turdus torquatus,1.5,4,NA,N,N,Y,N
+TURVIS,Grive draine,Turdus viscivorus,1.5,4,F,N,Y,N,N
+TYTALB,Effraie des clochers,Tyto alba,3,3,NA,N,N,Y,N
+UPUEPO,Huppe fasciee,Upupa epops,2,2,A,N,N,Y,N
+VANVAN,Vanneau huppe,Vanellus vanellus,2,2,A,N,Y,N,N

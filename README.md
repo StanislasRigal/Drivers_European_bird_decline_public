@@ -47,7 +47,7 @@ df$Year <- as.numeric(as.character(df$Year))
 
 # Load data from the EU Bird Directive Reporting (see Supplementary material for more details)
 
-abd <- setDT(read.table("Abundance_data_PECBMS.txt", header = T, sep="\t")) 
+abd <- setDT(read.table("raw_data/Abundance_data_PECBMS.txt", header = T, sep="\t")) 
 
 
 ```
@@ -589,7 +589,7 @@ ggplot(df_pop3b$msi, aes(x = c(1980:2016), y = mean_msi_final)) +
 ```{r}
 # Load data
 
-pecbms_hab <- read.csv2("Habitat_class_PECBMS.csv") # availble on https://pecbms.info/
+pecbms_hab <- read.csv2("raw_data/Habitat_class_PECBMS.csv") # availble on https://pecbms.info/
 
 # Select species
 
@@ -641,7 +641,7 @@ ggplot(msi_forest_pec_ab$msi, aes(x = c(1980:2016), y = mean_msi_final)) +
 # Load data
 # from https://www.eea.europa.eu/data-and-maps/data/linkages-of-species-and-habitat
 
-eunis_hab<-read.csv("species_birds_maes_EU27b.csv")
+eunis_hab<-read.csv("raw_data/species_birds_maes_EU27b.csv")
 eunis_hab2<-dcast(eunis_hab[eunis_hab$season=="B",], speciesname ~ codeeco)
 eunis_hab3<-data.frame(Species=levels(as.factor(eunis_hab$speciesname)), is_urban=FALSE)
 
@@ -691,7 +691,7 @@ ggplot(msi_build_eunis_ab$msi, aes(x = c(1980:2016), y = mean_msi_final)) +
 # Load data
 # from (Devictor et al., 2012)
 
-sti<-read.csv("STI_Devictor.csv") 
+sti<-read.csv("raw_data/STI_Devictor.csv") 
 sti_eu<-droplevels(subset(sti, SPECIES %in% df_pop2$Species)) 
 
 # Select species (hot dwellers)
@@ -805,35 +805,35 @@ for(i in 1:length(country4b)){
   country_cover[country_cover <= 11] <- 1 # artificial surface: continuous urban fabric, discontinuous urban fabric, industrial or commercial units, road and rail networks
   country_cover[country_cover > 11] <- 0 # agricultural areas, forest and seminatural areas
   country_cover2 <- mask(country_cover,country4b[i])
-  country_data[3, i] <- extract(country_cover2,extent(country_cover2), fun=mean, na.rm=T)
+  country_data[1, i] <- extract(country_cover2,extent(country_cover2), fun=mean, na.rm=T)
   
   country_cover <- crop(clc_2000, b)
   country_cover[country_cover > 39] <- NA
   country_cover[country_cover <= 11] <- 1
   country_cover[country_cover > 11] <- 0
   country_cover2 <- mask(country_cover, country4b[i])
-  country_data[4, i] <- extract(country_cover2,extent(country_cover2), fun=mean, na.rm=T)
+  country_data[2, i] <- extract(country_cover2,extent(country_cover2), fun=mean, na.rm=T)
   
   country_cover <- crop(clc_2006, b)
   country_cover[country_cover > 39] <- NA
   country_cover[country_cover <= 11] <- 1
   country_cover[country_cover > 11] <- 0
   country_cover2 <- mask(country_cover, country4b[i])
-  country_data[5, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
+  country_data[3, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
   
   country_cover <- crop(clc_2012, b)
   country_cover[country_cover > 39] <- NA
   country_cover[country_cover <= 11] <- 1
   country_cover[country_cover > 11] <- 0
   country_cover2 <- mask(country_cover, country4b[i])
-  country_data[6, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
+  country_data[4, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
   
   country_cover <- crop(clc_2018, b)
   country_cover[country_cover > 39] <- NA
   country_cover[country_cover <= 11] <- 1
   country_cover[country_cover > 11] <- 0
   country_cover2 <- mask(country_cover, country4b[i])
-  country_data[7, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
+  country_data[5, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
 }
 row.names(country_data)[1:5] <- c("clc_1990", "clc_2000", "clc_2006", "clc_2012", "clc_2018")
 
@@ -916,12 +916,12 @@ row.names(country_data)[8:76] <- paste0("temp",sep="_",1950:2018)
 
 # Mean value over the period
 
-country_data[77,] <- apply(country_data[38:76,], 2, function(x){mean(x, na.rm=T)})
+country_data[77,] <- apply(country_data[38:74,], 2, function(x){mean(x, na.rm=T)})
 row.names(country_data)[77] <- "temp_mean"
 
 # Trend over the period
 
-country_data[78,] <- apply(country_data[38:76,], 2, function(x){summary(lm(x~c(1980:2018)))$coef[2,1]})/country_data[38,]
+country_data[78,] <- apply(country_data[38:74,], 2, function(x){summary(lm(x~c(1980:2016)))$coef[2,1]})/country_data[38,]
 row.names(country_data)[78] <- "d_temp"
 
 ```
@@ -932,95 +932,35 @@ row.names(country_data)[78] <- "d_temp"
 # Load data
 # from https://ec.europa.eu/eurostat/web/main/data/database
 
-# Utilised agricultural area data
-# online data code: EF_M_FARMLEG
-
-uaa_country <- read.csv("ef_m_farmleg_1_Data.csv", header = T)
-uaa_country$Value <- str_replace_all(uaa_country$Value, " ", "")
-uaa_country$Value <- as.numeric(as.character(uaa_country$Value))
-uaa_country <- na.omit(uaa_country)
-uaa_country <- dcast(uaa_country, INDIC_AGR+TIME~GEO, fun.aggregate=sum, value.var="Value")
-names(uaa_country)[c(8,13,34)] <- c("Czech Republic","Germany","UK")
-
-# Estimate UAA for all years
-
-to_merge <- data.frame(TIME=c(2005:2016))
-uaa_country2 <- merge(uaa_country[36:40,-1], to_merge, by="TIME", all=T)
-uaa_country2$Iceland <- rep(uaa_country2$Iceland[uaa_country2$TIME==2010], nrow(uaa_country2)) # only one data, no estimation
-uaa_country2$Montenegro <- rep(uaa_country2$Montenegro[uaa_country2$TIME==2010], nrow(uaa_country2)) # only one data, no estimation
-
-uaa_country2[is.na(uaa_country2)] <- 0
-rep_0 <- function(x, time_vec){
-
-  id_0 <- which(x==0)
-  id_1 <- which(x!=0)
-  
-  if(length(id_0)>0){
-    if(id_0[1]==1){
-      alpha <- (x[id_1[2]]-x[id_1[1]])/(time_vec[id_1[2]]-time_vec[id_1[1]])
-      beta <- x[id_1[1]]-alpha*time_vec[id_1[1]]
-      x[1] <- alpha*time_vec[1]+beta
-    }
-    
-    if(id_0[length(id_0)]==length(x)){
-      alpha <- (x[id_1[length(id_1)]]-x[id_1[(length(id_1)-1)]])/(time_vec[id_1[length(id_1)]]-time_vec[id_1[(length(id_1)-1)]])
-      beta <- x[id_1[length(id_1)]]-alpha*time_vec[id_1[length(id_1)]]
-      x[length(x)] <- alpha*time_vec[length(x)]+beta
-    }
-    
-    id_0 <- which(x==0)
-    id_1 <- which(x!=0)
-    
-    for(i in 1:(length(id_0))){
-      alpha <- (x[min(id_1[which(id_1>id_0[i])])]-x[max(id_1[which(id_1<id_0[i])])])/(time_vec[min(id_1[which(id_1>id_0[i])])]-time_vec[max(id_1[which(id_1<id_0[i])])])
-      beta <- x[min(id_1[which(id_1>id_0[i])])]-alpha*time_vec[min(id_1[which(id_1>id_0[i])])]
-      x[id_0[i]] <- alpha*time_vec[(id_0[i])]+beta
-      
-    } 
-  }
-  return(x)
-}
-
-for(j in 2:ncol(uaa_country2)){
-  uaa_country2[,j] <- rep_0(uaa_country2[,j], uaa_country2$TIME)
-}
-
 # High input cover data
 # online data code: AEI_PS_INP
+# url: https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/AEI_PS_INP/A.HIGH_INP+LOW_INP+MED_INP.PC_AREA.BE+BG+CZ+DK+DE+EE+IE+EL+ES+FR+HR+IT+CY+LV+LT+LU+HU+MT+NL+AT+PL+PT+RO+SI+SK+FI+SE+UK/?format=SDMX-CSV&compressed=true&startPeriod=2005&endPeriod=2019
 
-input_country <- read.csv("aei_ps_inp_1_Data.csv", header = T)
-input_country$Value <- str_replace_all(input_country$Value, " ", "")
-input_country$Value <- as.numeric(as.character(input_country$Value))
-input_country <- na.omit(input_country)
-input_country <- dcast(input_country, INDIC_AG+TIME~GEO, fun.aggregate=sum, value.var="Value")
-names(input_country)[c(8,14,31)] <- c("Czech Republic","Germany","UK")
-
-# Calculate high input cover as percentage of UAA
-
-input_country2 <- input_country[1:10,-c(1,11)]
-uaa_country3 <- uaa_country2[uaa_country2$TIME %in% c(2007:2016), which(names(uaa_country2) %in% names(input_country2))]
-
-for(i in 2:ncol(input_country2)){
-
-  input_country2[,i] <- input_country2[,i]/uaa_country3[,i]
-  to_add <- summary(lm(input_country2[which(input_country2[,i]>0),i]~input_country2[which(input_country2[,i]>0),1]))$coef
-  input_country2[11,i] <- mean(input_country2[which(input_country2[,i]>0),i], na.rm=T)
-  input_country2[12,i] <- to_add[2,1]
-  input_country2[13,i] <- to_add[2,4]
-}
+input_country <- read.csv("raw_data/aei_ps_inp.csv", header = T)
+input_country <- na.omit(droplevels(input_country[input_country$indic_ag=="HIGH_INP",c("geo","TIME_PERIOD","OBS_VALUE","indic_ag")]))
+input_country <- dcast(input_country, TIME_PERIOD~geo, fun.aggregate=sum, value.var="OBS_VALUE")
+names(input_country) <- c("Year","Austria","Belgium","Bulgaria","Cyprus","Czech Republic","Germany","Denmark","Estonia","Greece","Spain","Finland","France","Croatia","Hungary","Ireland","Italy","Lithuania","Luxembourg","Latvia","Malta","Netherlands","Poland","Portugal","Romania","Sweden","Slovenia","Slovakia","UK")
 
 # Mean value over the period
 
-vect_trans <- input_country2[11,which(colnames(input_country2) %in% names(country6b))]
-country_data[79,] <- unlist(c(vect_trans[1:13],0,vect_trans[14:20],0,vect_trans[21:27],0,vect_trans[28]))
+input_country[input_country==0] <- NA
+row.names(input_country) <- paste0("hic",sep="_",input_country$Year)
+input_country$Year <- NULL
+input_country[16,] <- apply(input_country[1:12,], 2, function(x){mean(x, na.rm=T)})
+row.names(input_country)[16] <- "hic_mean"
 
 # Trend over the period
 
-vect_trans <- input_country2[12,which(colnames(input_country2) %in% names(country6b))]
-vect_trans[which(input_country2[13,which(colnames(input_country2) %in% names(country6b))]>0.05)] <- 0
-country_data[80,] <- unlist(c(vect_trans[1:13],0,vect_trans[14:20],0,vect_trans[21:27],0,vect_trans[28]))
-country_data[80,] <- unlist(country_data[83,])/unlist(country_data[82,])
-row.names(country_data)[79:80] <- c("high_input_cover","d_hic")
+input_country[17,] <- apply(input_country[1:12,], 2, function(x){summary(lm(x~c(2005:2016)))$coef[2,1]})/apply(input_country[1:3,], 2,function(x){mean(x, na.rm=T)})
+row.names(input_country)[17] <- "d_hic"
+
+# Merge data
+
+input_country <- input_country[,sort(names(input_country))]
+input_country <- data.frame(input_country[,c(1:13)], Iceland=0, input_country[,c(14:20)], Norway=0, input_country[,c(21:27)], Switzerland=0, UK=input_country$UK)
+names(input_country)[6] <- "Czech Republic"
+
+country_data <- rbind(country_data, input_country)
 
 ```
 
@@ -1028,9 +968,46 @@ row.names(country_data)[79:80] <- c("high_input_cover","d_hic")
 
 ```{r}
 # Load data
+# from https://www.fao.org/faostat/en/#data/RL
+
+fao_data_landuse <- read.csv("raw_data/FAOSTAT_data_RL.csv", header = T)
+fao_data_landuse$Area <- as.character(fao_data_landuse$Area)
+fao_data_landuse[fao_data_landuse=="United Kingdom of Great Britain and Northern Ireland"] <- "UK"
+fao_data_landuse[fao_data_landuse=="Czechia"] <- "Czech Republic"
+fao_data_landuse <- droplevels(fao_data_landuse[fao_data_landuse$Area %in% country_name,])
+write.csv(fao_data_landuse,"output/fao_data_landuse.csv", row.names = F)
+
+fao_data_landcover <- read.csv("raw_data/FAOSTAT_data_LC.csv", header = T)
+fao_data_landcover$Area <- as.character(fao_data_landcover$Area)
+fao_data_landcover[fao_data_landcover=="United Kingdom of Great Britain and Northern Ireland"] <- "UK"
+fao_data_landcover[fao_data_landcover=="Czechia"] <- "Czech Republic"
+fao_data_landcover <- droplevels(fao_data_landcover[fao_data_landcover$Area %in% country_name,])
+write.csv(fao_data_landcover,"output/fao_data_landcover.csv", row.names = F)
+
+area_country <- read.csv("output/fao_data_landuse.csv", header = T)
+area_country <- area_country[area_country$Item=="Country area" & area_country$Year==2016, c("Area","Value")]
+area_country$Value <- 10*area_country$Value
+
+forest_country <- read.csv("output/fao_data_landuse.csv", header = T)
+forest_country <- forest_country[forest_country$Item!="Country area", c("Area","Item","Year","Value")]
+forest_country$Value <- 10*forest_country$Value
+forest_country <- dcast(forest_country, Item+Year~Area, fun.aggregate=sum, value.var="Value")
+
+
 # from https://ec.europa.eu/eurostat/web/main/data/database
 
-foret_country <- read.csv("for_area_1_Data.csv", header = T)
+# online data code: LAN_LCV_FAO
+# https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/LAN_LCV_FAO/A.KM2.LC+LCC1+LCC2+LCC3.BE+BG+CZ+DK+DE+EE+IE+EL+ES+FR+HR+IT+CY+LV+LT+LU+HU+MT+NL+AT+PL+PT+RO+SI+SK+FI+SE+UK/?format=SDMX-CSV&compressed=true&startPeriod=2009&endPeriod=2018
+
+forest_fao_country <- read.csv("raw_data/lan_lcv_fao.csv", header = T)
+forest_fao_country <- droplevels(forest_fao_country[forest_fao_country$landcover=="LC" & forest_fao_country$TIME_PERIOD=="2015", c("geo", "OBS_VALUE")])
+forest_fao_country <- data.frame(t(forest_fao_country$OBS_VALUE))
+names(forest_fao_country) <- c("Austria","Belgium","Bulgaria","Cyprus","Czech Republic","Germany","Denmark","Estonia","Greece","Spain","Finland","France","Croatia","Hungary","Ireland","Italy","Lithuania","Luxembourg","Latvia","Malta","Netherlands","Poland","Portugal","Romania","Sweden","Slovenia","Slovakia","UK")
+
+# online data code: FOR_AREA
+# https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/FOR_AREA/A.THS_HA.FOR+OWL.BE+BG+CZ+DK+DE+EE+IE+EL+ES+FR+HR+IT+LV+LT+LU+HU+MT+NL+AT+PL+PT+RO+SI+SK+FI+SE+LI+NO+CH+UK+BA/?format=SDMX-CSV&compressed=true&startPeriod=1990&endPeriod=2020
+
+foret_country <- read.csv("raw_data/for_area.csv", header = T)
 foret_country$Value <- str_replace_all(foret_country$Value, " ", "")
 foret_country$Value <- as.numeric(as.character(foret_country$Value))
 foret_country <- na.omit(foret_country)
@@ -1050,69 +1027,88 @@ row.names(country_data)[83] <- "d_forest"
 country_data2 <- as.data.frame(t(country_data))
 country_data2$country <- as.factor(row.names(country_data2))
 
+
+# Clean up the final dataset
+
 for(i in c(1:83)){
   country_data2[which(country_data2[,i]==0),i] <- NA
 }
+
+country_data2$country2[country_data2$country2=="UK"]<-"United Kingdom"
+
 ```
 
 ### Preparing data for partial least square regression (PLS)
+
+#### Species data
+
 ```{r}
 
-country_data2$country2<-gsub(" ", "_", country_data2$country)
-country_data2$country2[country_data2$country2=="UK"]<-"United Kingdom"
+ssi_eu <- read.csv("SSI_EU.csv") # from LeViol et al. (2012)
+sxi <- read.csv("SXI_EU.csv") # from Godet et al. (2015)
+species_name_data <- read.csv("species_name_data.csv", header=T)
 
-ssi_eu<-read.csv("SSI_EU.csv") # LeViol 2012
-sxi<-read.csv("SXI_EU.csv")
-species_name_data<-read.csv("species_name_data.csv", header=T)
+trait2 <- read.csv("life_history_bird_2018.csv",header = TRUE) # from Storchová et al. (2018)
+trait2$is_migrant <- rep(0, nrow(trait2))
+trait2$is_migrant[which(trait2$Short.distance.migrant==1 | trait2$Long.distance.migrant==1)] <- 1
 
-global_data2<-merge(trend_species,sxi, by.x="Species", by.y="Nom_Europe",all.x=T)
-global_data2<-merge(global_data2,sti, by.x="Species", by.y="SPECIES",all.x=T)
-global_data2<-merge(global_data2,pecbms_hab, by="Species",all.x=T)
-global_data2<-merge(global_data2,synanthrop, by.x="Species", by.y="sp_name",all.x=T)
-global_data2<-merge(global_data2,ssi_eu, by="Species",all.x=T)
+```
 
-trait2<-read.csv("life_history_bird2.csv",header = TRUE)
-trait2$is_migrant<-rep(0, nrow(trait2))
-trait2$is_migrant[which(trait2$Short.distance.migrant==1 | trait2$Long.distance.migrant==1)]<-1
+#### Merge all data
 
-global_data2b<-merge(global_data2,trait2[,c(4,68:93)], by="Species",all.x=T)
-global_data2b[,c("STI")]<-scale(global_data2b[,c("STI")])
-global_data2b$slope[global_data2b$first_order_pvalue>0.05]<-0 # removing non significant trends
-global_data2b$slope[global_data2b$slope<0]<- -log( -global_data2b$slope[global_data2b$slope<0] + 1) # Yeo-Johnson power transformation
-global_data2b$slope[global_data2b$slope>0]<- log(global_data2b$slope[global_data2b$slope>0] + 1)
-global_data2b$is_farmland<-as.factor(global_data2b$Habitat=="Farmland")
-global_data2b$is_forest<-as.factor(global_data2b$Habitat=="Forest")
+```{r}
 
-global_data3<-merge(global_data2b,country_data2, by.x="CountryGroup", by.y="country2",all.x=T)
-global_data3b<-global_data3
+global_data2 <- merge(trend_species, sxi, by.x="Species", by.y="Nom_Europe",all.x=T)
+global_data2 <- merge(global_data2, sti, by.x="Species", by.y="SPECIES",all.x=T)
+global_data2 <- merge(global_data2, pecbms_hab, by="Species",all.x=T)
+global_data2 <- merge(global_data2, synanthrop, by.x="Species", by.y="sp_name",all.x=T)
+global_data2 <- merge(global_data2,ssi_eu, by="Species",all.x=T)
 
-global_data3b[,c("temp_mean","d_temp","high_input_cover","d_hic","forest","d_forest","clc_mean","d_clc")]<-scale(global_data3b[,c("temp_mean","d_temp","high_input_cover","d_hic","forest","d_forest","clc_mean","d_clc")])
-global_data3b<-merge(global_data3b, centroid_b[,c("Country","lon2","lat2")], by.x="CountryGroup",by.y="Country",all.x=T)
+global_data2b <- merge(global_data2,trait2[,c(4,68:93)], by="Species",all.x=T)
+global_data2b[,c("STI")] <- scale(global_data2b[,c("STI")])
+
+# Remove non significant trends
+
+global_data2b$slope[global_data2b$first_order_pvalue>0.05] <- 0
+
+# Yeo-Johnson power transformation
+
+global_data2b$slope[global_data2b$slope<0] <- -log( -global_data2b$slope[global_data2b$slope<0] + 1) 
+global_data2b$slope[global_data2b$slope>0] <- log(global_data2b$slope[global_data2b$slope>0] + 1)
+
+global_data2b$is_farmland <- as.factor(global_data2b$Habitat=="Farmland")
+global_data2b$is_forest <- as.factor(global_data2b$Habitat=="Forest")
+
+global_data3 <- merge(global_data2b,country_data2, by.x="CountryGroup", by.y="country2",all.x=T)
+global_data3b <- global_data3
+
+global_data3b[, c("temp_mean","d_temp","high_input_cover","d_hic","forest","d_forest","clc_mean","d_clc")] <- scale(global_data3b[,c("temp_mean","d_temp","high_input_cover","d_hic","forest","d_forest","clc_mean","d_clc")])
+global_data3b <- merge(global_data3b, centroid_b[,c("Country","lon2","lat2")], by.x="CountryGroup",by.y="Country",all.x=T)
 ```
 
 ### Applying PLS
 ```{r}
-gb_test<-global_data3b[, c("slope","clc_mean","d_clc","temp_mean","d_temp","high_input_cover","d_hic","forest","d_forest")]
-gb_test$slope<-scale(gb_test$slope)
+gb_test <- global_data3b[, c("slope","clc_mean","d_clc","temp_mean","d_temp","high_input_cover","d_hic","forest","d_forest")]
+gb_test$slope <- scale(gb_test$slope)
 
-cv.modpls<-cv.plsR(gb_test$slope,gb_test[,-1],nt=10)
-res.cv.modpls<-cvtable(summary(cv.modpls))
-res1<-plsR(gb_test$slope,gb_test[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative as NA in data
+cv.modpls <- cv.plsR(gb_test$slope,gb_test[,-1],nt=10)
+res.cv.modpls <- cvtable(summary(cv.modpls))
+res1 <- plsR(gb_test$slope,gb_test[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative as NA in data
 colSums(res1$pvalstep)
 
 # searching the best number of component to keep via CV
-cv.modpls<-cv.plsR(slope~.,data=gb_test,nt=10,NK=100)
+cv.modpls <- cv.plsR(slope~.,data=gb_test,nt=10,NK=100)
 res.cv.modpls=cvtable(summary(cv.modpls)) 
 
 # using CV PRESS, 1 or 2 components must be kept
 
 # PLS with 2 components
-res<-plsR(slope~.,data=gb_test,nt=2,pvals.expli=TRUE)
+res <- plsR(slope~.,data=gb_test,nt=2,pvals.expli=TRUE)
 trend.bootYT1=bootpls(res,typeboot="fmodel_np",R=10000)
 temp.ci=confints.bootpls(trend.bootYT1,indices=2:ncol(gb_test))
 
 # PLS with 1 component
-resb<-plsR(slope~.,data=gb_test,nt=1,pvals.expli=TRUE)
+resb <- plsR(slope~.,data=gb_test,nt=1,pvals.expli=TRUE)
 trend.bootYT1b=bootpls(resb,typeboot="fmodel_np",R=10000)
 temp.cib=confints.bootpls(trend.bootYT1b,indices=2:ncol(gb_test))
 
@@ -1123,15 +1119,15 @@ ind.BCa.YT1b <- (temp.cib[,7]<0&temp.cib[,8]<0)|(temp.cib[,7]>0&temp.cib[,8]>0)
 pi.e=prop.table(res.cv.modpls$CVPress)[1:2]%*%matind
 signpred(t(matind),labsize=.5, plotsize = 12)
 
-coef_plot<-data.frame(var=c("Artificialised cover","Artificialisation trend","Mean temperature","Temperature trend",
+coef_plot <- data.frame(var=c("Artificialised cover","Artificialisation trend","Mean temperature","Temperature trend",
                             "High input farm cover", "High input farm cover trend",
                             "Forest cover","Forest cover trend"),val=Pine.bootYT1$t0[-1,1],
                       inf=temp.ci[,1],sup=temp.ci[,2],t(matind), sig=t(pi.e))
 coef_plot$col_val<-"ns"
 coef_plot$col_val[which(coef_plot$sig>=0.95 & coef_plot$val>0)]<-"pos"
 coef_plot$col_val[which(coef_plot$sig>=0.95 & coef_plot$val<0)]<-"neg"
-coef_plot$var<-as.character(coef_plot$var)
-coef_plot$var<-factor(coef_plot$var, levels = c("Temperature trend","Mean temperature","Artificialisation trend","Artificialised cover", 
+coef_plot$var <- as.character(coef_plot$var)
+coef_plot$var <- factor(coef_plot$var, levels = c("Temperature trend","Mean temperature","Artificialisation trend","Artificialised cover", 
                                                 "Forest cover trend","Forest cover", "High input farm cover trend","High input farm cover"))
 ggplot(coef_plot, aes(y=val, x=var))+
   geom_rect(fill = "#CECEF6",xmin = -Inf,xmax = Inf,    ymin = 0,ymax = Inf, alpha = 0.1) +
@@ -1603,8 +1599,15 @@ ggplot(coef_plot_forest, aes(y=val, x=var))+
 
 # References
 Bogaart, P., van der Loo, M., Pannekoek, J., & Bogaart, M. P. (2016). Package ‘rtrim’.
-Devictor, V., Van Swaay, C., Brereton, T., Brotons, L., Chamberlain, D., Heliölä, J., ... & Jiguet, F. (2012). Differences in the climatic debts of birds and butterflies at a continental scale. Nature climate change, 2(2), 121-124.
+
 Brlík, V., Šilarová, E., Škorpilová, J. et al. Long-term and large-scale multispecies dataset tracking population changes of common European breeding birds. Sci Data 8, 21 (2021). https://doi.org/10.1038/s41597-021-00804-2
-Guetté, A., Gaüzère, P., Devictor, V., Jiguet, F., & Godet, L. (2017). Measuring the synanthropy of species and communities to monitor the effects of urbanization on biodiversity. Ecological Indicators, 79, 139-154.
+
+Devictor, V., Van Swaay, C., Brereton, T., Brotons, L., Chamberlain, D., Heliölä, J., ... & Jiguet, F. (2012). Differences in the climatic debts of birds and butterflies at a continental scale. Nature climate change, 2(2), 121-124.
+
+Godet, L., Gaüzere, P., Jiguet, F., & Devictor, V. (2015). Dissociating several forms of commonness in birds sheds new light on biotic homogenization. Global Ecology and Biogeography, 24(4), 416-426.
+
 Le Viol, I., Jiguet, F., Brotons, L., Herrando, S., Lindström, Å., Pearce-Higgins, J. W., ... & Devictor, V. (2012). More and more generalists: two decades of changes in the European avifauna. Biology letters, 8(5), 780-782.
+
 Rigal, S., Devictor, V., & Dakos, V. (2020). A method for classifying and comparing non-linear trajectories of ecological variables. Ecological Indicators, 112, 106113.
+
+Storchová, L., & Hořák, D. (2018). Life‐history characteristics of European birds. Global Ecology and Biogeography, 27(4), 400-406.

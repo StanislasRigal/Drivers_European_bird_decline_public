@@ -1,0 +1,477 @@
+SPECIES,ENGL NAME,STI
+Accipiter brevipes,Levant Sparrowhawk,15.6296915134
+Accipiter gentilis,Northern Goshawk,11.8007973825
+Accipiter nisus,Eurasian Sparrowhawk,11.9162821341
+Acridotheres cristatellus,Crested Myna,10.9762310606
+Acridotheres tristis,Common Myna,14.3331111111
+Acrocephalus agricola,Paddyfield Warbler,15.6050239736
+Acrocephalus arundinaceus,Great Reed Warbler,13.8793523116
+Acrocephalus dumetorum,Blyth's Reed Warbler,9.5123672859
+Acrocephalus melanopogon,Moustached Warbler,16.5739942379
+Acrocephalus paludicola,Aquatic Warbler,12.3617821452
+Acrocephalus palustris,Marsh Warbler,12.248077272
+Acrocephalus schoenobaenus,Sedge Warbler,11.3913898283
+Acrocephalus scirpaceus,European Reed Warbler,13.1524057431
+Actitis hypoleucos,Common Sandpiper,11.204752038
+Aegithalos caudatus,Long-tailed Tit,12.6607518772
+Aegolius funereus,Tengmalm's Owl,9.1005501486
+Aegypius monachus,Eurasian Black Vulture,16.1423263645
+Aix galericulata,Mandarin Duck,12.0188786985
+Aix sponsa,Wood Duck,12.3347769782
+Alauda arvensis,Eurasian Skylark,12.1983199326
+Alca torda,Razorbill,8.983234013
+Alcedo atthis,Common Kingfisher,13.5319163712
+Alectoris barbara,Barbary Partridge,17.9565222525
+Alectoris chukar,Chukar,16.2056005648
+Alectoris graeca,Rock Partridge,13.1661273716
+Alectoris rufa,Red-legged Partridge,14.8075058251
+Alle alle,Little Auk,-8.2647376082
+Alopochen aegyptiacus,Egyptian Goose,12.393051119
+Amandava amandava,Red Avadavat,18.6155272003
+Anas acuta,Northern Pintail,8.5273453088
+Spatula clypeata,Northern Shoveler,11.7556216717
+Anas crecca,Common Teal,10.071290709
+Anas platyrhynchos,Mallard,11.8110548425
+Spatula querquedula,Garganey,12.389627827
+Anser albifrons,Greater White-fronted Goose,1.4020604804
+Anser anser,Greylag Goose,11.1956416463
+Anser brachyrhynchus,Pink-footed Goose,3.3589566139
+Anser erythropus,Lesser White-fronted Goose,2.0354466746
+Anser fabalis,bean goose,4.2945434102
+Anthropoides virgo,Demoiselle Crane,15.6535752551
+Anthus berthelotii,Berthelot's Pipit,17.5180059524
+Anthus campestris,Tawny Pipit,14.4289502352
+Anthus cervinus,Red-throated Pipit,3.1344512091
+Anthus hodgsoni,Olive-backed Pipit,4.9239624575
+Anthus pratensis,Meadow Pipit,9.9487726902
+Anthus spinoletta,water pipit/rock pipit,11.6824589944
+Anthus trivialis,Tree Pipit,11.2439352645
+Apus apus,Common Swift,12.4470483242
+Apus caffer,White-rumped Swift,19.2680115916
+Tachymarptis melba,Alpine Swift,14.7487858791
+Apus pallidus,Pallid Swift,17.4132187993
+Apus unicolor,Plain Swift,17.5180059524
+Aquila chrysaetos,Golden Eagle,10.737820817
+Clanga clanga,Greater Spotted Eagle,12.2125784204
+Clanga pomarina,Lesser Spotted Eagle,12.6812933771
+Ardea cinerea,Grey Heron,12.6943991523
+Ardea purpurea,Purple Heron,15.2459728804
+Ardeola ralloides,Squacco Heron,15.9222826178
+Arenaria interpres,Ruddy Turnstone,7.7359447649
+Asio flammeus,Short-eared Owl,9.6200242401
+Asio otus,Long-eared Owl,12.2940439872
+Athene noctua,Little Owl,14.2083192272
+Aythya ferina,Common Pochard,12.445391892
+Aythya fuligula,Tufted Duck,10.1385920012
+Aythya marila,Greater Scaup,4.3711269674
+Aythya nyroca,Ferruginous Duck,14.3405138677
+Bombycilla garrulus,Bohemian Waxwing,5.7732088876
+Bonasa bonasia,Hazel Grouse,9.7370954848
+Botaurus stellaris,Great Bittern,13.1076210929
+Branta bernicla,brent goose,-4.5976922092
+Branta canadensis,canada goose,9.5489315049
+Branta leucopsis,Barnacle Goose,9.2841908871
+Bubo bubo,Eurasian Eagle Owl,11.8717555411
+Bubulcus ibis,Cattle Egret,18.2106677423
+Bucanetes githagineus,Trumpeter Finch,18.3578447768
+Bucanetes mongolicus,,15.3013708514
+Bucephala clangula,Common Goldeneye,8.4742927927
+Bucephala islandica,Barrow's Goldeneye,3.0456682175
+Bulweria bulwerii,Bulwer's Petrel,17.7120982143
+Burhinus oedicnemus,Stone-curlew,15.8667631804
+Buteo buteo,Common Buzzard,12.6973693303
+Buteo lagopus,Rough-legged Buzzard,5.2313430115
+Buteo rufinus,Long-legged Buzzard,16.2118333811
+Calandrella brachydactyla,Greater Short-toed Lark,16.2800301304
+Alaudala rufescens,Lesser Short-toed Lark,17.0538572749
+Calcarius lapponicus,Lapland Longspur,4.063825744
+Calidris alpina,Dunlin,7.0663752664
+Calidris maritima,Purple Sandpiper,3.8798767302
+Calidris melanotos,Pectoral Sandpiper,-1.2211929983
+Calidris minuta,Little Stint,2.7330225516
+Calidris temminckii,Temminck's Stint,4.1715343485
+Callipepla californica,California Quail,14.2968468468
+Calonectris borealis,Cory's Shearwater,18.5569052418
+Caprimulgus europaeus,European Nightjar,13.110333547
+Caprimulgus ruficollis,Red-necked Nightjar,17.5621177849
+Linaria cannabina,Common Linnet,13.1603552715
+Carduelis carduelis,European Goldfinch,13.4542440183
+Acanthis flammea,Mealy Redpoll/Lesser Redpoll,8.1923087262
+Linaria flavirostris,Twite,6.9462495294
+Acanthis flammea hornemanni,Hoary Redpoll,3.0886828702
+Spinus spinus,Eurasian Siskin,10.2425165856
+Carpodacus erythrinus,Common Rosefinch,10.348256227
+Carpodacus rubicilla,Great Rosefinch,9.5286777936
+Ardea alba,Great Egret,14.8916063035
+Cepphus grylle,Black Guillemot,7.4556643173
+Cercotrichas galactotes,Rufous-tailed Scrub-Robin,18.6085126056
+Certhia brachydactyla,Short-toed Treecreeper,13.8972978687
+Certhia familiaris,Eurasian Treecreeper,11.119463211
+Cettia cetti,Cetti's Warbler,15.9492001703
+Charadrius alexandrinus,Kentish Plover,16.3071703744
+Charadrius asiaticus,Caspian Plover,16.2644926524
+Charadrius dubius,Little Ringed Plover,12.7729324864
+Charadrius hiaticula,Common Ringed Plover,8.2214626932
+Charadrius leschenaultii,Greater Sand Plover,14.6817099567
+Charadrius morinellus,Eurasian Dotterel,5.3850226206
+Chersophilus duponti,Dupont's Lark,14.9653062548
+Chlidonias hybrida,Whiskered Tern,14.8787948952
+Chlidonias leucopterus,White-winged Tern,13.1741252005
+Chlidonias niger,Black Tern,13.0082465521
+Chloris chloris,European Greenfinch,12.6006224966
+Chrysolophus amherstiae,Lady Amherst's Pheasant,12.2080256434
+Chrysolophus pictus,Golden Pheasant,12.019509631
+Ciconia ciconia,White Stork,13.6109777723
+Ciconia nigra,Black Stork,13.1076611128
+Cinclus cinclus,White-throated Dipper,11.0150016531
+Circaetus gallicus,Short-toed Eagle,14.6544201337
+Circus aeruginosus,Western Marsh Harrier,13.2259231132
+Circus cyaneus,Hen Harrier,10.6284445855
+Circus macrourus,Pallid Harrier,13.8641537167
+Circus pygargus,Montagu's Harrier,13.6904029809
+Cisticola juncidis,Zitting Cisticola,16.8491453521
+Clamator glandarius,Great Spotted Cuckoo,16.705954543
+Clangula hyemalis,Long-tailed Duck,3.3853509781
+Coccothraustes coccothraustes,Hawfinch,12.9763477132
+Colinus virginianus,Northern Bobwhite,14.4898879546
+Columba livia,Rock Dove,12.7922374501
+Columba oenas,Stock Dove,12.4358174295
+Columba palumbus,Common Wood Pigeon,12.2214205187
+Columba trocaz,Trocaz Pigeon,16.2339285714
+Coracias garrulus,European Roller,14.8170350347
+Corvus corax,Common Raven,11.7378412998
+Corvus corone,carrion crow/hooded crow,12.1293990446
+Corvus frugilegus,Rook,12.7340640684
+Corvus monedula,Western Jackdaw,12.9581704982
+Coturnix coturnix,Common Quail,13.6002736383
+Crex crex,Corn Crake,11.9688491073
+Cuculus canorus,Common Cuckoo,12.1394391784
+Cuculus saturatus,Oriental Cuckoo,7.174000288
+Cyanopica cyanus,Azure-winged Magpie,17.5572267179
+Cygnus columbianus,Bewick's Swan,0.7404718829
+Cygnus cygnus,Whooper Swan,6.2650898152
+Cygnus olor,Mute Swan,12.1899516659
+Delichon urbicum,Common House Martin,12.3470551373
+Dendrocopos major,Great Spotted Woodpecker,12.1154284266
+Dendrocoptes medius,Middle Spotted Woodpecker,13.2448971066
+Dryobates minor,Lesser Spotted Woodpecker,11.5509643269
+Dryocopus martius,Black Woodpecker,11.1193962821
+Egretta garzetta,Little Egret,15.9170075253
+Elanus caeruleus,Black-winged Kite,17.6925590282
+Emberiza aureola,Yellow-breasted Bunting,9.2122687509
+Emberiza caesia,Cretzschmar's Bunting,17.9868031147
+Emberiza cia,Rock Bunting,14.4204045966
+Emberiza cineracea,Cinereous Bunting,19.264756096
+Emberiza cirlus,Cirl Bunting,15.054509048
+Emberiza citrinella,Yellowhammer,11.5528442066
+Emberiza hortulana,Ortolan Bunting,12.7263319124
+Emberiza leucocephalos,Pine Bunting,8.2474313346
+Emberiza melanocephala,Black-headed Bunting,16.637389023
+Emberiza pallasi,Pallas's Bunting,-1.0512646687
+Emberiza pusilla,Little Bunting,4.664674957
+Emberiza rustica,Rustic Bunting,6.3354860208
+Emberiza schoeniclus,Common Reed Bunting,11.2704483494
+Eremophila alpestris,Horned Lark,7.8950912062
+Erithacus rubecula,European Robin,11.9984458235
+Estrilda astrild,Common Waxbill,18.400379847
+Falco biarmicus,Lanner Falcon,16.8611449212
+Falco cherrug,Saker Falcon,14.2761528607
+Falco columbarius,Merlin,6.8232800153
+Falco eleonorae,Eleonora's Falcon,18.7438968456
+Falco naumanni,Lesser Kestrel,16.7316737116
+Falco peregrinus,Peregrine Falcon,12.6432075879
+Falco rusticolus,Gyr Falcon,3.744195596
+Falco subbuteo,Eurasian Hobby,12.6787682767
+Falco tinnunculus,Common Kestrel,12.4263636442
+Falco vespertinus,Red-footed Falcon,14.2518385654
+Ficedula albicollis,Collared Flycatcher,13.060432282
+Ficedula hypoleuca,European Pied Flycatcher,10.4275102213
+Ficedula parva,Red-breasted Flycatcher,11.5985667049
+Ficedula semitorquata,Semicollared Flycatcher,15.2643106262
+Francolinus francolinus,Black Francolin,17.6034248096
+Fratercula arctica,Atlantic Puffin,8.0917042345
+Fringilla coelebs,Common Chaffinch,12.2951633877
+Fringilla montifringilla,Brambling,7.0305345803
+Fulica atra,Common Coot,12.9624637063
+Fulica cristata,Red-knobbed Coot,19.6963434419
+Fulmarus glacialis,Northern Fulmar,8.4431048443
+Galerida cristata,Crested Lark,14.4982323391
+Galerida theklae,Thekla Lark,16.8013107544
+Gallinago gallinago,Common Snipe,10.2670472691
+Gallinago media,Great Snipe,8.1933367604
+Gallinago stenura,Pintail Snipe,1.0595158262
+Gallinula chloropus,Common Moorhen,13.3437206998
+Garrulus glandarius,Eurasian Jay,12.466780849
+Gavia adamsii,Yellow-billed Loon,-4.9098658453
+Gavia arctica,Black-throated Loon,6.8298651422
+Gavia immer,Great Northern Loon,4.2097109413
+Gavia stellata,Red-throated Loon,6.0510534453
+Gelochelidon nilotica,Gull-billed Tern,17.0430205323
+Glareola nordmanni,Black-winged Pratincole,15.2276734574
+Glareola pratincola,Collared Pratincole,17.4814415676
+Glaucidium passerinum,Eurasian Pygmy Owl,8.6304441647
+Grus grus,Common Crane,9.5005692263
+Gypaetus barbatus,Lammergeier,12.7929708067
+Gyps fulvus,Eurasian Griffon Vulture,15.2044334089
+Haematopus ostralegus,Eurasian Oystercatcher,10.4739718085
+Haliaeetus albicilla,White-tailed Eagle,10.7599084713
+Aquila fasciata,Bonelli's Eagle,16.8333834248
+Hieraaetus pennatus,Booted Eagle,15.1247451755
+Himantopus himantopus,Black-winged Stilt,16.2910576132
+Iduna caligata,Booted Warbler,11.8382462894
+Hippolais icterina,Icterine Warbler,11.3916568563
+Hippolais olivetorum,Olive-tree Warbler,17.7627863089
+Iduna pallida,Olivaceous Warbler,16.7488809702
+Hippolais polyglotta,Melodious Warbler,14.8355701427
+Cecropis daurica,Red-rumped Swallow,16.6554198353
+Hirundo rustica,Barn Swallow,12.4305273248
+Histrionicus histrionicus,Harlequin Duck,3.5649961244
+Vanellus spinosus,,17.5775278939
+Hydrobates pelagicus,European Storm-petrel,13.9624652971
+Ixobrychus minutus,Little Bittern,14.293485146
+Jynx torquilla,Eurasian Wryneck,11.8812540667
+Lagopus lagopus,Willow Ptarmigan,6.7378701704
+Lagopus muta,Rock Ptarmigan,6.0246781137
+Lanius collurio,Red-backed Shrike,12.6238867722
+Lanius excubitor,Great Grey Shrike,11.2044136127
+Lanius minor,Lesser Grey Shrike,14.8453039355
+Lanius nubicus,Masked Shrike,16.8732940878
+Lanius senator,Woodchat Shrike,15.8753774905
+Larus argentatus,European Herring Gull,9.0583381929
+Larus audouinii,Audouin's Gull,18.6662598707
+Larus canus,Mew Gull,8.5740563147
+Larus genei,Slender-billed Gull,17.4584264435
+Larus glaucoides,Iceland Gull,-2.9490311399
+Larus fuscus,Lesser Black-backed Gull,8.9178677716
+Larus hyperboreus,Glaucous Gull,-0.6919898898
+Larus ichthyaetus,Pallas's Gull,15.9209588463
+Larus marinus,Great Black-backed Gull,8.3694639418
+Larus melanocephalus,Mediterranean Gull,13.9748160871
+Larus michahellis,Mediterranean Yellow-legged Gu,16.1930437657
+Hydrocoloeus minutus,Little Gull,9.3576083447
+Larus ridibundus,Black-headed Gull,11.0679667544
+Calidris falcinellus,Broad-billed Sandpiper,4.9733644757
+Limosa lapponica,Bar-tailed Godwit,3.2516240678
+Limosa limosa,Black-tailed Godwit,12.0468335512
+Locustella fluviatilis,River Warbler,12.3186544297
+Locustella lanceolata,Lanceolated Warbler,6.3786241919
+Locustella luscinioides,Savi's Warbler,13.5908101527
+Locustella naevia,Common Grasshopper Warbler,11.7684221003
+Loxia curvirostra,Common Crossbill,10.4943181045
+Loxia leucoptera,Two-barred Crossbill,6.0397762908
+Loxia pytyopsittacus,Parrot Crossbill,7.2167836224
+Loxia scotica,Scottish Crossbill,9.2372096482
+Lullula arborea,Wood Lark,13.4719748078
+Calliope calliope,Siberian Rubythroat,6.3321053086
+Luscinia luscinia,Thrush Nightingale,11.8425102806
+Luscinia megarhynchos,Common Nightingale,14.4948782033
+Luscinia svecica,Bluethroat,10.1597734578
+Lymnocryptes minimus,Jack Snipe,5.828813561
+Mareca penelope,Eurasian Wigeon,6.6829266847
+Mareca strepera,Gadwall,12.5158986156
+Marmaronetta angustirostris,Marbled Teal,18.8024317955
+Melanitta fusca,Velvet Scoter,4.8133620389
+Melanitta nigra,Common Scoter,4.2259136478
+Melanocorypha calandra,Calandra Lark,16.124198258
+Alauda leucoptera,White-winged Lark,16.0469291126
+Meleagris gallopavo,Wild Turkey,12.5897818915
+Mergellus albellus,Smew,5.4834183449
+Mergus merganser,Goosander,7.9118621485
+Mergus serrator,Red-breasted Merganser,7.3724850113
+Merops apiaster,European Bee-eater,15.3795700333
+Merops persicus,Blue-cheeked Bee-eater,14.7569191465
+Microcarbo pygmaeus,Pygmy Cormorant,15.9922255243
+Emberiza calandra,Corn Bunting,14.2313581317
+Milvus migrans,Black Kite,13.4665896149
+Milvus milvus,Red Kite,13.5439835083
+Monticola saxatilis,Rufous-tailed Rock Thrush,13.7288003701
+Monticola solitarius,Blue Rock Thrush,16.3664243982
+Montifringilla nivalis,White-winged Snowfinch,9.8050400066
+Morus bassanus,Northern Gannet,8.7332606311
+Motacilla alba,white wagtail,11.9859302219
+Motacilla cinerea,Grey Wagtail,12.9122079488
+Motacilla citreola,Citrine Wagtail,12.5405548291
+Motacilla flava,yellow wagtail,12.136968586
+Muscicapa striata,Spotted Flycatcher,12.1492223917
+Neophron percnopterus,Egyptian Vulture,15.3773789116
+Netta rufina,Red-crested Pochard,14.5832702044
+Nucifraga caryocatactes,Spotted Nutcracker,10.7296126215
+Numenius arquata,Eurasian Curlew,10.0493203009
+Numenius phaeopus,Whimbrel,5.888322503
+Bubo scandiacus,Snowy Owl,2.9123452331
+Nycticorax nycticorax,Black-crowned Night Heron,15.1905388423
+Oceanodroma castro,Band-rumped Storm-petrel,17.4695670485
+Oceanodroma leucorhoa,Leach's Storm-petrel,8.4156478171
+Oenanthe finschii,Finsch's Wheatear,16.1007205323
+Oenanthe hispanica,Western Black-eared Wheatear,16.605864604
+Oenanthe isabellina,Isabelline Wheatear,15.5466304969
+Oenanthe leucura,Black Wheatear,17.0870963247
+Oenanthe oenanthe,Northern Wheatear,11.6202368597
+Oenanthe pleschanka,Pied Wheatear,15.2638104899
+Oenanthe xanthoprymna,Rufous-tailed Wheatear,15.3013708514
+Oriolus oriolus,Eurasian Golden Oriole,13.4707159049
+Otis tarda,Great Bustard,15.640742912
+Otus scops,European Scops Owl,15.4051046174
+Oxyura jamaicensis,Ruddy Duck,11.338185095
+Oxyura leucocephala,White-headed Duck,17.8705377499
+Pagophila eburnea,Ivory Gull,-8.9516053419
+Pandion haliaetus,Osprey,8.9193839163
+Panurus biarmicus,Bearded Reedling,13.8780278318
+Periparus ater,Coal Tit,11.9045668053
+Cyanistes caeruleus,Blue Tit,12.7367473555
+Poecile cinctus,Siberian Tit,4.4727972658
+Lophophanes cristatus,Crested Tit,11.7118025203
+Cyanistes cyanus,Azure Tit,11.7753518129
+Poecile lugubris,Sombre Tit,15.1051015291
+Parus major,Great Tit,12.343727765
+Poecile montanus,Willow Tit,10.1957890957
+Poecile palustris,Marsh Tit,12.3251392514
+Passer domesticus,House Sparrow,12.2628071769
+Passer hispaniolensis,Spanish Sparrow,17.0620063651
+Passer montanus,Eurasian Tree Sparrow,13.070887931
+Pelecanus crispus,Dalmatian Pelican,15.2608208009
+Pelecanus onocrotalus,Great White Pelican,14.67445266
+Perdix perdix,Grey Partridge,12.8463889005
+Perisoreus infaustus,Siberian Jay,5.7726030844
+Pernis apivorus,European Honey-buzzard,11.9608484505
+Petronia petronia,Rock Sparrow,15.8836993035
+Phaethon aethereus,Red-billed Tropicbird,17.6183333333
+Phalacrocorax carbo,Great Cormorant,12.4695479275
+Phalaropus fulicarius,Grey Phalarope,4.150416352
+Phalaropus lobatus,Red-necked Phalarope,4.7092026561
+Phasianus colchicus,Common Pheasant,12.8650410671
+Calidris pugnax,Ruff,7.9732949741
+Phoenicopterus roseus,Greater Flamingo,19.1058135837
+Phoenicurus ochruros,Black Redstart,13.2394438706
+Phoenicurus phoenicurus,Common Redstart,11.3098485667
+Phylloscopus bonelli,Western Bonelli's Warbler,13.8608600624
+Phylloscopus borealis,Arctic Warbler,5.4723833661
+Phylloscopus collybita,Northern Chiffchaff,11.9465889491
+Phylloscopus inornatus,Yellow-browed Warbler,3.9717214356
+Phylloscopus sibilatrix,Wood Warbler,11.3755910555
+Phylloscopus trochiloides,Greenish Warbler,9.7617129433
+Phylloscopus trochilus,Willow Warbler,10.4596695622
+Pica pica,Common Magpie,12.155826028
+Dendrocopos leucotos,White-backed Woodpecker,11.4358853032
+Dendrocopos syriacus,Syrian Woodpecker,14.1598198356
+Picoides tridactylus,Three-toed Woodpecker,7.9819685355
+Picus canus,Grey-headed Woodpecker,12.0605754782
+Picus viridis,European Green Woodpecker,12.9413688865
+Pinicola enucleator,Pine Grosbeak,5.0073529396
+Platalea leucorodia,Eurasian Spoonbill,15.2992257968
+Plectrophenax nivalis,Snow Bunting,4.0448193326
+Plegadis falcinellus,Glossy Ibis,16.1132293666
+Pluvialis apricaria,European Golden Plover,7.003152864
+Pluvialis squatarola,Grey Plover,1.0104301147
+Podiceps auritus,Horned Grebe,8.2996466285
+Podiceps cristatus,Great Crested Grebe,12.6860788894
+Podiceps grisegena,Red-necked Grebe,11.9386619385
+Podiceps nigricollis,Black-necked Grebe,13.3391366196
+Polysticta stelleri,Steller's Eider,0.9674603175
+Porphyrio porphyrio,Purple Swamphen,18.0710318921
+Zapornia parva,Little Crake,13.5008721527
+Porzana porzana,Spotted Crake,12.4064941754
+Zapornia pusilla,Baillon's Crake,15.3497102614
+Prunella atrogularis,Black-throated Accentor,3.8642085787
+Prunella collaris,Alpine Accentor,11.4960223023
+Prunella modularis,Dunnock,10.9083374064
+Prunella montanella,Siberian Accentor,2.3543954089
+Psittacula krameri,Rose-ringed Parakeet,13.7105682082
+Pterocles alchata,Pin-tailed Sandgrouse,17.2732417637
+Pterocles orientalis,Black-bellied Sandgrouse,16.8934761377
+Ptyonoprogne rupestris,Crag Martin,14.4733603417
+Puffinus assimilis,Little Shearwater,17.4833979678
+Pyrrhocorax graculus,Yellow-billed Chough,11.3930648722
+Pyrrhocorax pyrrhocorax,Red-billed Chough,14.3290981791
+Pyrrhula pyrrhula,Eurasian Bullfinch,10.756294956
+Rallus aquaticus,Water Rail,13.3215188918
+Recurvirostra avosetta,Pied Avocet,14.5831200661
+Regulus ignicapilla,Firecrest,13.1999439071
+Regulus regulus,Goldcrest,10.8075146552
+Remiz pendulinus,Eurasian Penduline Tit,13.7399153521
+Riparia riparia,Sand Martin,11.9550761988
+Rissa tridactyla,Black-legged Kittiwake,7.3873668048
+Saxicola rubetra,Whinchat,11.2990488425
+Saxicola torquatus,European Stonechat,13.9903207102
+Scolopax rusticola,Eurasian Woodcock,10.6010955955
+Serinus canaria,Island Canary,17.4090501099
+Carduelis citrinella,Citril Finch,11.353152804
+Serinus pusillus,Fire-fronted Serin,9.7974418149
+Serinus serinus,European Serin,13.8814196118
+Sitta europaea,Eurasian Nuthatch,12.7946675987
+Sitta krueperi,Krueper's Nuthatch,15.558043652
+Sitta neumayer,Western Rock-Nuthatch,16.4086393948
+Sitta whiteheadi,Corsican Nuthatch,15.8651771584
+Somateria mollissima,Common Eider,8.1688294838
+Somateria spectabilis,King Eider,0.3484709229
+Stercorarius longicaudus,Long-tailed Jaeger,3.5723104594
+Stercorarius parasiticus,Parasitic Jaeger,5.9635928199
+Stercorarius pomarinus,Pomarine Jaeger,0.5253844729
+Catharacta skua,Great Skua,5.0753006784
+Sternula albifrons,Little Tern,13.6554594356
+Thalasseus bengalensis,Lesser Crested-Tern,18.1614782695
+Hydroprogne caspia,Caspian Tern,10.2515622896
+Sterna dougallii,Roseate Tern,12.7248356913
+Onychoprion fuscatus,Sooty Tern,17.3271685105
+Sterna hirundo,Common Tern,11.4396148713
+Sterna paradisaea,Arctic Tern,6.7214988279
+Thalasseus sandvicensis,Sandwich Tern,12.309341223
+Phalacrocorax aristotelis,European Shag,12.5428143639
+Streptopelia decaocto,Eurasian Collared Dove,12.9162282666
+Spilopelia senegalensis,Laughing Dove,14.8562606076
+Streptopelia turtur,European Turtle Dove,13.7662137901
+Strix aluco,Tawny Owl,12.8738657057
+Strix nebulosa,Great Grey Owl,6.8558617882
+Strix uralensis,Ural Owl,9.2297971248
+Pastor roseus,Rose-coloured Starling,15.8790875657
+Sturnus unicolor,Spotless Starling,16.5557443851
+Sturnus vulgaris,Common Starling,11.8027600322
+Surnia ulula,Northern Hawk Owl,5.7955937495
+Sylvia atricapilla,Blackcap,12.6192368528
+Sylvia borin,Garden Warbler,11.3163422901
+Sylvia cantillans,Subalpine Warbler,16.4215435209
+Sylvia communis,Common Whitethroat,12.6535890847
+Sylvia conspicillata,Spectacled Warbler,16.9718230817
+Sylvia curruca,Lesser Whitethroat,11.6399285102
+Sylvia hortensis,Orphean Warbler,16.2233807984
+Sylvia melanocephala,Sardinian Warbler,16.9657737722
+Sylvia mystacea,Menetries's Warbler,18.2023809524
+Sylvia nisoria,Barred Warbler,12.8776226593
+Sylvia ruppelli,Rueppell's Warbler,19.1129971963
+Sylvia sarda,Marmora's Warbler,17.597271276
+Sylvia undata,Dartford Warbler,15.8211406462
+Syrmaticus reevesii,Reeves's Pheasant,13.4773442672
+Tachybaptus ruficollis,Little Grebe,13.4633891991
+Tadorna ferruginea,Ruddy Shelduck,15.5742096367
+Tadorna tadorna,Common Shelduck,12.0434493446
+Tarsiger cyanurus,Red-flanked Bluetail,6.5676103326
+Lyrurus mlokosiewiczi,Caucasian Grouse,10.9387748408
+Lyrurus tetrix,Black Grouse,8.9964805261
+Tetrao urogallus,Western Capercaillie,8.737084406
+Tetraogallus caspius,Caspian Snowcock,11.135009453
+Tetraogallus caucasicus,Caucasian Snowcock,8.5667279867
+Tetrax tetrax,Little Bustard,16.1633400521
+Tichodroma muraria,Wallcreeper,11.0821393827
+Tringa erythropus,Spotted Redshank,4.7717132465
+Tringa glareola,Wood Sandpiper,7.6706167812
+Tringa nebularia,Common Greenshank,6.4505313773
+Tringa ochropus,Green Sandpiper,9.8785200822
+Tringa stagnatilis,Marsh Sandpiper,13.0028332904
+Tringa totanus,Common Redshank,11.0359375128
+Troglodytes troglodytes,Winter Wren,12.2368253494
+Turdus iliacus,Redwing,8.2509643717
+Turdus merula,Common Blackbird,12.5843398181
+Turdus philomelos,Song Thrush,11.3956704897
+Turdus pilaris,Fieldfare,10.0287125382
+Turdus ruficollis,Dark-throated Thrush,4.0357353211
+Turdus torquatus,Ring Ouzel,9.0307605949
+Turdus viscivorus,Mistle Thrush,11.9147042629
+Turnix sylvatica,Small Buttonquail,20.7412371134
+Tyto alba,Barn Owl,13.9906366009
+Upupa epops,Eurasian Hoopoe,14.1794185219
+Uria aalge,Atlantic Murre,9.5889791859
+Uria lomvia,Brünnich's Murre,1.035541019
+Vanellus gregarius,Sociable Lapwing,14.6349167051
+Vanellus vanellus,Northern Lapwing,11.532605723
+Xenus cinereus,Terek Sandpiper,10.5979751735
+Zoothera aurea,White's Thrush,7.2192891768
