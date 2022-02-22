@@ -800,40 +800,40 @@ names(country_data) <- levels(as.factor(country_id$region))
 for(i in 1:length(country4b)){
   print(i)
   b <- extent(country4b[i])
-  test <- crop(clc_1990, b)
-  test[test > 39] <- NA # water bodies
-  test[test <= 11] <- 1 # artificial surface: continuous urban fabric, discontinuous urban fabric, industrial or commercial units, road and rail networks
-  test[test > 11] <- 0 # agricultural areas, forest and seminatural areas
-  test2 <- mask(test,country4b[i])
-  country_data[3, i] <- extract(test2,extent(test2), fun=mean, na.rm=T)
+  country_cover <- crop(clc_1990, b)
+  country_cover[country_cover > 39] <- NA # water bodies
+  country_cover[country_cover <= 11] <- 1 # artificial surface: continuous urban fabric, discontinuous urban fabric, industrial or commercial units, road and rail networks
+  country_cover[country_cover > 11] <- 0 # agricultural areas, forest and seminatural areas
+  country_cover2 <- mask(country_cover,country4b[i])
+  country_data[3, i] <- extract(country_cover2,extent(country_cover2), fun=mean, na.rm=T)
   
-  test <- crop(clc_2000, b)
-  test[test > 39] <- NA
-  test[test <= 11] <- 1
-  test[test > 11] <- 0
-  test2 <- mask(test, country4b[i])
-  country_data[4, i] <- extract(test2,extent(test2), fun=mean, na.rm=T)
+  country_cover <- crop(clc_2000, b)
+  country_cover[country_cover > 39] <- NA
+  country_cover[country_cover <= 11] <- 1
+  country_cover[country_cover > 11] <- 0
+  country_cover2 <- mask(country_cover, country4b[i])
+  country_data[4, i] <- extract(country_cover2,extent(country_cover2), fun=mean, na.rm=T)
   
-  test <- crop(clc_2006, b)
-  test[test > 39] <- NA
-  test[test <= 11] <- 1
-  test[test > 11] <- 0
-  test2 <- mask(test, country4b[i])
-  country_data[5, i] <- extract(test2, extent(test2), fun=mean, na.rm=T)
+  country_cover <- crop(clc_2006, b)
+  country_cover[country_cover > 39] <- NA
+  country_cover[country_cover <= 11] <- 1
+  country_cover[country_cover > 11] <- 0
+  country_cover2 <- mask(country_cover, country4b[i])
+  country_data[5, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
   
-  test <- crop(clc_2012, b)
-  test[test > 39] <- NA
-  test[test <= 11] <- 1
-  test[test > 11] <- 0
-  test2 <- mask(test, country4b[i])
-  country_data[6, i] <- extract(test2, extent(test2), fun=mean, na.rm=T)
+  country_cover <- crop(clc_2012, b)
+  country_cover[country_cover > 39] <- NA
+  country_cover[country_cover <= 11] <- 1
+  country_cover[country_cover > 11] <- 0
+  country_cover2 <- mask(country_cover, country4b[i])
+  country_data[6, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
   
-  test <- crop(clc_2018, b)
-  test[test > 39] <- NA
-  test[test <= 11] <- 1
-  test[test > 11] <- 0
-  test2 <- mask(test, country4b[i])
-  country_data[7, i] <- extract(test2, extent(test2), fun=mean, na.rm=T)
+  country_cover <- crop(clc_2018, b)
+  country_cover[country_cover > 39] <- NA
+  country_cover[country_cover <= 11] <- 1
+  country_cover[country_cover > 11] <- 0
+  country_cover2 <- mask(country_cover, country4b[i])
+  country_data[7, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
 }
 row.names(country_data)[1:5] <- c("clc_1990", "clc_2000", "clc_2006", "clc_2012", "clc_2018")
 
@@ -873,137 +873,185 @@ for(i in 1:(2019-1950)){
   assign(year, mean(r_temp[[beg_year:end_year]], na.rm=T))
 }
 
+# Reproject county boundaries
 
 country5<-spTransform(country3, CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0" ))
+
 country6a<-droplevels(subset(map_data("world"), region %in% country_name))
 coordinates(country6a)=~long+lat
 proj4string(country6a)<- CRS("+proj=longlat +datum=WGS84")
 country6a<-spTransform(country6a,CRS("+init=epsg:27572"))
+
 country6<-droplevels(subset(map_data("world"), region %in% country_name))
 country6$long<-country6a$long
 country6$lat<-country6a$lat
+
 country6b<-lapply(split(country6[,c(1:2)], country6$group), Polygon)
 country6b<-SpatialPolygons(lapply(seq_along(country6b),function(i){Polygons(list(country6b[[i]]),ID=row.names(country6[!duplicated(country6$group),])[i])}))
+
 country_id<-country6 %>% group_by(region,group) %>% summarize(count=n()) %>% data.frame()
 country_id<-country_id[order(country_id$group),]
+
 country6b<-unionSpatialPolygons(country6b,country_id[,1])
 proj4string(country6b)<-CRS("+init=epsg:27572")
 
-country6c<-lapply(split(country6[,c(1:2)], country6$group), Polygon)
-country6c<-SpatialPolygons(lapply(seq_along(country6c),function(i){Polygons(list(country6c[[i]]),ID=row.names(country6[!duplicated(country6$group),])[i])}))
-country_id<-country6 %>% group_by(region,group) %>% summarize(count=n()) %>% data.frame()
-country_id<-country_id[order(country_id$group),]
-country_id$ue<-as.factor(as.character(rep(1,nrow(country_id))))
-country6c<-unionSpatialPolygons(country6c,country_id[,"ue"])
-proj4string(country6c)<-CRS("+init=epsg:27572")
-country6d<-spTransform(country6c, CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0" ))
+# List dataset of yearly temperature
 
-temp_1950_2018<-list(temp_1950,temp_1951,temp_1952,temp_1953,temp_1954,temp_1955,temp_1956,temp_1957,temp_1958,temp_1959,
+temp_1950_2018 <- list(temp_1950,temp_1951,temp_1952,temp_1953,temp_1954,temp_1955,temp_1956,temp_1957,temp_1958,temp_1959,
   temp_1960,temp_1961,temp_1962,temp_1963,temp_1964,temp_1965,temp_1966,temp_1967,temp_1968,temp_1969,
   temp_1970,temp_1971,temp_1972,temp_1973,temp_1974,temp_1975,temp_1976,temp_1977,temp_1978,temp_1979,
   temp_1980,temp_1981,temp_1982,temp_1983,temp_1984,temp_1985,temp_1986,temp_1987,temp_1988,temp_1989,
   temp_1990,temp_1991,temp_1992,temp_1993,temp_1994,temp_1995,temp_1996,temp_1997,temp_1998,temp_1999,
   temp_2000,temp_2001,temp_2002,temp_2003,temp_2004,temp_2005,temp_2006,temp_2007,temp_2008,temp_2009,
   temp_2010,temp_2011,temp_2012,temp_2013,temp_2014,temp_2015,temp_2016,temp_2017,temp_2018)
+  
+# Extract temperature values by year by country
 
 for(i in 1:length(temp_1950_2018)){ # mean by year by country
   for(j in 1:ncol(country_data)){
-    country_data[i+7,j]<-mean(extract(temp_1950_2018[[i]],country5[j])[[1]],na.rm=T)
+    country_data[i+7,j] <- mean(extract(temp_1950_2018[[i]],country5[j])[[1]],na.rm=T)
   }
 }
+row.names(country_data)[8:76] <- paste0("temp",sep="_",1950:2018)
 
-row.names(country_data)[8:76]<-paste0("temp",sep="_",1950:2018)
+# Mean value over the period
 
-country_data[77,]<-apply(country_data[38:76,],2,function(x){mean(x, na.rm=T)})
-row.names(country_data)[77]<-"temp_mean"
-country_data[78,]<-apply(country_data[38:76,],2,function(x){summary(lm(x~c(1980:2018)))$coef[2,1]})/country_data[38,]
-row.names(country_data)[78]<-"d_temp"
+country_data[77,] <- apply(country_data[38:76,], 2, function(x){mean(x, na.rm=T)})
+row.names(country_data)[77] <- "temp_mean"
 
-# forest and high input cover data from https://ec.europa.eu/eurostat/fr/data/database
+# Trend over the period
 
-# high input farm cover
-sau_country<-read.csv("ef_m_farmleg_1_Data.csv", header = T)
-sau_country$Value<-str_replace_all(sau_country$Value, " ", "")
-sau_country$Value<-as.numeric(as.character(sau_country$Value))
-sau_country<-na.omit(sau_country)
-sau_country<-dcast(sau_country, INDIC_AGR+TIME~GEO, fun.aggregate=sum, value.var="Value")
-names(sau_country)[c(8,13,34)]<-c("Czech Republic","Germany","UK")
+country_data[78,] <- apply(country_data[38:76,], 2, function(x){summary(lm(x~c(1980:2018)))$coef[2,1]})/country_data[38,]
+row.names(country_data)[78] <- "d_temp"
 
-to_merge<-data.frame(TIME=c(2005:2016))
-sau_country2<-merge(sau_country[36:40,-1], to_merge, by="TIME", all=T)
-sau_country2$Iceland<-rep(sau_country2$Iceland[sau_country2$TIME==2010], nrow(sau_country2))
-sau_country2$Montenegro<-rep(sau_country2$Montenegro[sau_country2$TIME==2010], nrow(sau_country2))
-sau_country2[is.na(sau_country2)]<-0
-rep_0<-function(x, time_vec){
-  id_0<-which(x==0)
-  id_1<-which(x!=0)
+```
+
+#### High input cover data
+
+```{r}
+# Load data
+# from https://ec.europa.eu/eurostat/web/main/data/database
+
+# Utilised agricultural area data
+# online data code: EF_M_FARMLEG
+
+uaa_country <- read.csv("ef_m_farmleg_1_Data.csv", header = T)
+uaa_country$Value <- str_replace_all(uaa_country$Value, " ", "")
+uaa_country$Value <- as.numeric(as.character(uaa_country$Value))
+uaa_country <- na.omit(uaa_country)
+uaa_country <- dcast(uaa_country, INDIC_AGR+TIME~GEO, fun.aggregate=sum, value.var="Value")
+names(uaa_country)[c(8,13,34)] <- c("Czech Republic","Germany","UK")
+
+# Estimate UAA for all years
+
+to_merge <- data.frame(TIME=c(2005:2016))
+uaa_country2 <- merge(uaa_country[36:40,-1], to_merge, by="TIME", all=T)
+uaa_country2$Iceland <- rep(uaa_country2$Iceland[uaa_country2$TIME==2010], nrow(uaa_country2)) # only one data, no estimation
+uaa_country2$Montenegro <- rep(uaa_country2$Montenegro[uaa_country2$TIME==2010], nrow(uaa_country2)) # only one data, no estimation
+
+uaa_country2[is.na(uaa_country2)] <- 0
+rep_0 <- function(x, time_vec){
+
+  id_0 <- which(x==0)
+  id_1 <- which(x!=0)
+  
   if(length(id_0)>0){
     if(id_0[1]==1){
-      alpha<-(x[id_1[2]]-x[id_1[1]])/(time_vec[id_1[2]]-time_vec[id_1[1]])
-      beta<-x[id_1[1]]-alpha*time_vec[id_1[1]]
-      x[1]<-alpha*time_vec[1]+beta
+      alpha <- (x[id_1[2]]-x[id_1[1]])/(time_vec[id_1[2]]-time_vec[id_1[1]])
+      beta <- x[id_1[1]]-alpha*time_vec[id_1[1]]
+      x[1] <- alpha*time_vec[1]+beta
     }
+    
     if(id_0[length(id_0)]==length(x)){
-      alpha<-(x[id_1[length(id_1)]]-x[id_1[(length(id_1)-1)]])/(time_vec[id_1[length(id_1)]]-time_vec[id_1[(length(id_1)-1)]])
-      beta<-x[id_1[length(id_1)]]-alpha*time_vec[id_1[length(id_1)]]
-      x[length(x)]<-alpha*time_vec[length(x)]+beta
+      alpha <- (x[id_1[length(id_1)]]-x[id_1[(length(id_1)-1)]])/(time_vec[id_1[length(id_1)]]-time_vec[id_1[(length(id_1)-1)]])
+      beta <- x[id_1[length(id_1)]]-alpha*time_vec[id_1[length(id_1)]]
+      x[length(x)] <- alpha*time_vec[length(x)]+beta
     }
-    id_0<-which(x==0)
-    id_1<-which(x!=0)
+    
+    id_0 <- which(x==0)
+    id_1 <- which(x!=0)
+    
     for(i in 1:(length(id_0))){
-      alpha<-(x[min(id_1[which(id_1>id_0[i])])]-x[max(id_1[which(id_1<id_0[i])])])/(time_vec[min(id_1[which(id_1>id_0[i])])]-time_vec[max(id_1[which(id_1<id_0[i])])])
-      beta<-x[min(id_1[which(id_1>id_0[i])])]-alpha*time_vec[min(id_1[which(id_1>id_0[i])])]
-      x[id_0[i]]<-alpha*time_vec[(id_0[i])]+beta
+      alpha <- (x[min(id_1[which(id_1>id_0[i])])]-x[max(id_1[which(id_1<id_0[i])])])/(time_vec[min(id_1[which(id_1>id_0[i])])]-time_vec[max(id_1[which(id_1<id_0[i])])])
+      beta <- x[min(id_1[which(id_1>id_0[i])])]-alpha*time_vec[min(id_1[which(id_1>id_0[i])])]
+      x[id_0[i]] <- alpha*time_vec[(id_0[i])]+beta
+      
     } 
   }
   return(x)
 }
-for(j in 2:ncol(sau_country2)){
-  sau_country2[,j]<-rep_0(sau_country2[,j], sau_country2$TIME)
+
+for(j in 2:ncol(uaa_country2)){
+  uaa_country2[,j] <- rep_0(uaa_country2[,j], uaa_country2$TIME)
 }
 
-input_country<-read.csv("aei_ps_inp_1_Data.csv", header = T)
-input_country$Value<-str_replace_all(input_country$Value, " ", "")
-input_country$Value<-as.numeric(as.character(input_country$Value))
-input_country<-na.omit(input_country)
-input_country<-dcast(input_country, INDIC_AG+TIME~GEO, fun.aggregate=sum, value.var="Value")
-names(input_country)[c(8,14,31)]<-c("Czech Republic","Germany","UK")
+# High input cover data
+# online data code: AEI_PS_INP
 
-input_country2<-input_country[1:10,-c(1,11)]
-sau_country3<-sau_country2[sau_country2$TIME %in% c(2007:2016), which(names(sau_country2) %in% names(input_country2))]
+input_country <- read.csv("aei_ps_inp_1_Data.csv", header = T)
+input_country$Value <- str_replace_all(input_country$Value, " ", "")
+input_country$Value <- as.numeric(as.character(input_country$Value))
+input_country <- na.omit(input_country)
+input_country <- dcast(input_country, INDIC_AG+TIME~GEO, fun.aggregate=sum, value.var="Value")
+names(input_country)[c(8,14,31)] <- c("Czech Republic","Germany","UK")
+
+# Calculate high input cover as percentage of UAA
+
+input_country2 <- input_country[1:10,-c(1,11)]
+uaa_country3 <- uaa_country2[uaa_country2$TIME %in% c(2007:2016), which(names(uaa_country2) %in% names(input_country2))]
+
 for(i in 2:ncol(input_country2)){
-  input_country2[,i]<-input_country2[,i]/sau_country3[,i]
-  to_add<-summary(lm(input_country2[which(input_country2[,i]>0),i]~input_country2[which(input_country2[,i]>0),1]))$coef
-  input_country2[11,i]<-mean(input_country2[which(input_country2[,i]>0),i], na.rm=T)
-  input_country2[12,i]<-to_add[2,1]
-  input_country2[13,i]<-to_add[2,4]
+
+  input_country2[,i] <- input_country2[,i]/uaa_country3[,i]
+  to_add <- summary(lm(input_country2[which(input_country2[,i]>0),i]~input_country2[which(input_country2[,i]>0),1]))$coef
+  input_country2[11,i] <- mean(input_country2[which(input_country2[,i]>0),i], na.rm=T)
+  input_country2[12,i] <- to_add[2,1]
+  input_country2[13,i] <- to_add[2,4]
 }
-vect_trans<-input_country2[11,which(colnames(input_country2) %in% names(country6b))]
-country_data[79,]<-unlist(c(vect_trans[1:13],0,vect_trans[14:20],0,vect_trans[21:27],0,vect_trans[28]))
-vect_trans<-input_country2[12,which(colnames(input_country2) %in% names(country6b))]
-vect_trans[which(input_country2[13,which(colnames(input_country2) %in% names(country6b))]>0.05)]<-0
-country_data[80,]<-unlist(c(vect_trans[1:13],0,vect_trans[14:20],0,vect_trans[21:27],0,vect_trans[28]))
-country_data[80,]<-unlist(country_data[83,])/unlist(country_data[82,])
-row.names(country_data)[79:80]<-c("high_input_cover","d_hic")
 
-# forest cover
-foret_country<-read.csv("for_area_1_Data.csv", header = T)
-foret_country$Value<-str_replace_all(foret_country$Value, " ", "")
-foret_country$Value<-as.numeric(as.character(foret_country$Value))
-foret_country<-na.omit(foret_country)
-foret_country<-dcast(foret_country, INDIC_FO+TIME~GEO, fun.aggregate=sum, value.var="Value")
-names(foret_country)[c(9,16,41)]<-c("Czech Republic","Germany","UK")
+# Mean value over the period
 
-country_data[82,]<-t(foret_country[6,which(colnames(foret_country) %in% names(country6b))])/t(foret_country[1,which(colnames(foret_country) %in% names(country6b))])
-row.names(country_data)[82]<-"forest"
-country_data[83,]<-apply(foret_country[2:6,which(colnames(foret_country) %in% names(country6b))],2,function(x){summary(lm(x~c(1990,2000,2005,2010,2015)))$coef[2,1]})/foret_country[2,which(colnames(foret_country) %in% names(country6b))]
-row.names(country_data)[83]<-"d_forest"
+vect_trans <- input_country2[11,which(colnames(input_country2) %in% names(country6b))]
+country_data[79,] <- unlist(c(vect_trans[1:13],0,vect_trans[14:20],0,vect_trans[21:27],0,vect_trans[28]))
 
-country_data2<-as.data.frame(t(country_data))
-country_data2$country<-as.factor(row.names(country_data2))
+# Trend over the period
+
+vect_trans <- input_country2[12,which(colnames(input_country2) %in% names(country6b))]
+vect_trans[which(input_country2[13,which(colnames(input_country2) %in% names(country6b))]>0.05)] <- 0
+country_data[80,] <- unlist(c(vect_trans[1:13],0,vect_trans[14:20],0,vect_trans[21:27],0,vect_trans[28]))
+country_data[80,] <- unlist(country_data[83,])/unlist(country_data[82,])
+row.names(country_data)[79:80] <- c("high_input_cover","d_hic")
+
+```
+
+#### Forest cover data
+
+```{r}
+# Load data
+# from https://ec.europa.eu/eurostat/web/main/data/database
+
+foret_country <- read.csv("for_area_1_Data.csv", header = T)
+foret_country$Value <- str_replace_all(foret_country$Value, " ", "")
+foret_country$Value <- as.numeric(as.character(foret_country$Value))
+foret_country <- na.omit(foret_country)
+foret_country <- dcast(foret_country, INDIC_FO+TIME~GEO, fun.aggregate=sum, value.var="Value")
+names(foret_country)[c(9,16,41)] <- c("Czech Republic","Germany","UK")
+
+# Mean value over the period
+
+country_data[82,] <- t(foret_country[6,which(colnames(foret_country) %in% names(country6b))])/t(foret_country[1,which(colnames(foret_country) %in% names(country6b))])
+row.names(country_data)[82] <- "forest"
+
+# Trend over the period
+
+country_data[83,] <- apply(foret_country[2:6,which(colnames(foret_country) %in% names(country6b))],2,function(x){summary(lm(x~c(1990,2000,2005,2010,2015)))$coef[2,1]})/foret_country[2,which(colnames(foret_country) %in% names(country6b))]
+row.names(country_data)[83] <- "d_forest"
+
+country_data2 <- as.data.frame(t(country_data))
+country_data2$country <- as.factor(row.names(country_data2))
 
 for(i in c(1:83)){
-  country_data2[which(country_data2[,i]==0),i]<-NA
+  country_data2[which(country_data2[,i]==0),i] <- NA
 }
 ```
 
