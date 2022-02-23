@@ -780,6 +780,55 @@ proj4string(country3) <- CRS("+init=epsg:27572")
 
 ```{r}
 # Load data
+# from https://www.fao.org/faostat/en/#data/LC
+
+fao_data_landcover <- read.csv("raw_data/FAOSTAT_data_LC.csv", header = T)
+fao_data_landcover$Area <- as.character(fao_data_landcover$Area)
+fao_data_landcover[fao_data_landcover=="United Kingdom of Great Britain and Northern Ireland"] <- "UK"
+fao_data_landcover[fao_data_landcover=="Czechia"] <- "Czech Republic"
+fao_data_landcover <- droplevels(fao_data_landcover[fao_data_landcover$Area %in% country_name,])
+write.csv(fao_data_landcover,"output/fao_data_landcover.csv", row.names = F)
+
+# from https://www.fao.org/faostat/en/#data/RL
+
+fao_data_landuse <- read.csv("raw_data/FAOSTAT_data_RL.csv", header = T)
+fao_data_landuse$Area <- as.character(fao_data_landuse$Area)
+fao_data_landuse[fao_data_landuse=="United Kingdom of Great Britain and Northern Ireland"] <- "UK"
+fao_data_landuse[fao_data_landuse=="Czechia"] <- "Czech Republic"
+fao_data_landuse <- droplevels(fao_data_landuse[fao_data_landuse$Area %in% country_name,])
+write.csv(fao_data_landuse,"output/fao_data_landuse.csv", row.names = F)
+
+area_country <- read.csv("output/fao_data_landuse.csv", header = T)
+area_country <- area_country[area_country$Item=="Country area" & area_country$Year==2016, c("Area","Value")]
+area_country$Value <- 10*area_country$Value
+area_country <- area_country[order(area_country$Area),]
+
+urban_country <- read.csv("output/fao_data_landcover.csv", header = T)
+urban_country <- urban_country[urban_country$Item=="Artificial surfaces (including urban and associated areas)", c("Area","Year","Value")]
+urban_country$Value <- 10*urban_country$Value
+urban_country <- dcast(urban_country, Year~Area, fun.aggregate=sum, value.var="Value")
+
+# Mean value over the period
+
+urban_country[urban_country==0] <- NA
+row.names(urban_country) <- paste0("urb",sep="_",urban_country$Year)
+urban_country$Year <- NULL
+urban_country <- as.data.frame(t(apply(urban_country, 1, function(x){x/area_country$Value})))
+urban_country[29,] <- apply(urban_country[1:25,], 2, function(x){mean(x, na.rm=T)})
+row.names(urban_country)[29] <- "urb_mean"
+
+# Trend over the period
+
+urban_country[30,] <- apply(urban_country[1:25,], 2, function(x){summary(lm(x~c(1992:2016)))$coef[2,1]})/urban_country[9,]
+row.names(urban_country)[30] <- "d_urb"
+
+# Dataset to merge with other pressures
+
+country_data <- urban_country
+
+
+# Check with Corine Land Cover
+# Load data
 # from https://land.copernicus.eu/pan-european/corine-land-cover
 
 clc_1990 <- raster("U2000_CLC1990_V2020_20u1.tif") 
@@ -794,8 +843,8 @@ country4b <- spTransform(country3, CRS(proj4string(clc_1990)))
 
 # Extract urban cover
 
-country_data <- data.frame(t(rep(NA,length(country4b))))
-names(country_data) <- levels(as.factor(country_id$region))
+check_urban <- data.frame(t(rep(NA,length(country4b))))
+names(check_urban) <- levels(as.factor(country_id$region))
 
 for(i in 1:length(country4b)){
   print(i)
@@ -805,49 +854,64 @@ for(i in 1:length(country4b)){
   country_cover[country_cover <= 11] <- 1 # artificial surface: continuous urban fabric, discontinuous urban fabric, industrial or commercial units, road and rail networks
   country_cover[country_cover > 11] <- 0 # agricultural areas, forest and seminatural areas
   country_cover2 <- mask(country_cover,country4b[i])
-  country_data[1, i] <- extract(country_cover2,extent(country_cover2), fun=mean, na.rm=T)
+  check_urban[1, i] <- extract(country_cover2,extent(country_cover2), fun=mean, na.rm=T)
   
   country_cover <- crop(clc_2000, b)
   country_cover[country_cover > 39] <- NA
   country_cover[country_cover <= 11] <- 1
   country_cover[country_cover > 11] <- 0
   country_cover2 <- mask(country_cover, country4b[i])
-  country_data[2, i] <- extract(country_cover2,extent(country_cover2), fun=mean, na.rm=T)
+  check_urban[2, i] <- extract(country_cover2,extent(country_cover2), fun=mean, na.rm=T)
   
   country_cover <- crop(clc_2006, b)
   country_cover[country_cover > 39] <- NA
   country_cover[country_cover <= 11] <- 1
   country_cover[country_cover > 11] <- 0
   country_cover2 <- mask(country_cover, country4b[i])
-  country_data[3, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
+  check_urban[3, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
   
   country_cover <- crop(clc_2012, b)
   country_cover[country_cover > 39] <- NA
   country_cover[country_cover <= 11] <- 1
   country_cover[country_cover > 11] <- 0
   country_cover2 <- mask(country_cover, country4b[i])
-  country_data[4, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
+  check_urban[4, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
   
   country_cover <- crop(clc_2018, b)
   country_cover[country_cover > 39] <- NA
   country_cover[country_cover <= 11] <- 1
   country_cover[country_cover > 11] <- 0
   country_cover2 <- mask(country_cover, country4b[i])
-  country_data[5, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
+  check_urban[5, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
 }
-row.names(country_data)[1:5] <- c("clc_1990", "clc_2000", "clc_2006", "clc_2012", "clc_2018")
+row.names(check_urban)[1:5] <- c("clc_1990", "clc_2000", "clc_2006", "clc_2012", "clc_2018")
 
 # Mean value over the period
 
-country_data[6,] <- apply(country_data[2:5,],2,function(x){mean(x, na.rm=T)})
-row.names(country_data)[6] <- "clc_mean"
+check_urban[6,] <- apply(check_urban[2:5,],2,function(x){mean(x, na.rm=T)})
+row.names(check_urban)[6] <- "clc_mean"
 
 # Trend over the period
 
-country_data[7,] <- apply(country_data[2:5,],2,function(x){
+check_urban[7,] <- apply(check_urban[2:5,],2,function(x){
   summary(lm(x~c(2000,2006,2012,2018)))$coef[2,1]})
-row.names(country_data)[7] <- "d_clc"
-country_data[7,] <- unlist(country_data[7,])/unlist(country_data[2,])
+row.names(check_urban)[7] <- "d_clc"
+check_urban[7,] <- unlist(check_urban[7,])/unlist(check_urban[2,])
+
+# Check consistency between the two dataset
+
+# By country
+
+plot(check_urban$France[1:5]~urban_country$France[c(1,9,15,21,27)])
+
+# Mean
+
+plot(unlist(check_urban[6,])~unlist(urban_country[29,]))
+
+# Trend
+
+plot(unlist(check_urban[7,])~unlist(urban_country[30,]))
+
 
 ```
 
@@ -909,20 +973,20 @@ temp_1950_2018 <- list(temp_1950,temp_1951,temp_1952,temp_1953,temp_1954,temp_19
 
 for(i in 1:length(temp_1950_2018)){ # mean by year by country
   for(j in 1:ncol(country_data)){
-    country_data[i+7,j] <- mean(extract(temp_1950_2018[[i]],country5[j])[[1]],na.rm=T)
+    country_data[i+30,j] <- mean(extract(temp_1950_2018[[i]],country5[j])[[1]],na.rm=T)
   }
 }
-row.names(country_data)[8:76] <- paste0("temp",sep="_",1950:2018)
+row.names(country_data)[31:99] <- paste0("temp",sep="_",1950:2018)
 
 # Mean value over the period
 
-country_data[77,] <- apply(country_data[38:74,], 2, function(x){mean(x, na.rm=T)})
-row.names(country_data)[77] <- "temp_mean"
+country_data[100,] <- apply(country_data[61:97,], 2, function(x){mean(x, na.rm=T)})
+row.names(country_data)[100] <- "temp_mean"
 
 # Trend over the period
 
-country_data[78,] <- apply(country_data[38:74,], 2, function(x){summary(lm(x~c(1980:2016)))$coef[2,1]})/country_data[38,]
-row.names(country_data)[78] <- "d_temp"
+country_data[101,] <- apply(country_data[61:97,], 2, function(x){summary(lm(x~c(1980:2016)))$coef[2,1]})/country_data[38,]
+row.names(country_data)[101] <- "d_temp"
 
 ```
 
@@ -968,73 +1032,46 @@ country_data <- rbind(country_data, input_country)
 
 ```{r}
 # Load data
-# from https://www.fao.org/faostat/en/#data/RL
-
-fao_data_landuse <- read.csv("raw_data/FAOSTAT_data_RL.csv", header = T)
-fao_data_landuse$Area <- as.character(fao_data_landuse$Area)
-fao_data_landuse[fao_data_landuse=="United Kingdom of Great Britain and Northern Ireland"] <- "UK"
-fao_data_landuse[fao_data_landuse=="Czechia"] <- "Czech Republic"
-fao_data_landuse <- droplevels(fao_data_landuse[fao_data_landuse$Area %in% country_name,])
-write.csv(fao_data_landuse,"output/fao_data_landuse.csv", row.names = F)
-
-fao_data_landcover <- read.csv("raw_data/FAOSTAT_data_LC.csv", header = T)
-fao_data_landcover$Area <- as.character(fao_data_landcover$Area)
-fao_data_landcover[fao_data_landcover=="United Kingdom of Great Britain and Northern Ireland"] <- "UK"
-fao_data_landcover[fao_data_landcover=="Czechia"] <- "Czech Republic"
-fao_data_landcover <- droplevels(fao_data_landcover[fao_data_landcover$Area %in% country_name,])
-write.csv(fao_data_landcover,"output/fao_data_landcover.csv", row.names = F)
-
-area_country <- read.csv("output/fao_data_landuse.csv", header = T)
-area_country <- area_country[area_country$Item=="Country area" & area_country$Year==2016, c("Area","Value")]
-area_country$Value <- 10*area_country$Value
 
 forest_country <- read.csv("output/fao_data_landuse.csv", header = T)
 forest_country <- forest_country[forest_country$Item!="Country area", c("Area","Item","Year","Value")]
 forest_country$Value <- 10*forest_country$Value
 forest_country <- dcast(forest_country, Item+Year~Area, fun.aggregate=sum, value.var="Value")
 
-
-# from https://ec.europa.eu/eurostat/web/main/data/database
-
-# online data code: LAN_LCV_FAO
-# https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/LAN_LCV_FAO/A.KM2.LC+LCC1+LCC2+LCC3.BE+BG+CZ+DK+DE+EE+IE+EL+ES+FR+HR+IT+CY+LV+LT+LU+HU+MT+NL+AT+PL+PT+RO+SI+SK+FI+SE+UK/?format=SDMX-CSV&compressed=true&startPeriod=2009&endPeriod=2018
-
-forest_fao_country <- read.csv("raw_data/lan_lcv_fao.csv", header = T)
-forest_fao_country <- droplevels(forest_fao_country[forest_fao_country$landcover=="LC" & forest_fao_country$TIME_PERIOD=="2015", c("geo", "OBS_VALUE")])
-forest_fao_country <- data.frame(t(forest_fao_country$OBS_VALUE))
-names(forest_fao_country) <- c("Austria","Belgium","Bulgaria","Cyprus","Czech Republic","Germany","Denmark","Estonia","Greece","Spain","Finland","France","Croatia","Hungary","Ireland","Italy","Lithuania","Luxembourg","Latvia","Malta","Netherlands","Poland","Portugal","Romania","Sweden","Slovenia","Slovakia","UK")
-
-# online data code: FOR_AREA
-# https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/FOR_AREA/A.THS_HA.FOR+OWL.BE+BG+CZ+DK+DE+EE+IE+EL+ES+FR+HR+IT+LV+LT+LU+HU+MT+NL+AT+PL+PT+RO+SI+SK+FI+SE+LI+NO+CH+UK+BA/?format=SDMX-CSV&compressed=true&startPeriod=1990&endPeriod=2020
-
-foret_country <- read.csv("raw_data/for_area.csv", header = T)
-foret_country$Value <- str_replace_all(foret_country$Value, " ", "")
-foret_country$Value <- as.numeric(as.character(foret_country$Value))
-foret_country <- na.omit(foret_country)
-foret_country <- dcast(foret_country, INDIC_FO+TIME~GEO, fun.aggregate=sum, value.var="Value")
-names(foret_country)[c(9,16,41)] <- c("Czech Republic","Germany","UK")
-
 # Mean value over the period
 
-country_data[82,] <- t(foret_country[6,which(colnames(foret_country) %in% names(country6b))])/t(foret_country[1,which(colnames(foret_country) %in% names(country6b))])
-row.names(country_data)[82] <- "forest"
+forest_country$Item <- as.character(forest_country$Item)
+forest_country[forest_country=="Forest land"] <- "for"
+forest_country[forest_country=="Naturally regenerating forest"] <- "nat"
+forest_country[forest_country=="Planted Forest"] <- "pla"
+forest_country[forest_country==0] <- NA
+row.names(forest_country) <- paste0(forest_country$Item,sep="_",forest_country$Year)
+forest_country$Year <- forest_country$Item <- NULL
+forest_country <- as.data.frame(t(apply(forest_country, 1, function(x){x/area_country$Value})))
+forest_country[91,] <- apply(forest_country[1:27,], 2, function(x){mean(x, na.rm=T)})
+row.names(forest_country)[91] <- "for_mean"
+forest_country[92,] <- apply(forest_country[31:57,], 2, function(x){mean(x, na.rm=T)})
+row.names(forest_country)[92] <- "nat_mean"
+forest_country[93,] <- apply(forest_country[61:87,], 2, function(x){mean(x, na.rm=T)})
+row.names(forest_country)[93] <- "pla_mean"
 
 # Trend over the period
 
-country_data[83,] <- apply(foret_country[2:6,which(colnames(foret_country) %in% names(country6b))],2,function(x){summary(lm(x~c(1990,2000,2005,2010,2015)))$coef[2,1]})/foret_country[2,which(colnames(foret_country) %in% names(country6b))]
-row.names(country_data)[83] <- "d_forest"
+forest_country[94,] <- apply(forest_country[1:27,], 2, function(x){summary(lm(x~c(1990:2016)))$coef[2,1]})/forest_country[11,]
+row.names(forest_country)[94] <- "d_for"
 
-country_data2 <- as.data.frame(t(country_data))
-country_data2$country <- as.factor(row.names(country_data2))
+# Merge data
 
+country_data <- rbind(country_data, forest_country)
 
 # Clean up the final dataset
 
-for(i in c(1:83)){
-  country_data2[which(country_data2[,i]==0),i] <- NA
-}
+country_data2 <- as.data.frame(t(country_data))
+country_data2$country <- row.names(country_data2)
+country_data2$country[country_data2$country=="UK"]<-"United Kingdom"
+country_data2[country_data2==0] <- NA
+country_data2$country <- as.factor(country_data2$country)
 
-country_data2$country2[country_data2$country2=="UK"]<-"United Kingdom"
 
 ```
 
