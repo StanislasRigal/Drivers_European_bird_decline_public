@@ -231,6 +231,15 @@ stratum_number <- data.frame(code_sp = C, site = 1:length(C))
 species_code <- df_pop[, .SD[1], by = .(Code)][, .(Code,Species)]
 ```
 
+### RTRIM functions
+
+```{r}
+# Load RTRIM functions
+
+source("RTRIM_functions.R")
+
+```
+
 ### RTRIM preprocessing
 ```{r}
 # Set working directory to /output for intermediary results
@@ -265,15 +274,6 @@ for (i in S){
   write.csv2(arg, file = paste0("BIRD_",df_pop[Species==i,Code][1],
                                 "_0_arg_input_stratum.csv"), row.names = FALSE)
 }
-```
-
-### RTRIM functions
-
-```{r}
-# Load RTRIM functions
-
-source("RTRIM_functions.R")
-
 ```
 
 ### Running RTRIM
@@ -556,6 +556,7 @@ See Rigal et al. (2020) for more details about the following functions.
 
 # Load functions to estimate dynamics
 
+setwd("..")
 source("Nonlinear_functions.R")
 
 ```
@@ -589,15 +590,14 @@ ggplot(df_pop3b$msi, aes(x = c(1980:2016), y = mean_msi_final)) +
 ```{r}
 # Load data
 
-pecbms_hab <- read.csv2("raw_data/Habitat_class_PECBMS.csv") # availble on https://pecbms.info/
-
+  
 # Select species
 
 df_agri_pec <-  droplevels(subset(df_pop2, Species %in% pecbms_hab$Species[pecbms_hab$Habitat=="Farmland"]))
 
 # Compute dynamic estimation
 
-msi_agri_pec_ab<- msi_fun3(df_agri_pec, ref_year = 1980, niter = niter, ref_value = "Abundance")
+msi_agri_pec_ab <- msi_fun3(df_agri_pec, ref_year = 1980, niter = niter, ref_value = "Abundance")
 
 # Plot
 
@@ -621,7 +621,7 @@ df_forest_pec <-  droplevels(subset(df_pop2, Species %in% pecbms_hab$Species[pec
 
 # Compute dynamic estimation
 
-msi_forest_pec_ab<- msi_fun3(df_forest_pec,ref_year = 1980, niter = niter, ref_value = "Abundance")
+msi_forest_pec_ab <- msi_fun3(df_forest_pec,ref_year = 1980, niter = niter, ref_value = "Abundance")
 
 # Plot
 
@@ -641,9 +641,9 @@ ggplot(msi_forest_pec_ab$msi, aes(x = c(1980:2016), y = mean_msi_final)) +
 # Load data
 # from https://www.eea.europa.eu/data-and-maps/data/linkages-of-species-and-habitat
 
-eunis_hab<-read.csv("raw_data/species_birds_maes_EU27b.csv")
-eunis_hab2<-dcast(eunis_hab[eunis_hab$season=="B",], speciesname ~ codeeco)
-eunis_hab3<-data.frame(Species=levels(as.factor(eunis_hab$speciesname)), is_urban=FALSE)
+eunis_hab <- read.csv("raw_data/species_birds_maes_EU27b.csv")
+eunis_hab2 <- dcast(eunis_hab[eunis_hab$season=="B",], speciesname ~ codeeco)
+eunis_hab3 <- data.frame(Species=levels(as.factor(eunis_hab$speciesname)), is_urban=FALSE)
 
 # Update species names
 
@@ -691,8 +691,8 @@ ggplot(msi_build_eunis_ab$msi, aes(x = c(1980:2016), y = mean_msi_final)) +
 # Load data
 # from (Devictor et al., 2012)
 
-sti<-read.csv("raw_data/STI_Devictor.csv") 
-sti_eu<-droplevels(subset(sti, SPECIES %in% df_pop2$Species)) 
+sti <- read.csv("raw_data/STI_Devictor.csv") 
+sti_eu <- droplevels(subset(sti, SPECIES %in% df_pop2$Species)) 
 
 # Select species (hot dwellers)
 
@@ -700,7 +700,7 @@ df_temp <- droplevels(subset(df_pop2, Species %in% as.character(sti$SPECIES[sti_
 
 # Compute dynamic estimation (hot dwellers)
 
-msi_temp_ab1<- msi_fun3(df_temp,ref_year = 1980, niter = niter, ref_value = "Abundance")
+msi_temp_ab1 <- msi_fun3(df_temp,ref_year = 1980, niter = niter, ref_value = "Abundance")
 
 # Select species (cold dwellers)
 
@@ -708,11 +708,11 @@ df_temp <- droplevels(subset(df_pop2, Species %in% as.character(sti$SPECIES[sti_
 
 # Compute dynamic estimation (cold dwellers)
 
-msi_temp_ab2<- msi_fun3(df_temp,ref_year = 1980, niter = niter, ref_value = "Abundance")
+msi_temp_ab2 <- msi_fun3(df_temp,ref_year = 1980, niter = niter, ref_value = "Abundance")
 
 # Merge results
 
-msi_temp_ab3<-data.frame(rbind(msi_temp_ab1$msi,msi_temp_ab2$msi),
+msi_temp_ab3 <- data.frame(rbind(msi_temp_ab1$msi,msi_temp_ab2$msi),
                          fact=c(rep("Hot dwellers", nrow(msi_temp_ab1$msi)),rep("Cold dwellers", nrow(msi_temp_ab2$msi))),
                          year=rep(c(1980:2016),2))
 
@@ -738,12 +738,14 @@ df_trend <- droplevels(subset(df_trend, Year %in% c(1995:2016)))
 
 # Estimate trends
 
-trend_species <- ddply(df_trend, .(Species, CountryGroup), .fun=res_trend2, niter=1000, correction=T, mid="first", .parallel = F, .progress = "text")
+#trend_species <- ddply(df_trend, .(Species, CountryGroup), .fun=res_trend2, niter=1000, correction=T, mid="first", .parallel = F, .progress = "text")
+
+trend_species <- ddply(df_trend, .(Species, CountryGroup), .fun=function(x){re=summary(lm(Index~Year, x))$coef;return(data.frame(slope=re[2,1],pval=re[2,4],slope_pe=re[2,1]/x$Index[1]))}, .parallel = F, .progress = "text")
 
 # Clean up outputs
 
-trend_species$linear <- substr(trend_species$max_shape, 1, 8)
-trend_species$linear[trend_species$linear=="stable_c"] <- "stable"
+#trend_species$linear <- substr(trend_species$max_shape, 1, 8)
+#trend_species$linear[trend_species$linear=="stable_c"] <- "stable"
 ```
 
 ### Pressures
@@ -821,6 +823,8 @@ row.names(urban_country)[29] <- "urb_mean"
 
 urban_country[30,] <- apply(urban_country[1:25,], 2, function(x){summary(lm(x~c(1992:2016)))$coef[2,1]})/urban_country[9,]
 row.names(urban_country)[30] <- "d_urb"
+urb_sig_trend <- apply(urban_country[1:25,], 2, function(x){summary(lm(x~c(1992:2016)))$coef[2,4]})
+#urban_country[30,which(urb_sig_trend>0.05)] <- 0
 
 # Dataset to merge with other pressures
 
@@ -987,6 +991,8 @@ row.names(country_data)[100] <- "temp_mean"
 
 country_data[101,] <- apply(country_data[61:97,], 2, function(x){summary(lm(x~c(1980:2016)))$coef[2,1]})/country_data[38,]
 row.names(country_data)[101] <- "d_temp"
+temp_sig_trend <- apply(country_data[61:97,], 2, function(x){summary(lm(x~c(1980:2016)))$coef[2,4]})
+#country_data[101,which(temp_sig_trend>0.05)] <- 0
 
 ```
 
@@ -994,37 +1000,214 @@ row.names(country_data)[101] <- "d_temp"
 
 ```{r}
 # Load data
-# from https://ec.europa.eu/eurostat/web/main/data/database
+# from https://www.fao.org/faostat/en/#data/LC
 
-# High input cover data
-# online data code: AEI_PS_INP
-# url: https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/AEI_PS_INP/A.HIGH_INP+LOW_INP+MED_INP.PC_AREA.BE+BG+CZ+DK+DE+EE+IE+EL+ES+FR+HR+IT+CY+LV+LT+LU+HU+MT+NL+AT+PL+PT+RO+SI+SK+FI+SE+UK/?format=SDMX-CSV&compressed=true&startPeriod=2005&endPeriod=2019
+# Utilised Agricultural Area
 
-input_country <- read.csv("raw_data/aei_ps_inp.csv", header = T)
-input_country <- na.omit(droplevels(input_country[input_country$indic_ag=="HIGH_INP",c("geo","TIME_PERIOD","OBS_VALUE","indic_ag")]))
-input_country <- dcast(input_country, TIME_PERIOD~geo, fun.aggregate=sum, value.var="OBS_VALUE")
-names(input_country) <- c("Year","Austria","Belgium","Bulgaria","Cyprus","Czech Republic","Germany","Denmark","Estonia","Greece","Spain","Finland","France","Croatia","Hungary","Ireland","Italy","Lithuania","Luxembourg","Latvia","Malta","Netherlands","Poland","Portugal","Romania","Sweden","Slovenia","Slovakia","UK")
+uaa_country <- read.csv("raw_data/FAOSTAT_data_UAA.csv", header = T)
+uaa_country$Area <- as.character(uaa_country$Area)
+uaa_country[uaa_country=="United Kingdom of Great Britain and Northern Ireland"] <- "UK"
+uaa_country[uaa_country=="Czechia"] <- "Czech Republic"
+uaa_country <- droplevels(uaa_country[uaa_country$Area %in% country_name,c("Area","Year","Value")])
+uaa_country$Value <- 1000*uaa_country$Value
+
+
+# Pesticides
+# Load data
+# from https://www.fao.org/faostat/en/#data/RP
+
+pest_country <- read.csv("raw_data/FAOSTAT_data_RP.csv", header = T)
+pest_country$Area <- as.character(pest_country$Area)
+pest_country[pest_country=="United Kingdom of Great Britain and Northern Ireland"] <- "UK"
+pest_country[pest_country=="Czechia"] <- "Czech Republic"
+pest_country$Item <- as.character(pest_country$Item)
+pest_country[pest_country=="Pesticides (total)"] <- "pest"
+pest_country[pest_country=="Fungicides and Bactericides"] <- "fung"
+pest_country[pest_country=="Herbicides"] <- "herb"
+pest_country[pest_country=="Insecticides"] <- "inse"
+pest_country <- droplevels(pest_country[pest_country$Area %in% country_name & pest_country$Item %in% c("pest","fung","herb","inse"), c("Area","Item","Year","Value")])
+
+pest_country <- merge(pest_country, uaa_country, by=c("Area","Year"), all.x=T)
+pest_country$Value <- pest_country$Value.x/pest_country$Value.y
+pest_country <- dcast(pest_country, Item+Year~Area, fun.aggregate=sum, value.var="Value")
+
+uaa_country <- dcast(uaa_country, Year~Area, fun.aggregate=sum, value.var="Value")
+row.names(uaa_country) <- paste0("uaa",sep="_",uaa_country$Year)
+uaa_country$Year <- NULL
+uaa_country[60,] <- apply(uaa_country[40:56,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/uaa_country[11,]
+row.names(uaa_country)[60] <- "d_uaa"
+fung_sig_trend <- apply(uaa_country[40:56,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,4]})
+#uaa_country[60,which(fung_sig_trend>0.05)] <- 0
 
 # Mean value over the period
 
-input_country[input_country==0] <- NA
-row.names(input_country) <- paste0("hic",sep="_",input_country$Year)
-input_country$Year <- NULL
-input_country[16,] <- apply(input_country[1:12,], 2, function(x){mean(x, na.rm=T)})
-row.names(input_country)[16] <- "hic_mean"
+pest_country[pest_country==0] <- NA
+row.names(pest_country) <- paste0(pest_country$Item,sep="_",pest_country$Year)
+pest_country$Year <- pest_country$Item <- NULL
+pest_country[121,] <- apply(pest_country[11:27,], 2, function(x){mean(x, na.rm=T)})
+row.names(pest_country)[121] <- "fung_mean"
+pest_country[122,] <- apply(pest_country[41:57,], 2, function(x){mean(x, na.rm=T)})
+row.names(pest_country)[122] <- "herb_mean"
+pest_country[123,] <- apply(pest_country[71:87,], 2, function(x){mean(x, na.rm=T)})
+row.names(pest_country)[123] <- "inse_mean"
+pest_country[124,] <- apply(pest_country[101:117,], 2, function(x){mean(x, na.rm=T)})
+row.names(pest_country)[124] <- "pest_mean"
 
 # Trend over the period
 
-input_country[17,] <- apply(input_country[1:12,], 2, function(x){summary(lm(x~c(2005:2016)))$coef[2,1]})/apply(input_country[1:3,], 2,function(x){mean(x, na.rm=T)})
-row.names(input_country)[17] <- "d_hic"
+pest_country[11:27,14] <- 0
+pest_country[125,] <- apply(pest_country[11:27,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/pest_country[11,]
+row.names(pest_country)[125] <- "d_fung"
+fung_sig_trend <- apply(pest_country[11:27,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,4]})
+#pest_country[125,which(fung_sig_trend>0.05)] <- 0
+
+pest_country[126,] <- apply(pest_country[41:57,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/pest_country[41,]
+row.names(pest_country)[126] <- "d_herb"
+herb_sig_trend <- apply(pest_country[41:57,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,4]})
+#pest_country[126,which(herb_sig_trend>0.05)] <- 0
+
+pest_country[127,] <- apply(pest_country[71:87,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/pest_country[71,]
+row.names(pest_country)[127] <- "d_inse"
+inse_sig_trend <- apply(pest_country[71:87,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,4]})
+#pest_country[127,which(inse_sig_trend>0.05)] <- 0
+
+pest_country[128,] <- apply(pest_country[101:117,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/pest_country[101,]
+row.names(pest_country)[128] <- "d_pest"
+pest_sig_trend <- apply(pest_country[101:117,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,4]})
+#pest_country[128,which(pest_sig_trend>0.05)] <- 0
+
+# Fertiliser
+# Load data
+# from https://www.fao.org/faostat/en/#data/EF
+
+fert_country <- read.csv("raw_data/FAOSTAT_data_EF.csv", header = T)
+fert_country$Area <- as.character(fert_country$Area)
+fert_country[fert_country=="United Kingdom of Great Britain and Northern Ireland"] <- "UK"
+fert_country[fert_country=="Czechia"] <- "Czech Republic"
+fert_country$Item <- as.character(fert_country$Item)
+fert_country[fert_country=="Nutrient nitrogen N (total)"] <- "nitr"
+fert_country[fert_country=="Nutrient phosphate P2O5 (total)"] <- "phos"
+fert_country[fert_country=="Nutrient potash K2O (total)"] <- "pota"
+fert_country <- droplevels(fert_country[fert_country$Area %in% country_name, c("Area","Item","Year","Value")])
+fert_total_country <- data.frame(fert_country %>% group_by(Area,Year) %>% summarize(fert=sum(Value)))
+fert_country <- dcast(fert_country, Item+Year~Area, fun.aggregate=sum, value.var="Value")
+fert_total_country <- dcast(fert_total_country, Year~Area, fun.aggregate=sum, value.var="fert")
+
+
+# Mean value over the period
+
+fert_country[fert_country==0] <- NA
+row.names(fert_country) <- paste0(fert_country$Item,sep="_",fert_country$Year)
+fert_country$Year <- fert_country$Item <- NULL
+fert_country[178,] <- apply(fert_country[40:56,], 2, function(x){mean(x, na.rm=T)})
+row.names(fert_country)[178] <- "nitr_mean"
+fert_country[179,] <- apply(fert_country[99:115,], 2, function(x){mean(x, na.rm=T)})
+row.names(fert_country)[179] <- "phos_mean"
+fert_country[180,] <- apply(fert_country[158:174,], 2, function(x){mean(x, na.rm=T)})
+row.names(fert_country)[180] <- "pota_mean"
+
+fert_total_country[fert_total_country==0] <- NA
+row.names(fert_total_country) <- paste0("fert",sep="_",fert_total_country$Year)
+fert_total_country$Year <- NULL
+fert_total_country[60,] <- apply(fert_total_country[40:56,], 2, function(x){mean(x, na.rm=T)})
+row.names(fert_total_country)[60] <- "fert_mean"
+
+# Trend over the period
+
+fert_country[181,] <- apply(fert_country[40:56,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/fert_country[40,]
+row.names(fert_country)[181] <- "d_nitr"
+nitr_sig_trend <- apply(fert_country[40:56,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,4]})
+#fert_country[181,which(nitr_sig_trend>0.05)] <- 0
+
+fert_country[182,] <- apply(fert_country[99:115,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/fert_country[99,]
+row.names(fert_country)[182] <- "d_phos"
+phos_sig_trend <- apply(fert_country[99:115,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,4]})
+#fert_country[182,which(phos_sig_trend>0.05)] <- 0
+
+fert_country[183,] <- apply(fert_country[158:174,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/fert_country[158,]
+row.names(fert_country)[183] <- "d_pota"
+pota_sig_trend <- apply(fert_country[158:174,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,4]})
+#fert_country[183,which(pota_sig_trend>0.05)] <- 0
+
+fert_total_country[61,] <- apply(fert_total_country[40:56,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/fert_total_country[40,]
+row.names(fert_total_country)[61] <- "d_fert"
+fert_sig_trend <- apply(fert_total_country[40:56,], 2, function(x){summary(lm(x~c(2000:2016))4)$coef[2,4]})
+#fert_total_country[61,which(fert_sig_trend>0.05)] <- 0
 
 # Merge data
 
+country_data <- rbind(country_data, uaa_country, pest_country, fert_country, fert_total_country)
+
+# High input farm cover
+
+input_country <- read.csv("raw_data/aei_ps_inp.csv", header = T)
+ 
+input_country <- na.omit(droplevels(input_country[input_country$indic_ag=="HIGH_INP",c("geo","TIME_PERIOD","OBS_VALUE","indic_ag")]))
+ 
+input_country <- dcast(input_country, TIME_PERIOD~geo, fun.aggregate=sum, value.var="OBS_VALUE")
+
+names(input_country) <- c("Year","Austria","Belgium","Bulgaria","Cyprus","Czech Republic","Germany","Denmark","Estonia","Greece","Spain","Finland","France","Croatia","Hungary","Ireland","Italy","Lithuania","Luxembourg","Latvia","Malta","Netherlands","Poland","Portugal","Romania","Sweden","Slovenia","Slovakia","UK")
+
+input_country[input_country==0] <- NA
+ 
+row.names(input_country) <- paste0("hic",sep="_",input_country$Year)
+ 
+input_country$Year <- NULL
+ 
+input_country[16,] <- apply(input_country[1:12,], 2, function(x){mean(x, na.rm=T)})
+ 
+row.names(input_country)[16] <- "hic_mean"
+
+input_country[17,] <- apply(input_country[1:12,], 2, function(x){summary(lm(x~c(2005:2016)))$coef[2,1]})/apply(input_country[1:3,], 2,function(x){mean(x, na.rm=T)})
+ 
+row.names(input_country)[17] <- "d_hic"
+
+
 input_country <- input_country[,sort(names(input_country))]
+ 
 input_country <- data.frame(input_country[,c(1:13)], Iceland=0, input_country[,c(14:20)], Norway=0, input_country[,c(21:27)], Switzerland=0, UK=input_country$UK)
+ 
 names(input_country)[6] <- "Czech Republic"
 
 country_data <- rbind(country_data, input_country)
+
+
+# High input farm cover old
+
+input_country_old <- read.csv("raw_data/aei_ps_inp_1_Data.csv", header = T)
+ 
+input_country_old <- na.omit(droplevels(input_country_old[input_country_old$INDIC_AG=="High-input farms",]))
+input_country_old$Value <- as.character(input_country_old$Value)
+input_country_old$Value <- gsub(" ","",input_country_old$Value)
+input_country_old$Value <- as.numeric(input_country_old$Value)
+input_country_old <- dcast(input_country_old, TIME~GEO, fun.aggregate=sum, value.var="Value")
+
+names(input_country_old) <- c("Year","Austria","Belgium","Bulgaria","Croatia","Cyprus","Czech Republic","Denmark","Estonia","EU","Finland","France","Germany","Greece","Hungary","Ireland","Italy","Latvia","Lithuania","Luxembourg","Malta","Netherlands","Poland","Portugal","Romania","Slovakia","Slovenia","Spain","Sweden","UK")
+
+input_country_old[input_country_old==0] <- NA
+ 
+row.names(input_country_old) <- paste0("hico",sep="_",input_country_old$Year)
+ 
+input_country_old$Year <- input_country_old$EU <- NULL
+ 
+input_country_old[11,] <- apply(input_country_old[1:10,], 2, function(x){mean(x, na.rm=T)})
+ 
+row.names(input_country_old)[11] <- "hico_mean"
+
+input_country_old[12,] <- apply(input_country_old[1:10,], 2, function(x){summary(lm(x~c(2007:2016)))$coef[2,1]})/apply(input_country_old[1:3,], 2,function(x){mean(x, na.rm=T)})
+ 
+row.names(input_country_old)[12] <- "d_hico"
+
+
+input_country_old <- input_country_old[,sort(names(input_country_old))]
+ 
+input_country_old <- data.frame(input_country_old[,c(1:13)], Iceland=0, input_country_old[,c(14:20)], Norway=0, input_country_old[,c(21:27)], Switzerland=0, UK=input_country_old$UK)
+ 
+names(input_country_old)[6] <- "Czech Republic"
+
+country_data <- rbind(country_data, input_country_old) # opposite sign for names(input_country_old)[c(2,12,17,28)] we choose this old dataset as it is more coherent with https://www.eea.europa.eu/publications/eea_report_2005_6 but see also https://link.springer.com/article/10.1007/s11356-021-17655-4
+
+
 
 ```
 
@@ -1059,6 +1242,8 @@ row.names(forest_country)[93] <- "pla_mean"
 
 forest_country[94,] <- apply(forest_country[1:27,], 2, function(x){summary(lm(x~c(1990:2016)))$coef[2,1]})/forest_country[11,]
 row.names(forest_country)[94] <- "d_for"
+for_sig_trend <- apply(forest_country[1:27,], 2, function(x){summary(lm(x~c(1990:2016)))$coef[2,4]})
+forest_country[94,which(for_sig_trend>0.05)] <- 0
 
 # Merge data
 
@@ -1080,85 +1265,96 @@ country_data2$country <- as.factor(country_data2$country)
 #### Species data
 
 ```{r}
+#Load data
 
-ssi_eu <- read.csv("SSI_EU.csv") # from LeViol et al. (2012)
-sxi <- read.csv("SXI_EU.csv") # from Godet et al. (2015)
-species_name_data <- read.csv("species_name_data.csv", header=T)
+ssi_eu <- read.csv("raw_data/SSI_EU.csv") # from LeViol et al. (2012)
+sxi <- read.csv("raw_data/SXI_EU.csv") # from Godet et al. (2015)
+species_name_data <- read.csv("raw_data/species_name_data.csv", header=T)
+sti<-read.csv("raw_data/STI_Devictor.csv") 
+pecbms_hab <- read.csv2("raw_data/Habitat_class_PECBMS.csv") # available on https://pecbms.info/
 
-trait2 <- read.csv("life_history_bird_2018.csv",header = TRUE) # from Storchová et al. (2018)
-trait2$is_migrant <- rep(0, nrow(trait2))
-trait2$is_migrant[which(trait2$Short.distance.migrant==1 | trait2$Long.distance.migrant==1)] <- 1
+trait <- read.csv("raw_data/life_history_bird_2018.csv",header = TRUE) # from Storchová et al. (2018)
+trait$is_migrant <- rep(0, nrow(trait))
+trait$is_migrant[which(trait$Short.distance.migrant==1 | trait$Long.distance.migrant==1)] <- 1
+trait$is_insectivore<-rep(0, nrow(trait))
+trait$is_insectivore[which(trait$Arthropods_B==1 & trait$Other.invertebrates_B==1)]<-1
 
 ```
 
-#### Merge all data
+#### Merge species trends, traits and pressure data
 
 ```{r}
+# Species trends and traits
 
-global_data2 <- merge(trend_species, sxi, by.x="Species", by.y="Nom_Europe",all.x=T)
-global_data2 <- merge(global_data2, sti, by.x="Species", by.y="SPECIES",all.x=T)
-global_data2 <- merge(global_data2, pecbms_hab, by="Species",all.x=T)
-global_data2 <- merge(global_data2, synanthrop, by.x="Species", by.y="sp_name",all.x=T)
-global_data2 <- merge(global_data2,ssi_eu, by="Species",all.x=T)
+global_data <- merge(trend_species, sxi, by.x="Species", by.y="Name",all.x=T)
+global_data <- merge(global_data, sti, by.x="Species", by.y="SPECIES",all.x=T)
+global_data <- merge(global_data, pecbms_hab, by="Species",all.x=T)
+global_data <- merge(global_data, eunis_hab3, by="Species",all.x=T)
+global_data <- merge(global_data,ssi_eu, by="Species",all.x=T)
+global_data <- merge(global_data,trait[,c(3,67:88)], by="Species",all.x=T)
+global_data[,c("STI")] <- scale(global_data[,c("STI")])
+global_data$is_farmland <- as.factor(global_data$Habitat=="Farmland")
+global_data$is_forest <- as.factor(global_data$Habitat=="Forest")
 
-global_data2b <- merge(global_data2,trait2[,c(4,68:93)], by="Species",all.x=T)
-global_data2b[,c("STI")] <- scale(global_data2b[,c("STI")])
+# Remove outlier trends
 
-# Remove non significant trends
+global_data = global_data[abs(global_data$slope) < 50,]
 
-global_data2b$slope[global_data2b$first_order_pvalue>0.05] <- 0
+# Merge with pressures
 
-# Yeo-Johnson power transformation
+global_data <- merge(global_data,country_data2, by.x="CountryGroup", by.y="country",all.x=T)
 
-global_data2b$slope[global_data2b$slope<0] <- -log( -global_data2b$slope[global_data2b$slope<0] + 1) 
-global_data2b$slope[global_data2b$slope>0] <- log(global_data2b$slope[global_data2b$slope>0] + 1)
+# Scale
 
-global_data2b$is_farmland <- as.factor(global_data2b$Habitat=="Farmland")
-global_data2b$is_forest <- as.factor(global_data2b$Habitat=="Forest")
+Zscore<-function(x){
+  return((x-mean(x,na.rm=T))/sd(x,na.rm=T))
+}
 
-global_data3 <- merge(global_data2b,country_data2, by.x="CountryGroup", by.y="country2",all.x=T)
-global_data3b <- global_data3
+global_data_scale <- data.frame(global_data[,1:57],apply(global_data[,58:ncol(global_data)],2,Zscore))
 
-global_data3b[, c("temp_mean","d_temp","high_input_cover","d_hic","forest","d_forest","clc_mean","d_clc")] <- scale(global_data3b[,c("temp_mean","d_temp","high_input_cover","d_hic","forest","d_forest","clc_mean","d_clc")])
-global_data3b <- merge(global_data3b, centroid_b[,c("Country","lon2","lat2")], by.x="CountryGroup",by.y="Country",all.x=T)
 ```
 
 ### Applying PLS
 ```{r}
-gb_test <- global_data3b[, c("slope","clc_mean","d_clc","temp_mean","d_temp","high_input_cover","d_hic","forest","d_forest")]
-gb_test$slope <- scale(gb_test$slope)
 
-cv.modpls <- cv.plsR(gb_test$slope,gb_test[,-1],nt=10)
-res.cv.modpls <- cvtable(summary(cv.modpls))
-res1 <- plsR(gb_test$slope,gb_test[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative as NA in data
+# Selecting data
+
+data_pls <- global_data_scale[, c("slope","hico_2007","d_hico","for_2000","d_for","urb_2000","d_urb","temp_2000","d_temp")]
+data_pls$slope <- scale(data_pls$slope)
+
+# Initiate PLS
+
+cv.modpls<-cv.plsR(data_pls$slope,data_pls[,-1],K=10,nt=10, grouplist = createFolds(data_pls[,1], k = 10, list = F, returnTrain = FALSE))
+res.cv.modpls<-cvtable(summary(cv.modpls))
+res1<-plsR(data_pls$slope,data_pls[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative as NA in data
 colSums(res1$pvalstep)
 
-# searching the best number of component to keep via CV
-cv.modpls <- cv.plsR(slope~.,data=gb_test,nt=10,NK=100)
-res.cv.modpls=cvtable(summary(cv.modpls)) 
+# Searching the best number of component to keep via CV
 
-# using CV PRESS, 1 or 2 components must be kept
+cv.modpls<-cv.plsR(slope~.,data=data_pls,K=10,nt=10, grouplist = createFolds(data_pls[,1], k = 10, list = F, returnTrain = FALSE),NK=100)
+res.cv.modpls=cvtable(summary(cv.modpls))
+
+# Using CV PRESS, 1 or 2 components must be kept
 
 # PLS with 2 components
-res <- plsR(slope~.,data=gb_test,nt=2,pvals.expli=TRUE)
-trend.bootYT1=bootpls(res,typeboot="fmodel_np",R=10000)
-temp.ci=confints.bootpls(trend.bootYT1,indices=2:ncol(gb_test))
+res <- plsR(slope~.,data=data_pls,nt=2,pvals.expli=TRUE)
+trend.bootYT1=bootpls(res,typeboot="fmodel_np",R=2000)
+temp.ci=confints.bootpls(trend.bootYT1,indices=2:ncol(data_pls))
+plots.confints.bootpls(temp.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),legendpos ="topright")
 
 # PLS with 1 component
-resb <- plsR(slope~.,data=gb_test,nt=1,pvals.expli=TRUE)
-trend.bootYT1b=bootpls(resb,typeboot="fmodel_np",R=10000)
-temp.cib=confints.bootpls(trend.bootYT1b,indices=2:ncol(gb_test))
+resb <- plsR(slope~.,data=data_pls,nt=1,pvals.expli=TRUE)
+trend.bootYT1b=bootpls(resb,typeboot="fmodel_np",R=2000)
+temp.cib=confints.bootpls(trend.bootYT1b,indices=2:ncol(data_pls))
 
-# using the empirical distribution of the best number of component, we can obtain an empircal measure of the significance of each effect.
+# Using the empirical distribution of the best number of component, we can obtain an empircal measure of the significance of each effect.
 ind.BCa.YT1 <- (temp.ci[,7]<0&temp.ci[,8]<0)|(temp.ci[,7]>0&temp.ci[,8]>0) 
 ind.BCa.YT1b <- (temp.cib[,7]<0&temp.cib[,8]<0)|(temp.cib[,7]>0&temp.cib[,8]>0)
 (matind=(rbind(YT1b=ind.BCa.YT1b, YT1=ind.BCa.YT1)))
 pi.e=prop.table(res.cv.modpls$CVPress)[1:2]%*%matind
 signpred(t(matind),labsize=.5, plotsize = 12)
 
-coef_plot <- data.frame(var=c("Artificialised cover","Artificialisation trend","Mean temperature","Temperature trend",
-                            "High input farm cover", "High input farm cover trend",
-                            "Forest cover","Forest cover trend"),val=Pine.bootYT1$t0[-1,1],
+coef_plot <- data.frame(var=c("High input farm cover", "High input farm cover trend","Forest cover","Forest cover trend","Artificialised cover","Artificialisation trend","Mean temperature","Temperature trend"),val=trend.bootYT1$t0[-1,1],
                       inf=temp.ci[,1],sup=temp.ci[,2],t(matind), sig=t(pi.e))
 coef_plot$col_val<-"ns"
 coef_plot$col_val[which(coef_plot$sig>=0.95 & coef_plot$val>0)]<-"pos"
@@ -1184,185 +1380,128 @@ ggplot(coef_plot, aes(y=val, x=var))+
 # Causal effect analysis
 ### Functions for CCM and Smap
 ```{r}
-CCM_EU<-function(x, column, niter, press=c("short","mid","long")){
-  
-  x<-droplevels(x[which(!is.na(x$value)),])
 
-  if(length(levels(x$CountryGroup))>1 & nrow(x)>=50){
-    
-    long_ts<-as.data.frame(x %>% group_by(CountryGroup) %>% summarize(count=n(),ab=sum(Index),sd_i=sd(Index)))
-    x<-droplevels(subset(x, CountryGroup %in% long_ts$CountryGroup[which(long_ts$count>3 & long_ts$ab>0 & long_ts$sd_i>0)]))
-    long_ts2<-as.data.frame(x %>% group_by(CountryGroup) %>% summarize(count=n()))
-    
-    x<-data.frame(x %>% group_by(CountryGroup) %>% mutate(Index2=scale(Index),value2=scale(value)))
-    ab<-ddply(x, .(CountryGroup), .fun=add_row, .parallel = F)
-    Accm<-ab$Index[-nrow(ab)]
-    val<-ddply(x, .(CountryGroup), .fun=add_row, .parallel = F)
-    Bccm<-val$value[-nrow(val)]
-    
-    if(press=="short"){maxE<-2}
-    if(press=="mid"){maxE<-min(c(min(long_ts2$count),4))}
-    if(press=="long"){maxE<-min(c(min(long_ts2$count),6))}
-    Emat<-matrix(nrow=maxE-1, ncol=2); colnames(Emat)<-c("A", "B")
+source("CCM_Smap_function.R")
 
-    for(E in 2:maxE) {
-      Emat[E-1,"A"]<-SSR_pred_boot(A=Accm, E=E, predstep=1, tau=1)$rho 
-      Emat[E-1,"B"]<-SSR_pred_boot(A=Bccm, E=E, predstep=1, tau=1)$rho
-    }
-    
-    E_A<-which.max(na.omit(Emat[,1]))+1
-    E_B<-which.max(na.omit(Emat[,2]))+1
-    
-    if(length(E_A)>0 & length(E_B)>0){
-      signal_A_out<-SSR_check_signal(A=Accm, E=E_A, tau=1, predsteplist=1:10)
-      signal_B_out<-SSR_check_signal(A=Bccm, E=E_B, tau=1, predsteplist=1:10)
-      
-      if(summary(lm(signal_A_out$predatout$rho~signal_A_out$predatout$predstep))$coeff[2,1]<0 &
-         summary(lm(signal_B_out$predatout$rho~signal_B_out$predatout$predstep))$coeff[2,1]<0){
-        
-        CCM_boot_A<-CCM_boot(Accm, Bccm, E_A, tau=1, iterations=niter)
-        CCM_boot_B<-CCM_boot(Bccm, Accm, E_B, tau=1, iterations=niter)
-        CCM_significance_test<-ccmtest(CCM_boot_A,CCM_boot_B)
-      }
-      if(summary(lm(signal_A_out$predatout$rho~signal_A_out$predatout$predstep))$coeff[2,1]<0 &
-         summary(lm(signal_B_out$predatout$rho~signal_B_out$predatout$predstep))$coeff[2,1]>=0){
-        
-        CCM_boot_A<-CCM_boot(Accm, Bccm, E_A, tau=1, iterations=niter)
-        CCM_significance_test<-ccmtest(CCM_boot_A,CCM_boot_A)
-        CCM_significance_test[2]<-1
-      }
-      if(summary(lm(signal_A_out$predatout$rho~signal_A_out$predatout$predstep))$coeff[2,1]>=0 &
-         summary(lm(signal_B_out$predatout$rho~signal_B_out$predatout$predstep))$coeff[2,1]<0){
-        
-        CCM_boot_B<-CCM_boot(Bccm, Accm, E_B, tau=1, iterations=niter)
-        CCM_significance_test<-ccmtest(CCM_boot_B,CCM_boot_B)
-        CCM_significance_test[1]<-1
-      }
-      if(summary(lm(signal_A_out$predatout$rho~signal_A_out$predatout$predstep))$coeff[2,1]>=0 &
-         summary(lm(signal_B_out$predatout$rho~signal_B_out$predatout$predstep))$coeff[2,1]>=0){
-        CCM_significance_test<-c(1,1)
-      }
-      
-      result<-data.frame(a_cause_b=CCM_significance_test[1], # a = species, b= pressure
-                         b_cause_a=CCM_significance_test[2])
-      x<-as.data.frame(x %>% group_by(CountryGroup) %>% mutate(Index2=scale(Index),value2=scale(value)))
-      block<-data.frame(ind=x$Index2, pressure=x$value2)
-      if(result[2]>0.05 & result[1]<=0.05){ # b does not cause a but a causes b
-        block<-block[,c(2,1)] # effect from a to b
-        res_smap<-smap_intb(block)
-        strenght1<-res_smap[4]
-        strenght2<-0
-        min_str2<-firstq_str2<-med_str2<-thirdq_str2<-max_str2<-NA}
-      if(result[1]>0.05 & result[2]<=0.05){ # b causes a but a does not cause b
-        block<-block # effcet from b to a
-        res_smap<-smap_intb(block)
-        strenght1<-0
-        strenght2<-res_smap[4]
-        min_str2<-res_smap[1];firstq_str2<-res_smap[2];med_str2<-res_smap[3];thirdq_str2<-res_smap[5];max_str2<-res_smap[6]}
-      if(result[1]<=0.05 & result[2]<=0.05){ # a causes b and b causes a
-        res_smap<-smap_intb(block)
-        strenght2<-res_smap[4] # effect from b to a 
-        min_str2<-res_smap[1];firstq_str2<-res_smap[2];med_str2<-res_smap[3];thirdq_str2<-res_smap[5];max_str2<-res_smap[6]
-        block<-block[,c(2,1)]
-        strenght1<-smap_intb(block)[4] # effect from a to b
-      }
-      if(result[1]>0.05 & result[2]>0.05){
-        strenght1<-NA
-        strenght2<-NA
-        min_str2<-firstq_str2<-med_str2<-thirdq_str2<-max_str2<-NA
-      }
-    }else{
-      strenght1<-strenght2<-min_str2<-firstq_str2<-med_str2<-thirdq_str2<-max_str2<-NA
-      CCM_significance_test<-c(NA,NA)
-    }
-  }else{
-    strenght1<-strenght2<-min_str2<-firstq_str2<-med_str2<-thirdq_str2<-max_str2<-NA
-    CCM_significance_test<-c(NA,NA)
-  }
-  result2<-data.frame(a_cause_b=CCM_significance_test[1],
-                      b_cause_a=CCM_significance_test[2],
-                      strenght1, strenght2,min_str2,
-                      firstq_str2,med_str2,thirdq_str2,max_str2,
-                      E_A=ifelse(length(E_A)>0,E_A,NA),
-                      E_B=ifelse(length(E_B)>0,E_B,NA))
-  
-  return(result2)
-}
-
-smap_intb <- function(block){
-   # Determine the best theta
-    theta.examined <- seq(0, 10, by = 0.1)
-    th.test <-
-      pforeach(
-        i      = theta.examined,
-        .c     = rbind,
-        .cores = 7
-      )({
-        th.test0 <- block_lnlp(block, method = "s-map", tp = 1,columns = 2,
-                               theta  = i, silent = T, num_neighbors = 0)
-      })
-    
-    best.th <- th.test[th.test$mae == min(th.test$mae), 'theta']
-    
-    # Perform multivariate S-map to quantify interaction strengths
-    smapc.res <- block_lnlp(block, method = "s-map", tp = 1, columns=2,
-                            theta  = best.th, num_neighbors = 0, silent = T,
-                            save_smap_coefficients = T)
-    smapc.tmp <- smapc.res[[1]]$smap_coefficients
-    smapc.tmp <- as.data.frame(smapc.tmp)
-    
-    # Column names
-    colnames(smapc.tmp) <- c("effect_of_pressure","constant") 
-    smapc.tmp<-smapc.tmp[,1]
-    smapc.tmp<-c(summary(na.omit(smapc.tmp)))
-  return(smapc.tmp)
-}
 ```
+
 ### Pressure time-series
+
 ```{r}
-country_data_temp<-data.frame(year=1950:2018,country_data[8:76,])
-country_data_temp2<-melt(country_data_temp, id.vars="year")
+country_data_temp <- data.frame(year=2007:2016,country_data[88:97,])
+country_data_temp2 <- melt(country_data_temp, id.vars="year")
+names(country_data_temp2)[3] <- "temp"
+country_data_urb <- data.frame(year=2007:2016,country_data[16:25,])
+country_data_urb2 <- melt(country_data_urb, id.vars="year")
+names(country_data_urb2)[3] <- "urb"
+country_data_hico <- data.frame(year=2007:2016,country_data[551:560,])
+country_data_hico[country_data_hico==0]<-NA
+country_data_hico2 <- melt(country_data_hico, id.vars="year")
+names(country_data_hico2)[3] <- "hico"
+country_data_forest <- data.frame(year=c(2007:2016),country_data[c(580:589),])
+country_data_forest2 <- melt(country_data_forest, id.vars="year")
+names(country_data_forest2)[3] <- "forest"
 
-country_data_clc<-data.frame(year=c(1990,2000,2006,2012,2016),country_data[1:5,])
-country_data_clc2<-melt(country_data_clc, id.vars="year")
-country_data_clc2[c(11,12,121,122,146,151),3]<-NA # remove absurd values
+country_data_press <- merge(country_data_temp2, country_data_urb2, by=c("variable","year"))
+country_data_press <- merge(country_data_press, country_data_hico2, by=c("variable","year"))
+country_data_press <- merge(country_data_press, country_data_forest2, by=c("variable","year"))
 
-country_data_hic<-data.frame(year=2007:2016,input_country2[1:10,-1])
-country_data_hic2<-melt(country_data_hic, id.vars="year")
+df_press <- as.data.frame(df)
 
-country_data_forest<-data.frame(year=c(1990,2000,2005,2010,2015),foret_country[2:6,-c(1:2)])
-x<-as.data.frame(t(country_data_forest[,-1]))
-x$area<-t(foret_country[1,-c(1:2)])
-x2<-apply(x[,1:5], 2, function(z)(z/x$area))
-country_data_forest[,-1]<-t(x2)
-country_data_forest2<-melt(country_data_forest, id.vars="year")
+press <- country_data_press
+press$country <- as.character(press$variable)
+press$variable <- NULL
+press$country[press$country=="Czech.Republic"] <- "Czech Republic"
+press$country[press$country=="UK"] <- "United Kingdom"
+press$country[press$country=="Ireland"] <- "Republic of Ireland"
+df_press2 <- merge(press, df_press[,c("Species","CountryGroup","Year","Index","Index_SE","Abd")], by.x=c("country","year"), by.y=c("CountryGroup","Year"), all.x=T)
+df_press2 <- droplevels(df_press2[which(df_press2$Index >= df_press2$Index_SE),])
+
+to_remove <- data.frame(df_press2 %>% group_by(Species, country) %>% summarize(count=n()))
+df_press3 <- merge(df_press2,to_remove, by=c("Species","country"))
+to_remove2 <- data.frame(df_press2 %>% group_by(Species, country) %>% summarize(sum_ab=sum(Index)))
+df_press3 <- merge(df_press3,to_remove2, by=c("Species","country"))
+df_press3 <- df_press3[order(df_press3$Species, df_press3$country, df_press3$year),]
+
+# detrend when needed
+
+df_press4 <- data.frame(droplevels(na.omit(df_press3[df_press3$count>4 & df_press3$sum_ab>20 & df_press3$country!="Luxembourg",])) %>% group_by(Species, country) %>% mutate(temp_std=detrend_data(temp), urb_std=detrend_data(urb), hico_std=detrend_data(hico), forest_std=detrend_data(forest), Index_std=detrend_data(Index), Abd_std=detrend_data(Abd)))
+
+# multispatialCCM
+
+ccm_sp <- ddply(df_press4, .(Species), .fun = multisp_CCM, niter=100, .parallel = F, .progress = "text")
+ccm_sp2 <- ccm_sp
+ccm_sp2[is.na(ccm_sp2)] <- 1
+
+# S-map
+
+smap_sp <- dlply(droplevels(df_press4), .(Species, country), .fun = smap_fun_signif, ccm_sp2, .parallel = F, .progress = "text")
+```
+
+
+
+
+```{r}
+country_data_temp <- data.frame(year=1980:2016,country_data[61:97,])
+#data.frame(year=1980:2016,apply(country_data[61:97,],2,function(x){x/x[21]}))
+country_data_temp2 <- melt(country_data_temp, id.vars="year")
+
+country_data_urb <- data.frame(year=2004:2016,country_data[13:25,])
+#data.frame(year=2004:2016,apply(country_data[13:25,],2,function(x){x/x[1]}))
+#data.frame(year=1992:2016,apply(country_data[1:25,],2,function(x){x/x[9]}))
+#data.frame(year=c(1992,2000,2006,2012,2016),apply(country_data[c(1,9,15,21,25),],2,function(x){x/x[2]})) 
+country_data_urb2 <- melt(country_data_urb, id.vars="year")
+
+country_data_hic <- data.frame(year=2005:2016,country_data[534:545,])
+# data.frame(year=2005:2016,apply(country_data[534:545,],2,function(x){x/mean(x[1:5])}))
+country_data_hic[country_data_hic==0]<-NA
+country_data_hic2 <- melt(country_data_hic, id.vars="year")
+
+country_data_hico <- data.frame(year=2007:2016,country_data[551:560,])
+country_data_hico[country_data_hico==0]<-NA
+country_data_hicob <- data.frame(year=2007:2016,apply(country_data[551:560,],2,function(x){x/mean(x[1:3])}))
+country_data_hicob[,5] <- country_data[551:560,4]/country_data[557,4]
+country_data_hico2 <- melt(country_data_hico, id.vars="year")
+country_data_hico2b <- melt(country_data_hicob, id.vars="year")
+country_data_hico3 <- merge(country_data_hico2,country_data_hico2b, by=c("year","variable"))
+names(country_data_hico3)[3:4] <- c("value", "value.std")
+
+country_data_forest <- data.frame(year=c(1990,2000,2005,2010,2015, 2016),country_data[c(563,573,578,583,588,589),])
+#data.frame(year=c(1990,2000,2005,2010,2015),apply(country_data[c(563,573,578,583,588),],2,function(x){x/x[2]})) #data.frame(year=1990:2016,apply(country_data[563:589,],2,function(x){x/x[11]}))
+country_data_forest2 <- melt(country_data_forest, id.vars="year")
+
+country_data_pest <- data.frame(year=1990:2016,apply(country_data[252:278,],2,function(x){x/x[11]}))
+country_data_pest2 <- melt(country_data_pest, id.vars="year")
+
+country_data_inse <- data.frame(year=1990:2016,apply(country_data[222:248,],2,function(x){x/x[11]}))
+country_data_inse2 <- melt(country_data_inse, id.vars="year")
 ```
 
 ### Appying CCM and Smap on species/pressure time-series
 ```{r}
-df_press<-as.data.frame(df)
+df_press <- as.data.frame(df)
 
-press<-country_data_temp2
-press$country<-as.character(press$variable)
-press$country[press$country=="Czech.Republic"]<-"Czech_Republic"
-press$country[press$country=="UK"]<-"United_Kingdom"
-press$country[press$country=="Ireland"]<-"Republic_of_Ireland"
-df_press2<-merge(df_press, press, by.x=c("CountryGroup","Year"), by.y=c("country","year"), all.x=T)
-df_press2<-droplevels(df_press2[which(df_press2$Index>=df_press2$Index_SE),])
-ccm_temp<-ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=300, press="long", .parallel = F, .progress = "text")
-names(ccm_temp)[5]<-"temp"
+press <- country_data_temp2
+press$country <- as.character(press$variable)
+press$country[press$country=="Czech.Republic"] <- "Czech Republic"
+press$country[press$country=="UK"] <- "United Kingdom"
+press$country[press$country=="Ireland"] <- "Republic of Ireland"
+df_press2 <- merge(df_press, press, by.x=c("CountryGroup","Year"), by.y=c("country","year"), all.x=T)
+df_press2 <- droplevels(df_press2[which(df_press2$Index >= df_press2$Index_SE),])
+ccm_temp <- ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=300, press="long", .parallel = F, .progress = "text")
+names(ccm_temp)[5] <- "temp"
 
-press<-country_data_clc2
-press$country<-as.character(press$variable)
-press$country[press$country=="Czech.Republic"]<-"Czech_Republic"
-press$country[press$country=="UK"]<-"United_Kingdom"
-press$country[press$country=="Ireland"]<-"Republic_of_Ireland"
-df_press2<-merge(df_press, press, by.x=c("CountryGroup","Year"), by.y=c("country","year"), all.x=T)
-df_press2<-droplevels(df_press2[which(df_press2$Index>=df_press2$Index_SE),])
-ccm_clc<-ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=1000, .parallel = F, .progress = "text")
-names(ccm_clc)[5]<-"clc"
+press <- country_data_urb2
+press$country <- as.character(press$variable)
+press$country[press$country=="Czech.Republic"] <- "Czech Republic"
+press$country[press$country=="UK"] <- "United Kingdom"
+press$country[press$country=="Ireland"] <- "Republic of Ireland"
+df_press2 <- merge(df_press, press, by.x=c("CountryGroup","Year"), by.y=c("country","year"), all.x=T)
+df_press2 <- droplevels(df_press2[which(df_press2$Index >= df_press2$Index_SE),])
+ccm_urb<-ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=1000, press="mid", .parallel = F, .progress = "text")
+names(ccm_urb)[5]<-"urb"
 
-press<-country_data_hic2
+press <- country_data_hic2
 press$country<-as.character(press$variable)
 press$country[press$country=="Czech.Republic"]<-"Czech_Republic"
 press$country[press$country=="UK"]<-"United_Kingdom"
@@ -1372,6 +1511,36 @@ df_press2<-droplevels(df_press2[which(df_press2$Index>=df_press2$Index_SE),])
 ccm_hic<-ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=1000, press="mid", .parallel = F, .progress = "text")
 names(ccm_hic)[5]<-"hic"
 
+press <- country_data_hico3
+press$country<-as.character(press$variable)
+press$country[press$country=="Czech.Republic"]<-"Czech_Republic"
+press$country[press$country=="UK"]<-"United_Kingdom"
+press$country[press$country=="Ireland"]<-"Republic_of_Ireland"
+df_press2<-merge(df_press, press, by.x=c("CountryGroup","Year"), by.y=c("country","year"), all.x=T)
+df_press2<-droplevels(df_press2[which(df_press2$Index>=df_press2$Index_SE),])
+ccm_hico<-ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=1000, press="mid", .parallel = F, .progress = "text")
+names(ccm_hico)[5]<-"hico"
+
+press <- country_data_pest2
+press$country<-as.character(press$variable)
+press$country[press$country=="Czech.Republic"]<-"Czech_Republic"
+press$country[press$country=="UK"]<-"United_Kingdom"
+press$country[press$country=="Ireland"]<-"Republic_of_Ireland"
+df_press2<-merge(df_press, press, by.x=c("CountryGroup","Year"), by.y=c("country","year"), all.x=T)
+df_press2<-droplevels(df_press2[which(df_press2$Index>=df_press2$Index_SE),])
+ccm_pest<-ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=1000, press="mid", .parallel = F, .progress = "text")
+names(ccm_pest)[5]<-"pest"
+
+press <- country_data_inse2
+press$country<-as.character(press$variable)
+press$country[press$country=="Czech.Republic"]<-"Czech_Republic"
+press$country[press$country=="UK"]<-"United_Kingdom"
+press$country[press$country=="Ireland"]<-"Republic_of_Ireland"
+df_press2<-merge(df_press, press, by.x=c("CountryGroup","Year"), by.y=c("country","year"), all.x=T)
+df_press2<-droplevels(df_press2[which(df_press2$Index>=df_press2$Index_SE),])
+ccm_inse<-ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=1000, press="mid", .parallel = F, .progress = "text")
+names(ccm_inse)[5]<-"inse"
+
 press<-country_data_forest2
 press$country<-as.character(press$variable)
 press$country[press$country=="Czech.Republic"]<-"Czech_Republic"
@@ -1379,24 +1548,25 @@ press$country[press$country=="UK"]<-"United_Kingdom"
 press$country[press$country=="Ireland"]<-"Republic_of_Ireland"
 df_press2<-merge(df_press, press, by.x=c("CountryGroup","Year"), by.y=c("country","year"), all.x=T)
 df_press2<-droplevels(df_press2[which(df_press2$Index>=df_press2$Index_SE),])
-ccm_for<-ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=1000, .parallel = F, .progress = "text")
+ccm_for<-ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=1000, press="short", .parallel = F, .progress = "text")
 names(ccm_for)[5]<-"forest"
 
-sp_data<-merge(ccm_temp[,c(1,5)],ccm_clc[,c(1,5)], by="Species", all.x=T)
-sp_data<-merge(sp_data,ccm_hic[,c(1,5)], by="Species", all.x=T)
+sp_data<-merge(ccm_temp[,c(1,5)],ccm_urb[,c(1,5)], by="Species", all.x=T)
+sp_data<-merge(sp_data,ccm_hico[,c(1,5)], by="Species", all.x=T)
 sp_data<-merge(sp_data,ccm_for[,c(1,5)], by="Species", all.x=T)
 
-sp_data<-merge(sp_data,sxi, by.x="Species", by.y="Nom_Europe",all.x=T)
+sp_data<-merge(sp_data,sxi, by.x="Species", by.y="Name",all.x=T)
 sp_data<-merge(sp_data,sti, by.x="Species", by.y="SPECIES",all.x=T)
-sp_data<-merge(sp_data,trait2[,c(4,51,52,68:93)], by="Species",all.x=T)
+sp_data<-merge(sp_data,trait[,c("Species","Granivore_B","is_migrant","is_insectivore")], by="Species",all.x=T)
 sp_data<-merge(sp_data,pecbms_hab, by="Species",all.x=T)
-sp_data<-merge(sp_data,synanthrop, by.x="Species", by.y="sp_name",all.x=T)
 sp_data<-merge(sp_data,ssi_eu, by="Species",all.x=T)
+sp_data<-merge(sp_data,eunis_hab3, by="Species",all.x=T)
 
 sp_data$temp[is.na(sp_data$temp)]<-0
-sp_data$clc[is.na(sp_data$clc)]<-0
-sp_data$hic[is.na(sp_data$hic)]<-0
+sp_data$urb[is.na(sp_data$urb)]<-0
+sp_data$hico[is.na(sp_data$hico)]<-0
 sp_data$forest[is.na(sp_data$forest)]<-0
+sp_data$is_urban[is.na(sp_data$is_urban)]<-0
 sp_data$is_forest<-as.factor(sp_data$Habitat=="Forest")
 sp_data$is_farmland<-as.factor(sp_data$Habitat=="Farmland")
 ```
@@ -1404,21 +1574,23 @@ sp_data$is_farmland<-as.factor(sp_data$Habitat=="Farmland")
 ### Applying PLS on pressure influence vs. species traits
 ```{r}
 # Temperature vs traits
-trait_inter_data_temp<-sp_data[which(sp_data$temp!=0 | !is.na(sp_data$STI)),c("temp","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B",
-                                                 "Arthropods_B","Other.invertebrates_B","s1")]
+trait_inter_data_temp<-sp_data[which(sp_data$temp!=0 | !is.na(sp_data$STI)),c("temp","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
+
 trait_inter_data_temp$STI<-scale(trait_inter_data_temp$STI)
 trait_inter_data_temp$SSI<-scale(trait_inter_data_temp$SSI)
-trait_inter_data_temp$s1<-scale(trait_inter_data_temp$s1)
 trait_inter_data_temp$is_farmland<-as.numeric(trait_inter_data_temp$is_farmland)-1
 trait_inter_data_temp$is_forest<-as.numeric(trait_inter_data_temp$is_forest)-1
+trait_inter_data_temp$is_urban<-as.numeric(trait_inter_data_temp$is_urban)
 
 cv.modpls_temp<-cv.plsR(trait_inter_data_temp$temp,trait_inter_data_temp[,-1],nt=10)
 res.cv.modpls_temp<-cvtable(summary(cv.modpls_temp))
-res1<-plsR(trait_inter_data_temp$temp,trait_inter_data_temp[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE)
+res1<-plsR(trait_inter_data_temp$temp,trait_inter_data_temp[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative car NA
 colSums(res1$pvalstep)
 cv.modpls_temp<-cv.plsR(temp~.,data=trait_inter_data_temp,nt=10,NK=100)
 res.cv.modpls_temp<-cvtable(summary(cv.modpls_temp))
-res1<-plsR(temp~.,data=trait_inter_data_temp,nt=1,pvals.expli=TRUE)
+#plot(res.cv.modpls_temp)
+
+res1<-plsR(temp~.,data=trait_inter_data_temp,nt=2,pvals.expli=TRUE)
 
 temp.bootYT1=bootpls(res1,typeboot="fmodel_np",R=10000)
 boxplots.bootpls(temp.bootYT1,indices=2:ncol(trait_inter_data_temp))
@@ -1426,34 +1598,36 @@ temper.ci=confints.bootpls(temp.bootYT1,indices=2:ncol(trait_inter_data_temp))
 plots.confints.bootpls(temper.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
                        legendpos ="topright")
 
-res1b<-plsR(temp~.,data=trait_inter_data_temp,nt=2,pvals.expli=TRUE)
+res1b<-plsR(temp~.,data=trait_inter_data_temp,nt=3,pvals.expli=TRUE)
 temp.bootYT1b=bootpls(res1b,typeboot="fmodel_np",R=10000)
 temper.cib=confints.bootpls(temp.bootYT1b,indices=2:ncol(trait_inter_data_temp))
+plots.confints.bootpls(temper.cib,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
+                       legendpos ="topright")
 
-res1c<-plsR(temp~.,data=trait_inter_data_temp,nt=3,pvals.expli=TRUE)
+res1c<-plsR(temp~.,data=trait_inter_data_temp,nt=4,pvals.expli=TRUE)
 temp.bootYT1c=bootpls(res1c,typeboot="fmodel_np",R=10000)
 temper.cic=confints.bootpls(temp.bootYT1c,indices=2:ncol(trait_inter_data_temp))
+plots.confints.bootpls(temper.cic,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
+                       legendpos ="topright")
 
 res1d<-plsR(temp~.,data=trait_inter_data_temp,nt=4,pvals.expli=TRUE)
 temp.bootYT1d=bootpls(res1d,typeboot="fmodel_np",R=10000)
 temper.cid=confints.bootpls(temp.bootYT1d,indices=2:ncol(trait_inter_data_temp))
 
-res1e<-plsR(temp~.,data=trait_inter_data_temp,nt=5,pvals.expli=TRUE)
-temp.bootYT1e=bootpls(res1e,typeboot="fmodel_np",R=10000)
-temper.cie=confints.bootpls(temp.bootYT1e,indices=2:ncol(trait_inter_data_temp))
 
-ind.BCa.YT1 <- (temper.ci[,7]<0&temper.ci[,8]<0)|(temper.ci[,7]>0&temper.ci[,8]>0)
-ind.BCa.YT1b <- (temper.cib[,7]<0&temper.cib[,8]<0)|(temper.cib[,7]>0&temper.cib[,8]>0)
-ind.BCa.YT1c <- (temper.cic[,7]<0&temper.cic[,8]<0)|(temper.cic[,7]>0&temper.cic[,8]>0)
-ind.BCa.YT1d <- (temper.cid[,7]<0&temper.cid[,8]<0)|(temper.cid[,7]>0&temper.cid[,8]>0)
-ind.BCa.YT1e <- (temper.cie[,7]<0&temper.cie[,8]<0)|(temper.cie[,7]>0&temper.cie[,8]>0)
+ind.BCa.pineYT1 <- (temper.ci[,7]<0&temper.ci[,8]<0)|(temper.ci[,7]>0&temper.ci[,8]>0)
+ind.BCa.pineYT1b <- (temper.cib[,7]<0&temper.cib[,8]<0)|(temper.cib[,7]>0&temper.cib[,8]>0)
+ind.BCa.pineYT1c <- (temper.cic[,7]<0&temper.cic[,8]<0)|(temper.cic[,7]>0&temper.cic[,8]>0)
+ind.BCa.pineYT1d <- (temper.cid[,7]<0&temper.cid[,8]<0)|(temper.cid[,7]>0&temper.cid[,8]>0)
 
-(matind=(rbind(YT1=ind.BCa.YT1, YT1b=ind.BCa.YT1b, YT1c=ind.BCa.YT1c, YT1d=ind.BCa.YT1d, YT1e=ind.BCa.YT1e)))
-pi.e=(prop.table(res.cv.modpls_temp$CVPress)[c(1:5)]/sum(prop.table(res.cv.modpls_temp$CVPress)[c(1:5)]))%*%matind
+
+(matind=(rbind(YT1=ind.BCa.pineYT1, YT1b=ind.BCa.pineYT1b, YT1c=ind.BCa.pineYT1c, YT1d=ind.BCa.pineYT1d)))
+pi.e=(prop.table(res.cv.modpls_temp$CVPress)[c(1:4)]/sum(prop.table(res.cv.modpls_temp$CVPress)[c(1:4)]))%*%matind
+pi.e
 signpred(t(matind),labsize=.5, plotsize = 12)
 
 coef_plot_temp<-data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
-                                 "Granivorous diet","Arthropod diet","Other invertebrate diet","Synanthropy"),val=temp.bootYT1c$t0[-1,1],
+                                 "Granivorous diet","Invertebrate diet","Synanthropy"),val=temp.bootYT1c$t0[-1,1],
                            inf=temper.cic[,7],sup=temper.cic[,8],t(matind),sig=t(pi.e))
 coef_plot_temp$col_val<-"ns"
 coef_plot_temp$col_val[which(coef_plot_temp$sig>=0.95 & coef_plot_temp$val>0)]<-"pos"
@@ -1461,109 +1635,110 @@ coef_plot_temp$col_val[which(coef_plot_temp$sig>=0.95 & coef_plot_temp$val<0)]<-
 
 # Artificialisation vs traits
 
-trait_inter_data_clc<-sp_data[which(sp_data$clc!=0 | !is.na(sp_data$STI)),c("clc","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B",
-                                                 "Arthropods_B","Other.invertebrates_B","s1")] 
-trait_inter_data_clc$STI<-scale(trait_inter_data_clc$STI)
-trait_inter_data_clc$SSI<-scale(trait_inter_data_clc$SSI)
-trait_inter_data_clc$s1<-scale(trait_inter_data_clc$s1)
-trait_inter_data_clc$is_farmland<-as.numeric(trait_inter_data_clc$is_farmland)-1
-trait_inter_data_clc$is_forest<-as.numeric(trait_inter_data_clc$is_forest)-1
+trait_inter_data_urb<-sp_data[which(sp_data$urb!=0 | !is.na(sp_data$STI)),c("urb","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
 
-cv.modpls_clc<-cv.plsR(trait_inter_data_clc$clc,trait_inter_data_clc[,-1],nt=10)
-res.cv.modpls_clc<-cvtable(summary(cv.modpls_clc))
-res2<-plsR(trait_inter_data_clc$clc,trait_inter_data_clc[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) 
+trait_inter_data_urb$STI<-scale(trait_inter_data_urb$STI)
+trait_inter_data_urb$SSI<-scale(trait_inter_data_urb$SSI)
+trait_inter_data_urb$is_farmland<-as.numeric(trait_inter_data_urb$is_farmland)-1
+trait_inter_data_urb$is_forest<-as.numeric(trait_inter_data_urb$is_forest)-1
+trait_inter_data_urb$is_urban<-as.numeric(trait_inter_data_urb$is_urban)
+
+cv.modpls_urb<-cv.plsR(trait_inter_data_urb$urb,trait_inter_data_urb[,-1],nt=10)
+res.cv.modpls_urb<-cvtable(summary(cv.modpls_urb))
+res2<-plsR(trait_inter_data_urb$urb,trait_inter_data_urb[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) 
 colSums(res2$pvalstep)
-cv.modpls_clc<-cv.plsR(clc~.,data=trait_inter_data_clc,nt=10,NK=100)
-res.cv.modpls_clc<-cvtable(summary(cv.modpls_clc))
-res2<-plsR(clc~.,data=trait_inter_data_clc,nt=1,pvals.expli=TRUE)
+cv.modpls_urb<-cv.plsR(urb~.,data=trait_inter_data_urb,nt=10,NK=100)
+res.cv.modpls_urb<-cvtable(summary(cv.modpls_urb))
+res2<-plsR(urb~.,data=trait_inter_data_urb,nt=1,pvals.expli=TRUE)
 
-clc.bootYT1=bootpls(res2,typeboot="fmodel_np",R=10000)
-boxplots.bootpls(clc.bootYT1,indices=2:ncol(trait_inter_data_clc))
-clcer.ci=confints.bootpls(clc.bootYT1,indices=2:ncol(trait_inter_data_clc))
-plots.confints.bootpls(clcer.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
+urb.bootYT1=bootpls(res2,typeboot="fmodel_np",R=10000)
+boxplots.bootpls(urb.bootYT1,indices=2:ncol(trait_inter_data_urb))
+urber.ci=confints.bootpls(urb.bootYT1,indices=2:ncol(trait_inter_data_urb))
+plots.confints.bootpls(urber.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
                        legendpos ="topright")
 
-res2b<-plsR(clc~.,data=trait_inter_data_clc,nt=3,pvals.expli=TRUE)
-clc.bootYT1b=bootpls(res2b,typeboot="fmodel_np",R=10000)
-clcer.cib=confints.bootpls(clc.bootYT1b,indices=2:ncol(trait_inter_data_clc))
+res2b<-plsR(urb~.,data=trait_inter_data_urb,nt=3,pvals.expli=TRUE)
+urb.bootYT1b=bootpls(res2b,typeboot="fmodel_np",R=10000)
+urber.cib=confints.bootpls(urb.bootYT1b,indices=2:ncol(trait_inter_data_urb))
+plots.confints.bootpls(urber.cib,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
+                       legendpos ="topright")
 
-res2c<-plsR(clc~.,data=trait_inter_data_clc,nt=4,pvals.expli=TRUE)
-clc.bootYT1c=bootpls(res2c,typeboot="fmodel_np",R=10000)
-clcer.cic=confints.bootpls(clc.bootYT1c,indices=2:ncol(trait_inter_data_clc))
+res2c<-plsR(urb~.,data=trait_inter_data_urb,nt=4,pvals.expli=TRUE)
+urb.bootYT1c=bootpls(res2c,typeboot="fmodel_np",R=10000)
+urber.cic=confints.bootpls(urb.bootYT1c,indices=2:ncol(trait_inter_data_urb))
 
-res2d<-plsR(clc~.,data=trait_inter_data_clc,nt=5,pvals.expli=TRUE)
-clc.bootYT1d=bootpls(res2d,typeboot="fmodel_np",R=10000)
-clcer.cid=confints.bootpls(clc.bootYT1d,indices=2:ncol(trait_inter_data_clc))
+res2d<-plsR(urb~.,data=trait_inter_data_urb,nt=5,pvals.expli=TRUE)
+urb.bootYT1d=bootpls(res2d,typeboot="fmodel_np",R=10000)
+urber.cid=confints.bootpls(urb.bootYT1d,indices=2:ncol(trait_inter_data_urb))
 
-ind.BCa.YT1 <- (clcer.ci[,7]<0&clcer.ci[,8]<0)|(clcer.ci[,7]>0&clcer.ci[,8]>0)
-ind.BCa.YT1b <- (clcer.cib[,7]<0&clcer.cib[,8]<0)|(clcer.cib[,7]>0&clcer.cib[,8]>0)
-ind.BCa.YT1c <- (clcer.cic[,7]<0&clcer.cic[,8]<0)|(clcer.cic[,7]>0&clcer.cic[,8]>0)
-ind.BCa.YT1d <- (clcer.cid[,7]<0&clcer.cid[,8]<0)|(clcer.cid[,7]>0&clcer.cid[,8]>0)
+ind.BCa.YT1 <- (urber.ci[,7]<0&urber.ci[,8]<0)|(urber.ci[,7]>0&urber.ci[,8]>0)
+ind.BCa.YT1b <- (urber.cib[,7]<0&urber.cib[,8]<0)|(urber.cib[,7]>0&urber.cib[,8]>0)
+ind.BCa.YT1c <- (urber.cic[,7]<0&urber.cic[,8]<0)|(urber.cic[,7]>0&urber.cic[,8]>0)
+ind.BCa.YT1d <- (urber.cid[,7]<0&urber.cid[,8]<0)|(urber.cid[,7]>0&urber.cid[,8]>0)
 (matind=(rbind(YT1=ind.BCa.YT1,YT1b=ind.BCa.YT1b,YT1c=ind.BCa.YT1c,YT1d=ind.BCa.YT1d)))
-pi.e=(prop.table(res.cv.modpls_clc$CVPress)[c(1,3:5)]/sum(prop.table(res.cv.modpls_clc$CVPress)[c(1,3:5)]))%*%matind
+pi.e=(prop.table(res.cv.modpls_urb$CVPress)[c(1,3:5)]/sum(prop.table(res.cv.modpls_urb$CVPress)[c(1,3:5)]))%*%matind
 signpred(t(matind),labsize=.5, plotsize = 12)
 
-coef_plot_clc<-data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
-                                 "Granivorous diet","Arthropod diet","Other invertebrate diet","Synanthropy"),val=clc.bootYT1c$t0[-1,1],
-                           inf=clcer.cic[,7],sup=clcer.cic[,8],t(matind),sig=t(pi.e))
-coef_plot_clc$col_val<-"ns"
-coef_plot_clc$col_val[which(coef_plot_clc$sig>=0.95 & coef_plot_clc$val>0)]<-"pos"
-coef_plot_clc$col_val[which(coef_plot_clc$sig>=0.95 & coef_plot_clc$val<0)]<-"neg"
+coef_plot_urb<-data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
+                                 "Granivorous diet","Arthropod diet","Other invertebrate diet","Synanthropy"),val=urb.bootYT1c$t0[-1,1],
+                           inf=urber.cic[,7],sup=urber.cic[,8],t(matind),sig=t(pi.e))
+coef_plot_urb$col_val<-"ns"
+coef_plot_urb$col_val[which(coef_plot_urb$sig>=0.95 & coef_plot_urb$val>0)]<-"pos"
+coef_plot_urb$col_val[which(coef_plot_urb$sig>=0.95 & coef_plot_urb$val<0)]<-"neg"
 
 # High input farm cover vs traits
 
-trait_inter_data_hic<-sp_data[which(sp_data$hic!=0| !is.na(sp_data$STI)), c("hic","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B",
-                                                 "Arthropods_B","Other.invertebrates_B","s1")]
-trait_inter_data_hic$STI<-scale(trait_inter_data_hic$STI)
-trait_inter_data_hic$SSI<-scale(trait_inter_data_hic$SSI)
-trait_inter_data_hic$s1<-scale(trait_inter_data_hic$s1)
-trait_inter_data_hic$is_farmland<-as.numeric(trait_inter_data_hic$is_farmland)-1
-trait_inter_data_hic$is_forest<-as.numeric(trait_inter_data_hic$is_forest)-1
+trait_inter_data_hico<-sp_data[which(sp_data$hico!=0 | !is.na(sp_data$STI)),c("hico","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
 
-cv.modpls_hic<-cv.plsR(trait_inter_data_hic$hic,trait_inter_data_hic[,-1],nt=10)
-res.cv.modpls_hic<-cvtable(summary(cv.modpls_hic))
-res3<-plsR(trait_inter_data_hic$hic,trait_inter_data_hic[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) 
+trait_inter_data_hico$STI<-scale(trait_inter_data_hico$STI)
+trait_inter_data_hico$SSI<-scale(trait_inter_data_hico$SSI)
+trait_inter_data_hico$is_farmland<-as.numeric(trait_inter_data_hico$is_farmland)-1
+trait_inter_data_hico$is_forest<-as.numeric(trait_inter_data_hico$is_forest)-1
+trait_inter_data_hico$is_urban<-as.numeric(trait_inter_data_hico$is_urban)
+
+cv.modpls_hico<-cv.plsR(trait_inter_data_hico$hico,trait_inter_data_hico[,-1],nt=10)
+res.cv.modpls_hico<-cvtable(summary(cv.modpls_hico))
+res3<-plsR(trait_inter_data_hico$hico,trait_inter_data_hico[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) 
 colSums(res3$pvalstep)
-cv.modpls_hic<-cv.plsR(hic~.,data=trait_inter_data_hic,nt=10,NK=100)
-res.cv.modpls_hic<-cvtable(summary(cv.modpls_hic))
-plot(res.cv.modpls_hic)
-res3<-plsR(hic~.,data=trait_inter_data_hic,nt=1,pvals.expli=TRUE)
-biplot(res3$tt,res3$pp)
+cv.modpls_hico<-cv.plsR(hico~.,data=trait_inter_data_hico,nt=10,NK=100)
+res.cv.modpls_hico<-cvtable(summary(cv.modpls_hico))
+plot(res.cv.modpls_hico)
+res3<-plsR(hico~.,data=trait_inter_data_hico,nt=1,pvals.expli=TRUE)
 
-hic.bootYT1=bootpls(res3,typeboot="fmodel_np",R=10000)
-boxplots.bootpls(hic.bootYT1,indices=2:ncol(trait_inter_data_hic))
-hicer.ci=confints.bootpls(hic.bootYT1,indices=2:ncol(trait_inter_data_hic))
-plots.confints.bootpls(hicer.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
+hico.bootYT1=bootpls(res3,typeboot="fmodel_np",R=10000)
+boxplots.bootpls(hico.bootYT1,indices=2:ncol(trait_inter_data_hico))
+hicoer.ci=confints.bootpls(hico.bootYT1,indices=2:ncol(trait_inter_data_hico))
+plots.confints.bootpls(hicoer.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
                        legendpos ="topright")
 
-res3b<-plsR(hic~.,data=trait_inter_data_hic,nt=2,pvals.expli=TRUE)
-hic.bootYT1b=bootpls(res3b,typeboot="fmodel_np",R=10000)
-hicer.cib=confints.bootpls(hic.bootYT1b,indices=2:ncol(trait_inter_data_hic))
+res3b<-plsR(hico~.,data=trait_inter_data_hico,nt=2,pvals.expli=TRUE)
+hico.bootYT1b=bootpls(res3b,typeboot="fmodel_np",R=10000)
+hicoer.cib=confints.bootpls(hico.bootYT1b,indices=2:ncol(trait_inter_data_hico))
 
-ind.BCa.YT1 <- (hicer.ci[,7]<0&hicer.ci[,8]<0)|(hicer.ci[,7]>0&hicer.ci[,8]>0)
-ind.BCa.YT1b <- (hicer.cib[,7]<0&hicer.cib[,8]<0)|(hicer.cib[,7]>0&hicer.cib[,8]>0)
+ind.BCa.YT1 <- (hicoer.ci[,7]<0&hicoer.ci[,8]<0)|(hicoer.ci[,7]>0&hicoer.ci[,8]>0)
+ind.BCa.YT1b <- (hicoer.cib[,7]<0&hicoer.cib[,8]<0)|(hicoer.cib[,7]>0&hicoer.cib[,8]>0)
 
 (matind=(rbind(YT1=ind.BCa.YT1,YT1b=ind.BCa.YT1b)))
-pi.e=(prop.table(res.cv.modpls_hic$CVPress)[1:2]/sum(prop.table(res.cv.modpls_hic$CVPress)[1:2]))%*%matind
+pi.e=(prop.table(res.cv.modpls_hico$CVPress)[1:2]/sum(prop.table(res.cv.modpls_hico$CVPress)[1:2]))%*%matind
 pi.e
 signpred(t(matind),labsize=.5, plotsize = 12)
 
-coef_plot_hic<-data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
-                                 "Granivorous diet","Arthropod diet","Other invertebrate diet","Synanthropy"),val=hic.bootYT1$t0[-1,1],
-                           inf=hicer.ci[,7],sup=hicer.ci[,8],t(matind),sig=t(pi.e))
-coef_plot_hic$col_val<-"ns"
-coef_plot_hic$col_val[which(coef_plot_hic$sig>=0.95 & coef_plot_hic$val>0)]<-"pos"
-coef_plot_hic$col_val[which(coef_plot_hic$sig>=0.95 & coef_plot_hic$val<0)]<-"neg"
+coef_plot_hico<-data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
+                                 "Granivorous diet","Arthropod diet","Other invertebrate diet","Synanthropy"),val=hico.bootYT1$t0[-1,1],
+                           inf=hicoer.ci[,7],sup=hicoer.ci[,8],t(matind),sig=t(pi.e))
+coef_plot_hico$col_val<-"ns"
+coef_plot_hico$col_val[whicoh(coef_plot_hico$sig>=0.95 & coef_plot_hico$val>0)]<-"pos"
+coef_plot_hico$col_val[whicoh(coef_plot_hico$sig>=0.95 & coef_plot_hico$val<0)]<-"neg"
 
 # Forest vs traits
 
-trait_inter_data_forest<-sp_data[which(sp_data$forest!=0 | !is.na(sp_data$STI)),c("forest","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B",
-                                                 "Arthropods_B","Other.invertebrates_B","s1")]
+trait_inter_data_forest<-sp_data[which(sp_data$forest!=0 | !is.na(sp_data$STI)),c("forest","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
+
 trait_inter_data_forest$STI<-scale(trait_inter_data_forest$STI)
 trait_inter_data_forest$SSI<-scale(trait_inter_data_forest$SSI)
-trait_inter_data_forest$s1<-scale(trait_inter_data_forest$s1)
 trait_inter_data_forest$is_farmland<-as.numeric(trait_inter_data_forest$is_farmland)-1
 trait_inter_data_forest$is_forest<-as.numeric(trait_inter_data_forest$is_forest)-1
+trait_inter_data_forest$is_urban<-as.numeric(trait_inter_data_forest$is_urban)
 
 cv.modpls_forest<-cv.plsR(trait_inter_data_forest$forest,trait_inter_data_forest[,-1],nt=10)
 res.cv.modpls_forest<-cvtable(summary(cv.modpls_forest))

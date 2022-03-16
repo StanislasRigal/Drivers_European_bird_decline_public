@@ -34,3 +34,6 @@ require(pforeach)
 require(RVAideMemoire)
 require(kimisc)
 library(plsRglm)
+library(forecast)
+#library(caret)
+
