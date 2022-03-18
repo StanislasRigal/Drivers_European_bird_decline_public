@@ -1436,6 +1436,56 @@ ccm_sp2[is.na(ccm_sp2)] <- 1
 # S-map
 
 smap_sp <- dlply(droplevels(df_press4), .(Species, country), .fun = smap_fun_signif, ccm_sp2, .parallel = F, .progress = "text")
+
+smap_sp_res <- data.frame(.id=NA,temp_smap=NA,urb_smap=NA,hico_smap=NA,forest_smap=NA)
+for(i in levels(df_press4$Species)){
+ sub_smap_sp <- smap_sp[grepl(i,names(smap_sp))]
+ sub_smap_sp_res <- ldply(sub_smap_sp, .fun=function(x){
+ if(is.na(x$res_ccm)){
+  temp_smap <- urb_smap <- hico_smap <- forest_smap <- NA
+ }else{
+  if(x$pvalue<0.05 & x$res_ccm$temp_cause_species<0.05 & !is.null(x$coefficients$temp)){
+   temp_smap <- na.omit(x$coefficients$temp)
+  }else{temp_smap <- NA}
+  if(x$pvalue<0.05 & x$res_ccm$urb_cause_species<0.05 & !is.null(x$coefficients$urb)){
+   urb_smap <- na.omit(x$coefficients$urb)
+  }else{urb_smap <- NA}
+  if(x$pvalue<0.05 & x$res_ccm$hico_cause_species<0.05 & !is.null(x$coefficients$hico)){
+   hico_smap <- na.omit(x$coefficients$hico)
+  }else{hico_smap <- NA}
+  if(x$pvalue<0.05 & x$res_ccm$forest_cause_species<0.05 & !is.null(x$coefficients$forest)){
+   forest_smap <- na.omit(x$coefficients$forest)
+  }else{forest_smap <- NA}
+ }
+ return(data.frame(temp_smap, urb_smap, hico_smap, forest_smap))
+ })
+ smap_sp_res <- rbind(smap_sp_res,sub_smap_sp_res)
+}
+smap_sp_res <- smap_sp_res[-1,]
+smap_sp_res$Species <- sub("\\..*","",smap_sp_res$.id)
+
+smap_sp_res_long <- melt(smap_sp_res[,-1], id.vars="Species")
+for(i in levels(as.factor(smap_sp_res_long$Species))){
+ print(ggplot(smap_sp_res_long[smap_sp_res_long$Species==i,], aes(variable, value)) + 
+    geom_boxplot() +
+    scale_fill_viridis(discrete = TRUE, alpha=0.6) + theme_modern() +
+    theme(
+        legend.position="none",
+        plot.title = element_text(size=11)
+    )+xlab(i))
+}
+
+smap_sp_mean <- data.frame(smap_sp_res[,-1] %>% group_by(Species) %>% summarize(temp=mean(temp_smap, na.rm=T),
+urb=mean(urb_smap, na.rm=T),
+hico=mean(hico_smap, na.rm=T),
+forest=mean(forest_smap, na.rm=T)))
+
+smap_sp_med <- data.frame(smap_sp_res[,-1] %>% group_by(Species) %>% summarize(temp=median(temp_smap, na.rm=T),
+urb=median(urb_smap, na.rm=T),
+hico=median(hico_smap, na.rm=T),
+forest=median(forest_smap, na.rm=T)))
+
+
 ```
 
 
@@ -1555,6 +1605,8 @@ sp_data<-merge(ccm_temp[,c(1,5)],ccm_urb[,c(1,5)], by="Species", all.x=T)
 sp_data<-merge(sp_data,ccm_hico[,c(1,5)], by="Species", all.x=T)
 sp_data<-merge(sp_data,ccm_for[,c(1,5)], by="Species", all.x=T)
 
+sp_data<-smap_sp_mean
+
 sp_data<-merge(sp_data,sxi, by.x="Species", by.y="Name",all.x=T)
 sp_data<-merge(sp_data,sti, by.x="Species", by.y="SPECIES",all.x=T)
 sp_data<-merge(sp_data,trait[,c("Species","Granivore_B","is_migrant","is_insectivore")], by="Species",all.x=T)
@@ -1572,241 +1624,316 @@ sp_data$is_farmland<-as.factor(sp_data$Habitat=="Farmland")
 ```
 
 ### Applying PLS on pressure influence vs. species traits
+
+#### Temperature vs traits
 ```{r}
-# Temperature vs traits
-trait_inter_data_temp<-sp_data[which(sp_data$temp!=0 | !is.na(sp_data$STI)),c("temp","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
+# Select data for PLS
 
-trait_inter_data_temp$STI<-scale(trait_inter_data_temp$STI)
-trait_inter_data_temp$SSI<-scale(trait_inter_data_temp$SSI)
-trait_inter_data_temp$is_farmland<-as.numeric(trait_inter_data_temp$is_farmland)-1
-trait_inter_data_temp$is_forest<-as.numeric(trait_inter_data_temp$is_forest)-1
-trait_inter_data_temp$is_urban<-as.numeric(trait_inter_data_temp$is_urban)
+trait_inter_data_temp <- sp_data[which(sp_data$temp!=0), c("temp","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
 
-cv.modpls_temp<-cv.plsR(trait_inter_data_temp$temp,trait_inter_data_temp[,-1],nt=10)
-res.cv.modpls_temp<-cvtable(summary(cv.modpls_temp))
-res1<-plsR(trait_inter_data_temp$temp,trait_inter_data_temp[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative car NA
+# Scale data
+
+trait_inter_data_temp$STI <- scale(trait_inter_data_temp$STI)
+trait_inter_data_temp$SSI <- scale(trait_inter_data_temp$SSI)
+trait_inter_data_temp$is_farmland <- as.numeric(trait_inter_data_temp$is_farmland)-1
+trait_inter_data_temp$is_forest <- as.numeric(trait_inter_data_temp$is_forest)-1
+trait_inter_data_temp$is_urban <- as.numeric(trait_inter_data_temp$is_urban)
+
+# Find the number of latent value
+
+cv.modpls_temp <- cv.plsR(trait_inter_data_temp$temp,trait_inter_data_temp[,-1],nt=10)
+res.cv.modpls_temp <- cvtable(summary(cv.modpls_temp))
+res_pls_temp <- plsR(trait_inter_data_temp$temp,trait_inter_data_temp[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative because NA in some columns
 colSums(res1$pvalstep)
-cv.modpls_temp<-cv.plsR(temp~.,data=trait_inter_data_temp,nt=10,NK=100)
-res.cv.modpls_temp<-cvtable(summary(cv.modpls_temp))
-#plot(res.cv.modpls_temp)
+cv.modpls_temp <- cv.plsR(temp~.,data=trait_inter_data_temp,nt=10,NK=100)
+res.cv.modpls_temp <- cvtable(summary(cv.modpls_temp))
 
-res1<-plsR(temp~.,data=trait_inter_data_temp,nt=2,pvals.expli=TRUE)
+# Run PLS
 
-temp.bootYT1=bootpls(res1,typeboot="fmodel_np",R=10000)
+res_pls_temp <- plsR(temp~.,data=trait_inter_data_temp,nt=1,pvals.expli=TRUE)
+
+# Plot PLS
+
+temp.bootYT1 <- bootpls(res_pls_temp,typeboot="fmodel_np",R=10000)
 boxplots.bootpls(temp.bootYT1,indices=2:ncol(trait_inter_data_temp))
-temper.ci=confints.bootpls(temp.bootYT1,indices=2:ncol(trait_inter_data_temp))
-plots.confints.bootpls(temper.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
+temp.ci <- confints.bootpls(temp.bootYT1,indices=2:ncol(trait_inter_data_temp))
+plots.confints.bootpls(temp.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
                        legendpos ="topright")
 
-res1b<-plsR(temp~.,data=trait_inter_data_temp,nt=3,pvals.expli=TRUE)
-temp.bootYT1b=bootpls(res1b,typeboot="fmodel_np",R=10000)
-temper.cib=confints.bootpls(temp.bootYT1b,indices=2:ncol(trait_inter_data_temp))
-plots.confints.bootpls(temper.cib,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
-                       legendpos ="topright")
+ind.BCa.tempYT1 <- (temp.ci[,7] < 0 & temp.ci[,8] < 0) | (temp.ci[,7] > 0 & temp.ci[,8] > 0)
 
-res1c<-plsR(temp~.,data=trait_inter_data_temp,nt=4,pvals.expli=TRUE)
-temp.bootYT1c=bootpls(res1c,typeboot="fmodel_np",R=10000)
-temper.cic=confints.bootpls(temp.bootYT1c,indices=2:ncol(trait_inter_data_temp))
-plots.confints.bootpls(temper.cic,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
-                       legendpos ="topright")
+# Save results
 
-res1d<-plsR(temp~.,data=trait_inter_data_temp,nt=4,pvals.expli=TRUE)
-temp.bootYT1d=bootpls(res1d,typeboot="fmodel_np",R=10000)
-temper.cid=confints.bootpls(temp.bootYT1d,indices=2:ncol(trait_inter_data_temp))
+matind <- rbind(YT1=ind.BCa.tempYT1)
+pi.e <- (prop.table(res.cv.modpls_temp$CVPress)[c(1)]/sum(prop.table(res.cv.modpls_temp$CVPress)[c(1)])) %*% matind
 
+coef_plot_temp <- data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
+                                 "Granivorous diet","Invertebrate diet","Synanthropy"),
+                                 val=temp.bootYT1$t0[-1,1],
+                                 inf=temp.ci[,7],sup=temp.ci[,8],t(matind),
+                                 sig=t(pi.e))
+coef_plot_temp$col_val <- "ns"
+coef_plot_temp$col_val[which(coef_plot_temp$sig >= 0.95 & coef_plot_temp$val > 0)] <- "pos"
+coef_plot_temp$col_val[which(coef_plot_temp$sig >= 0.95 & coef_plot_temp$val < 0)]<-"neg"
+```
 
-ind.BCa.pineYT1 <- (temper.ci[,7]<0&temper.ci[,8]<0)|(temper.ci[,7]>0&temper.ci[,8]>0)
-ind.BCa.pineYT1b <- (temper.cib[,7]<0&temper.cib[,8]<0)|(temper.cib[,7]>0&temper.cib[,8]>0)
-ind.BCa.pineYT1c <- (temper.cic[,7]<0&temper.cic[,8]<0)|(temper.cic[,7]>0&temper.cic[,8]>0)
-ind.BCa.pineYT1d <- (temper.cid[,7]<0&temper.cid[,8]<0)|(temper.cid[,7]>0&temper.cid[,8]>0)
+#### Urbanisation vs traits
+```{r}
+# Select data for PLS
 
+trait_inter_data_urb <- sp_data[,#which(sp_data$urb!=0),
+c("urb","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
 
-(matind=(rbind(YT1=ind.BCa.pineYT1, YT1b=ind.BCa.pineYT1b, YT1c=ind.BCa.pineYT1c, YT1d=ind.BCa.pineYT1d)))
-pi.e=(prop.table(res.cv.modpls_temp$CVPress)[c(1:4)]/sum(prop.table(res.cv.modpls_temp$CVPress)[c(1:4)]))%*%matind
-pi.e
-signpred(t(matind),labsize=.5, plotsize = 12)
+# Scale data
 
-coef_plot_temp<-data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
-                                 "Granivorous diet","Invertebrate diet","Synanthropy"),val=temp.bootYT1c$t0[-1,1],
-                           inf=temper.cic[,7],sup=temper.cic[,8],t(matind),sig=t(pi.e))
-coef_plot_temp$col_val<-"ns"
-coef_plot_temp$col_val[which(coef_plot_temp$sig>=0.95 & coef_plot_temp$val>0)]<-"pos"
-coef_plot_temp$col_val[which(coef_plot_temp$sig>=0.95 & coef_plot_temp$val<0)]<-"neg"
+trait_inter_data_urb$STI <- scale(trait_inter_data_urb$STI)
+trait_inter_data_urb$SSI <- scale(trait_inter_data_urb$SSI)
+trait_inter_data_urb$is_farmland <- as.numeric(trait_inter_data_urb$is_farmland)-1
+trait_inter_data_urb$is_forest <- as.numeric(trait_inter_data_urb$is_forest)-1
+trait_inter_data_urb$is_urban <- as.numeric(trait_inter_data_urb$is_urban)
 
-# Artificialisation vs traits
+# Find the number of latent value
 
-trait_inter_data_urb<-sp_data[which(sp_data$urb!=0 | !is.na(sp_data$STI)),c("urb","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
+cv.modpls_urb <- cv.plsR(trait_inter_data_urb$urb,trait_inter_data_urb[,-1],nt=10)
+res.cv.modpls_urb <- cvtable(summary(cv.modpls_urb))
+res_pls_urb <- plsR(trait_inter_data_urb$urb,trait_inter_data_urb[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative because NA in some columns
+colSums(res1$pvalstep)
+cv.modpls_urb <- cv.plsR(urb~.,data=trait_inter_data_urb,nt=10,NK=100)
+res.cv.modpls_urb <- cvtable(summary(cv.modpls_urb))
 
-trait_inter_data_urb$STI<-scale(trait_inter_data_urb$STI)
-trait_inter_data_urb$SSI<-scale(trait_inter_data_urb$SSI)
-trait_inter_data_urb$is_farmland<-as.numeric(trait_inter_data_urb$is_farmland)-1
-trait_inter_data_urb$is_forest<-as.numeric(trait_inter_data_urb$is_forest)-1
-trait_inter_data_urb$is_urban<-as.numeric(trait_inter_data_urb$is_urban)
+# Run PLS
 
-cv.modpls_urb<-cv.plsR(trait_inter_data_urb$urb,trait_inter_data_urb[,-1],nt=10)
-res.cv.modpls_urb<-cvtable(summary(cv.modpls_urb))
-res2<-plsR(trait_inter_data_urb$urb,trait_inter_data_urb[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) 
-colSums(res2$pvalstep)
-cv.modpls_urb<-cv.plsR(urb~.,data=trait_inter_data_urb,nt=10,NK=100)
-res.cv.modpls_urb<-cvtable(summary(cv.modpls_urb))
-res2<-plsR(urb~.,data=trait_inter_data_urb,nt=1,pvals.expli=TRUE)
+res_pls_urb <- plsR(urb~.,data=trait_inter_data_urb,nt=1,pvals.expli=TRUE)
 
-urb.bootYT1=bootpls(res2,typeboot="fmodel_np",R=10000)
+# Plot PLS
+
+urb.bootYT1 <- bootpls(res_pls_urb,typeboot="fmodel_np",R=10000)
 boxplots.bootpls(urb.bootYT1,indices=2:ncol(trait_inter_data_urb))
-urber.ci=confints.bootpls(urb.bootYT1,indices=2:ncol(trait_inter_data_urb))
-plots.confints.bootpls(urber.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
+urb.ci <- confints.bootpls(urb.bootYT1,indices=2:ncol(trait_inter_data_urb))
+plots.confints.bootpls(urb.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
                        legendpos ="topright")
 
-res2b<-plsR(urb~.,data=trait_inter_data_urb,nt=3,pvals.expli=TRUE)
-urb.bootYT1b=bootpls(res2b,typeboot="fmodel_np",R=10000)
-urber.cib=confints.bootpls(urb.bootYT1b,indices=2:ncol(trait_inter_data_urb))
-plots.confints.bootpls(urber.cib,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
-                       legendpos ="topright")
+ind.BCa.urbYT1 <- (urb.ci[,7] < 0 & urb.ci[,8] < 0) | (urb.ci[,7] > 0 & urb.ci[,8] > 0)
 
-res2c<-plsR(urb~.,data=trait_inter_data_urb,nt=4,pvals.expli=TRUE)
-urb.bootYT1c=bootpls(res2c,typeboot="fmodel_np",R=10000)
-urber.cic=confints.bootpls(urb.bootYT1c,indices=2:ncol(trait_inter_data_urb))
+# Save results
 
-res2d<-plsR(urb~.,data=trait_inter_data_urb,nt=5,pvals.expli=TRUE)
-urb.bootYT1d=bootpls(res2d,typeboot="fmodel_np",R=10000)
-urber.cid=confints.bootpls(urb.bootYT1d,indices=2:ncol(trait_inter_data_urb))
+matind <- rbind(YT1=ind.BCa.urbYT1)
+pi.e <- (prop.table(res.cv.modpls_urb$CVPress)[c(1)]/sum(prop.table(res.cv.modpls_urb$CVPress)[c(1)])) %*% matind
 
-ind.BCa.YT1 <- (urber.ci[,7]<0&urber.ci[,8]<0)|(urber.ci[,7]>0&urber.ci[,8]>0)
-ind.BCa.YT1b <- (urber.cib[,7]<0&urber.cib[,8]<0)|(urber.cib[,7]>0&urber.cib[,8]>0)
-ind.BCa.YT1c <- (urber.cic[,7]<0&urber.cic[,8]<0)|(urber.cic[,7]>0&urber.cic[,8]>0)
-ind.BCa.YT1d <- (urber.cid[,7]<0&urber.cid[,8]<0)|(urber.cid[,7]>0&urber.cid[,8]>0)
-(matind=(rbind(YT1=ind.BCa.YT1,YT1b=ind.BCa.YT1b,YT1c=ind.BCa.YT1c,YT1d=ind.BCa.YT1d)))
-pi.e=(prop.table(res.cv.modpls_urb$CVPress)[c(1,3:5)]/sum(prop.table(res.cv.modpls_urb$CVPress)[c(1,3:5)]))%*%matind
-signpred(t(matind),labsize=.5, plotsize = 12)
+coef_plot_urb <- data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
+                                 "Granivorous diet","Invertebrate diet","Synanthropy"),
+                                 val=urb.bootYT1$t0[-1,1],
+                                 inf=urb.ci[,7],sup=urb.ci[,8],t(matind),
+                                 sig=t(pi.e))
+coef_plot_urb$col_val <- "ns"
+coef_plot_urb$col_val[which(coef_plot_urb$sig >= 0.95 & coef_plot_urb$val > 0)] <- "pos"
+coef_plot_urb$col_val[which(coef_plot_urb$sig >= 0.95 & coef_plot_urb$val < 0)]<-"neg"
+```
 
-coef_plot_urb<-data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
-                                 "Granivorous diet","Arthropod diet","Other invertebrate diet","Synanthropy"),val=urb.bootYT1c$t0[-1,1],
-                           inf=urber.cic[,7],sup=urber.cic[,8],t(matind),sig=t(pi.e))
-coef_plot_urb$col_val<-"ns"
-coef_plot_urb$col_val[which(coef_plot_urb$sig>=0.95 & coef_plot_urb$val>0)]<-"pos"
-coef_plot_urb$col_val[which(coef_plot_urb$sig>=0.95 & coef_plot_urb$val<0)]<-"neg"
+#### High input farm cover vs traits
+```{r}
+# Select data for PLS
 
-# High input farm cover vs traits
+trait_inter_data_hico <- sp_data[which(sp_data$hico!=0), c("hico","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
 
-trait_inter_data_hico<-sp_data[which(sp_data$hico!=0 | !is.na(sp_data$STI)),c("hico","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
+# Scale data
 
-trait_inter_data_hico$STI<-scale(trait_inter_data_hico$STI)
-trait_inter_data_hico$SSI<-scale(trait_inter_data_hico$SSI)
-trait_inter_data_hico$is_farmland<-as.numeric(trait_inter_data_hico$is_farmland)-1
-trait_inter_data_hico$is_forest<-as.numeric(trait_inter_data_hico$is_forest)-1
-trait_inter_data_hico$is_urban<-as.numeric(trait_inter_data_hico$is_urban)
+trait_inter_data_hico$STI <- scale(trait_inter_data_hico$STI)
+trait_inter_data_hico$SSI <- scale(trait_inter_data_hico$SSI)
+trait_inter_data_hico$is_farmland <- as.numeric(trait_inter_data_hico$is_farmland)-1
+trait_inter_data_hico$is_forest <- as.numeric(trait_inter_data_hico$is_forest)-1
+trait_inter_data_hico$is_urban <- as.numeric(trait_inter_data_hico$is_urban)
 
-cv.modpls_hico<-cv.plsR(trait_inter_data_hico$hico,trait_inter_data_hico[,-1],nt=10)
-res.cv.modpls_hico<-cvtable(summary(cv.modpls_hico))
-res3<-plsR(trait_inter_data_hico$hico,trait_inter_data_hico[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) 
-colSums(res3$pvalstep)
-cv.modpls_hico<-cv.plsR(hico~.,data=trait_inter_data_hico,nt=10,NK=100)
-res.cv.modpls_hico<-cvtable(summary(cv.modpls_hico))
-plot(res.cv.modpls_hico)
-res3<-plsR(hico~.,data=trait_inter_data_hico,nt=1,pvals.expli=TRUE)
+# Find the number of latent value
 
-hico.bootYT1=bootpls(res3,typeboot="fmodel_np",R=10000)
+cv.modpls_hico <- cv.plsR(trait_inter_data_hico$hico,trait_inter_data_hico[,-1],nt=10)
+res.cv.modpls_hico <- cvtable(summary(cv.modpls_hico))
+res_pls_hico <- plsR(trait_inter_data_hico$hico,trait_inter_data_hico[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative because NA in some columns
+colSums(res1$pvalstep)
+cv.modpls_hico <- cv.plsR(hico~.,data=trait_inter_data_hico,nt=10,NK=100)
+res.cv.modpls_hico <- cvtable(summary(cv.modpls_hico))
+
+# Run PLS
+
+res_pls_hico <- plsR(hico~.,data=trait_inter_data_hico,nt=1,pvals.expli=TRUE)
+
+# Plot PLS
+
+hico.bootYT1 <- bootpls(res_pls_hico,typeboot="fmodel_np",R=10000)
 boxplots.bootpls(hico.bootYT1,indices=2:ncol(trait_inter_data_hico))
-hicoer.ci=confints.bootpls(hico.bootYT1,indices=2:ncol(trait_inter_data_hico))
-plots.confints.bootpls(hicoer.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
+hico.ci <- confints.bootpls(hico.bootYT1,indices=2:ncol(trait_inter_data_hico))
+plots.confints.bootpls(hico.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
                        legendpos ="topright")
 
-res3b<-plsR(hico~.,data=trait_inter_data_hico,nt=2,pvals.expli=TRUE)
-hico.bootYT1b=bootpls(res3b,typeboot="fmodel_np",R=10000)
-hicoer.cib=confints.bootpls(hico.bootYT1b,indices=2:ncol(trait_inter_data_hico))
+ind.BCa.hicoYT1 <- (hico.ci[,7] < 0 & hico.ci[,8] < 0) | (hico.ci[,7] > 0 & hico.ci[,8] > 0)
 
-ind.BCa.YT1 <- (hicoer.ci[,7]<0&hicoer.ci[,8]<0)|(hicoer.ci[,7]>0&hicoer.ci[,8]>0)
-ind.BCa.YT1b <- (hicoer.cib[,7]<0&hicoer.cib[,8]<0)|(hicoer.cib[,7]>0&hicoer.cib[,8]>0)
+# Save results
 
-(matind=(rbind(YT1=ind.BCa.YT1,YT1b=ind.BCa.YT1b)))
-pi.e=(prop.table(res.cv.modpls_hico$CVPress)[1:2]/sum(prop.table(res.cv.modpls_hico$CVPress)[1:2]))%*%matind
-pi.e
-signpred(t(matind),labsize=.5, plotsize = 12)
+matind <- rbind(YT1=ind.BCa.hicoYT1)
+pi.e <- (prop.table(res.cv.modpls_hico$CVPress)[c(1)]/sum(prop.table(res.cv.modpls_hico$CVPress)[c(1)])) %*% matind
 
-coef_plot_hico<-data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
-                                 "Granivorous diet","Arthropod diet","Other invertebrate diet","Synanthropy"),val=hico.bootYT1$t0[-1,1],
-                           inf=hicoer.ci[,7],sup=hicoer.ci[,8],t(matind),sig=t(pi.e))
-coef_plot_hico$col_val<-"ns"
-coef_plot_hico$col_val[whicoh(coef_plot_hico$sig>=0.95 & coef_plot_hico$val>0)]<-"pos"
-coef_plot_hico$col_val[whicoh(coef_plot_hico$sig>=0.95 & coef_plot_hico$val<0)]<-"neg"
+coef_plot_hico <- data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
+                                 "Granivorous diet","Invertebrate diet","Synanthropy"),
+                                 val=hico.bootYT1$t0[-1,1],
+                                 inf=hico.ci[,7],sup=hico.ci[,8],t(matind),
+                                 sig=t(pi.e))
+coef_plot_hico$col_val <- "ns"
+coef_plot_hico$col_val[which(coef_plot_hico$sig >= 0.95 & coef_plot_hico$val > 0)] <- "pos"
+coef_plot_hico$col_val[which(coef_plot_hico$sig >= 0.95 & coef_plot_hico$val < 0)]<-"neg"
+```
 
-# Forest vs traits
+#### Forest vs traits
+```{r}
+# Select data for PLS
 
-trait_inter_data_forest<-sp_data[which(sp_data$forest!=0 | !is.na(sp_data$STI)),c("forest","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
+trait_inter_data_forest <- sp_data[which(sp_data$forest!=0), c("forest","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
 
-trait_inter_data_forest$STI<-scale(trait_inter_data_forest$STI)
-trait_inter_data_forest$SSI<-scale(trait_inter_data_forest$SSI)
-trait_inter_data_forest$is_farmland<-as.numeric(trait_inter_data_forest$is_farmland)-1
-trait_inter_data_forest$is_forest<-as.numeric(trait_inter_data_forest$is_forest)-1
-trait_inter_data_forest$is_urban<-as.numeric(trait_inter_data_forest$is_urban)
+# Scale data
 
-cv.modpls_forest<-cv.plsR(trait_inter_data_forest$forest,trait_inter_data_forest[,-1],nt=10)
-res.cv.modpls_forest<-cvtable(summary(cv.modpls_forest))
-res4<-plsR(trait_inter_data_forest$forest,trait_inter_data_forest[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) 
-colSums(res4$pvalstep)
-cv.modpls_forest<-cv.plsR(forest~.,data=trait_inter_data_forest,nt=10,NK=100)
-res.cv.modpls_forest<-cvtable(summary(cv.modpls_forest))
-res4<-plsR(forest~.,data=trait_inter_data_forest,nt=1,pvals.expli=TRUE)
+trait_inter_data_forest$STI <- scale(trait_inter_data_forest$STI)
+trait_inter_data_forest$SSI <- scale(trait_inter_data_forest$SSI)
+trait_inter_data_forest$is_farmland <- as.numeric(trait_inter_data_forest$is_farmland)-1
+trait_inter_data_forest$is_forest <- as.numeric(trait_inter_data_forest$is_forest)-1
+trait_inter_data_forest$is_urban <- as.numeric(trait_inter_data_forest$is_urban)
 
-forest.bootYT1=bootpls(res4,typeboot="fmodel_np",R=10000)
+# Find the number of latent value
+
+cv.modpls_forest <- cv.plsR(trait_inter_data_forest$forest,trait_inter_data_forest[,-1],nt=10)
+res.cv.modpls_forest <- cvtable(summary(cv.modpls_forest))
+res_pls_forest <- plsR(trait_inter_data_forest$forest,trait_inter_data_forest[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative because NA in some columns
+colSums(res1$pvalstep)
+cv.modpls_forest <- cv.plsR(forest~.,data=trait_inter_data_forest,nt=10,NK=100)
+res.cv.modpls_forest <- cvtable(summary(cv.modpls_forest))
+
+# Run PLS
+
+res_pls_forest <- plsR(forest~.,data=trait_inter_data_forest,nt=1,pvals.expli=TRUE)
+
+# Plot PLS
+
+forest.bootYT1 <- bootpls(res_pls_forest,typeboot="fmodel_np",R=10000)
 boxplots.bootpls(forest.bootYT1,indices=2:ncol(trait_inter_data_forest))
-forester.ci=confints.bootpls(forest.bootYT1,indices=2:ncol(trait_inter_data_forest))
-plots.confints.bootpls(forester.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
+forest.ci <- confints.bootpls(forest.bootYT1,indices=2:ncol(trait_inter_data_forest))
+plots.confints.bootpls(forest.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
                        legendpos ="topright")
 
-res4b<-plsR(forest~.,data=trait_inter_data_forest,nt=3,pvals.expli=TRUE)
-forest.bootYT1b=bootpls(res4b,typeboot="fmodel_np",R=10000)
-forester.cib=confints.bootpls(forest.bootYT1b,indices=2:ncol(trait_inter_data_forest))
+ind.BCa.forestYT1 <- (forest.ci[,7] < 0 & forest.ci[,8] < 0) | (forest.ci[,7] > 0 & forest.ci[,8] > 0)
 
-ind.BCa.YT1 <- (forester.ci[,7]<0&forester.ci[,8]<0)|(forester.ci[,7]>0&forester.ci[,8]>0)
-ind.BCa.YT1b <- (forester.cib[,7]<0&forester.cib[,8]<0)|(forester.cib[,7]>0&forester.cib[,8]>0)
+# Save results
 
-(matind=(rbind(YT1=ind.BCa.YT1, YT1b=ind.BCa.YT1b)))
-pi.e=(prop.table(res.cv.modpls_forest$CVPress)[c(1,3)]/sum(prop.table(res.cv.modpls_forest$CVPress)[c(1,3)]))%*%matind
-signpred(t(matind),labsize=.5, plotsize = 12)
+matind <- rbind(YT1=ind.BCa.forestYT1)
+pi.e <- (prop.table(res.cv.modpls_forest$CVPress)[c(1)]/sum(prop.table(res.cv.modpls_forest$CVPress)[c(1)])) %*% matind
 
-coef_plot_forest<-data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
-                                 "Granivorous diet","Arthropod diet","Other invertebrate diet","Synanthropy"),val=forest.bootYT1$t0[-1,1],
-                           inf=forester.ci[,7],sup=forester.ci[,8],t(matind),sig=t(pi.e))
-coef_plot_forest$col_val<-"ns"
-coef_plot_forest$col_val[which(coef_plot_forest$sig>=0.95 & coef_plot_forest$val>0)]<-"pos"
-coef_plot_forest$col_val[which(coef_plot_forest$sig>=0.95 & coef_plot_forest$val<0)]<-"neg"
+coef_plot_forest <- data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
+                                 "Granivorous diet","Invertebrate diet","Synanthropy"),
+                                 val=forest.bootYT1$t0[-1,1],
+                                 inf=forest.ci[,7],sup=forest.ci[,8],t(matind),
+                                 sig=t(pi.e))
+coef_plot_forest$col_val <- "ns"
+coef_plot_forest$col_val[which(coef_plot_forest$sig >= 0.95 & coef_plot_forest$val > 0)] <- "pos"
+coef_plot_forest$col_val[which(coef_plot_forest$sig >= 0.95 & coef_plot_forest$val < 0)]<-"neg"
+```
 
-ggplot(coef_plot_temp, aes(y=val, x=var))+
-  geom_bar(stat="identity", position=position_dodge(), aes(alpha=abs(val), fill=col_val)) +
-  scale_fill_manual(values=c("ns"="#959393","neg"="#FF0000","pos"="#0000FF"))+
-  geom_errorbar(aes(ymin=inf, ymax=sup), width=.2, position=position_dodge(.9))+
-  theme_modern()+labs(y="Temperature influence on species dynamic")+
-  theme(legend.position = "none", axis.title.y = element_blank())+
-  geom_hline(yintercept=0, linetype="dashed", size=1) + 
-  coord_flip()
+#### Plot pressure vs traits
+```{r}
+library(tidyverse)
+library(viridis)
+library(patchwork)
+library(hrbrthemes)
+library(circlize)
+library(networkD3)
 
-ggplot(coef_plot_clc, aes(y=val, x=var))+
-  geom_bar(stat="identity", position=position_dodge(), aes(alpha=abs(val), fill=col_val)) +
-  scale_fill_manual(values=c("ns"="#959393","neg"="#FF0000","pos"="#0000FF"))+
-  geom_errorbar(aes(ymin=inf, ymax=sup), width=.2, position=position_dodge(.9))+
-  theme_modern()+labs(y="Artificialisation influence on species dynamic")+
-  theme(legend.position = "none", axis.title.y = element_blank())+
-  geom_hline(yintercept=0, linetype="dashed", size=1) + 
-  coord_flip()
+# Group all data to get flows
 
-ggplot(coef_plot_hic, aes(y=val, x=var))+
-  geom_bar(stat="identity", position=position_dodge(), aes(alpha=abs(val), fill=col_val)) +
-  scale_fill_manual(values=c("ns"="#959393","neg"="#FF0000","pos"="#0000FF"))+
-  geom_errorbar(aes(ymin=inf, ymax=sup), width=.2, position=position_dodge(.9))+
-  theme_modern()+labs(y="High input farm influence on species dynamic")+
-  theme(legend.position = "none", axis.title.y = element_blank())+
-  geom_hline(yintercept=0, linetype="dashed", size=1) + 
-  coord_flip()
+data_trait_pression<-rbind(data.frame(coef_plot_temp[,c("var","val","inf","sup","col_val")],pressure="Temperature",value2=coef_plot_temp$val/sum(abs(coef_plot_temp$val))),
+                           data.frame(coef_plot_urb[,c("var","val","inf","sup","col_val")],pressure="Urbanisation",value2=coef_plot_urb$val/sum(abs(coef_plot_urb$val))),
+                           data.frame(coef_plot_hico[,c("var","val","inf","sup","col_val")],pressure="High input farm cover",value2=coef_plot_hico$val/sum(abs(coef_plot_hico$val))),
+                           data.frame(coef_plot_forest[,c("var","val","inf","sup","col_val")],pressure="Forest cover",value2=coef_plot_forest$val/sum(abs(coef_plot_forest$val))))
 
-ggplot(coef_plot_forest, aes(y=val, x=var))+
-  geom_bar(stat="identity", position=position_dodge(), aes(alpha=abs(val), fill=col_val)) +
-  scale_fill_manual(values=c("ns"="#959393","neg"="#FF0000","pos"="#0000FF"))+
-  geom_errorbar(aes(ymin=inf, ymax=sup), width=.2, position=position_dodge(.9))+
-  theme_modern()+labs(y="Forest influence on species dynamic")+
-  theme(legend.position = "none", axis.title.y = element_blank())+
-  geom_hline(yintercept=0, linetype="dashed", size=1) + 
-  coord_flip()
+data_trait_pression2<-data.frame(source=data_trait_pression$pressure,target=data_trait_pression$var,
+                                 value=abs(data_trait_pression$value2),col_link=data_trait_pression$col_val)
+
+# From these flows we need to create a node data frame: it lists every entities involved in the flow
+
+nodes <- data.frame(name=c(as.character(data_trait_pression2$source), as.character(data_trait_pression2$target)) %>% unique())
+nodes$group<-as.factor(c("Temperature","Urbanisation","Input","Forestc","trait","trait","trait","trait","trait","trait","trait","trait"))
+
+# With networkD3, connection must be provided using id, not using real name like in the links dataframe.. So we need to reformat it.
+
+data_trait_pression2$IDsource=match(data_trait_pression2$source, nodes$name)-1 
+data_trait_pression2$IDtarget=match(data_trait_pression2$target, nodes$name)-1
+
+# Prepare colour scale
+
+ColourScal <-  'd3.scaleOrdinal() .domain(["neg", "ns","pos","Temperature","Urbanisation","Input","Forestc","trait","trait","trait","trait","trait","trait","trait","trait"]) .range(["red","grey", "blue", "#FA0900","#196DF6","#D302F9","#1BAE20", "black", "black", "black", "black", "black", "black", "black", "black"])'
+
+# Make the Network
+
+sankeyNetwork(Links = data_trait_pression2, Nodes = nodes,
+              Source = "IDsource", Target = "IDtarget",
+              Value = "value", NodeID = "name",  LinkGroup = "col_link", NodeGroup="group",
+              sinksRight=FALSE, colourScale=ColourScal, nodeWidth=40, fontSize=13, nodePadding=20)
+
+data_trait_pressionb<-rbind(data.frame(coef_plot_hico[coef_plot_hico$col_val!="ns",c("var","val","inf","sup","col_val")],pressure="High input farm cover",value2=sign(coef_plot_hico$val[coef_plot_hico$sig==1])),
+                            data.frame(coef_plot_forest[coef_plot_forest$col_val!="ns",c("var","val","inf","sup","col_val")],pressure="Forest cover",value2=sign(coef_plot_forest$val[coef_plot_forest$sig==1])),
+                            data.frame(coef_plot_urb[coef_plot_urb$col_val!="ns",c("var","val","inf","sup","col_val")],pressure="Urbanisation",value2=sign(coef_plot_urb$val[coef_plot_urb$sig==1])),
+                            data.frame(coef_plot_temp[coef_plot_temp$col_val!="ns",c("var","val","inf","sup","col_val")],pressure="Temperature",value2=sign(coef_plot_temp$val[coef_plot_temp$sig==1])))
+
+data_trait_pression3<-data.frame(source=data_trait_pressionb$pressure,target=data_trait_pressionb$var,
+                                 value=abs(data_trait_pressionb$value2),col_link=data_trait_pressionb$col_val)
+
+nodes <- data.frame(name=c(as.character(data_trait_pression3$source), as.character(data_trait_pression3$target)) %>% unique())
+nodes$group<-as.factor(c("Input","Forestc","Urbanisation","Temperature","trait","trait","trait","trait","trait","trait","trait","trait"))
+
+data_trait_pression3$IDsource=match(data_trait_pression3$source, nodes$name)-1 
+data_trait_pression3$IDtarget=match(data_trait_pression3$target, nodes$name)-1
+
+ColourScal <-  'd3.scaleOrdinal() .domain(["neg", "pos","Input","Forestc","Urbanisation","Temperature","trait","trait","trait","trait","trait","trait","trait","trait"]) .range(["#F6CECE","#CECEF6","#D302F9","#1BAE20","#196DF6", "#FA0900", "black", "black", "black", "black", "black", "black", "black", "black"])'
+ColourScal <-  'd3.scaleOrdinal() .domain(["neg", "pos","Input","Forestc","Urbanisation","Temperature","trait","trait","trait","trait","trait","trait","trait","trait"]) .range(["#F6CECE","#CEF6CE","#D302F9","#1BAE20","#196DF6", "#FA0900", "black", "black", "black", "black", "black", "black", "black", "black"])'
+
+
+sn<-sankeyNetwork(Links = data_trait_pression3, Nodes = nodes,
+              Source = "IDsource", Target = "IDtarget",
+              Value = "value", NodeID = "name",  LinkGroup = "col_link", NodeGroup="group",
+              sinksRight=FALSE, colourScale=ColourScal, nodeWidth=40, fontSize=13, nodePadding=20)
+
+
+saveNetwork(sn, "sn.html")
+
+library(webshot)
+# you convert it as png
+webshot("sn.html","sn.png", vwidth = 1200, vheight = 900)
+
+library(htmlwidgets)
+onRender(
+  sn,
+  '
+function(el,x){
+  // select all our node text
+  var node_text = d3.select(el)
+    .selectAll(".node text")
+    //and make them match
+    //https://github.com/christophergandrud/networkD3/blob/master/inst/htmlwidgets/sankeyNetwork.js#L180-L181
+    .attr("x", 20 + x.options.nodeWidth)
+    .attr("text-anchor", "start");
+}
+'
+)
+
+
+onRender(
+  sn,
+  '
+  function(el,x){
+  // select all our node text
+  d3.select(el)
+  .selectAll(".node text")
+  .filter(function(d) { return d.name.startsWith("Temperature"); })
+  .attr("x", x.options.nodeWidth - 16)
+  .attr("text-anchor", "end");
+  }
+  '
+)
 ```
 
 # References
