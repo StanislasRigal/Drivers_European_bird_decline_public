@@ -1429,7 +1429,7 @@ df_press4 <- data.frame(droplevels(na.omit(df_press3[df_press3$count>4 & df_pres
 
 # multispatialCCM
 
-ccm_sp <- ddply(df_press4, .(Species), .fun = multisp_CCM, niter=100, .parallel = F, .progress = "text")
+ccm_sp <- ddply(df_press4, .(Species), .fun = multisp_CCM, niter=1000, .parallel = F, .progress = "text")
 ccm_sp2 <- ccm_sp
 ccm_sp2[is.na(ccm_sp2)] <- 1
 
@@ -1475,135 +1475,39 @@ for(i in levels(as.factor(smap_sp_res_long$Species))){
     )+xlab(i))
 }
 
-smap_sp_mean <- data.frame(smap_sp_res[,-1] %>% group_by(Species) %>% summarize(temp=mean(temp_smap, na.rm=T),
-urb=mean(urb_smap, na.rm=T),
-hico=mean(hico_smap, na.rm=T),
-forest=mean(forest_smap, na.rm=T)))
+smap_sp_mean <- data.frame(smap_sp_res[,-1] %>% group_by(Species) %>% summarize(temp=mean(temp_smap, na.rm=T),temp_sd=sd(temp_smap, na.rm=T),
+urb=mean(urb_smap, na.rm=T),urb_sd=sd(urb_smap, na.rm=T),
+hico=mean(hico_smap, na.rm=T),hico_sd=sd(hico_smap, na.rm=T),
+forest=mean(forest_smap, na.rm=T),forest_sd=sd(forest_smap, na.rm=T)))
 
 smap_sp_med <- data.frame(smap_sp_res[,-1] %>% group_by(Species) %>% summarize(temp=median(temp_smap, na.rm=T),
 urb=median(urb_smap, na.rm=T),
 hico=median(hico_smap, na.rm=T),
 forest=median(forest_smap, na.rm=T)))
 
+data_density <- data.frame(pressure=c(rep("hico",length(na.omit(smap_sp_mean$hico[smap_sp_mean$hico!=0]))),
+rep("urb",length(na.omit(smap_sp_mean$urb[smap_sp_mean$urb!=0]))),
+rep("forest",length(na.omit(smap_sp_mean$forest[smap_sp_mean$forest!=0]))),
+rep("temp",length(na.omit(smap_sp_mean$temp[smap_sp_mean$temp!=0])))),
+value=c(na.omit(smap_sp_mean$hico[smap_sp_mean$hico!=0]),
+na.omit(smap_sp_mean$urb[smap_sp_mean$urb!=0]),
+na.omit(smap_sp_mean$forest[smap_sp_mean$forest!=0]),
+na.omit(smap_sp_mean$temp[smap_sp_mean$temp!=0])))
+                                 
+ggplot(data_density, aes(x=value, fill=pressure)) +
+geom_rect(fill = "#DDF9DD",xmin = 0,xmax = Inf,    ymin = -Inf,ymax = Inf, alpha = 0.1) +
+geom_rect(fill = "#F5A9A9",xmin = -Inf,xmax = 0,ymin = -Inf,ymax = Inf, alpha = 0.1) +
+geom_histogram(bins=50,data=data_density[data_density$pressure=="hico",],alpha=0.7, aes(col=pressure), position = position_nudge(y=15)) +
+geom_histogram(bins=50,data=data_density[data_density$pressure=="forest",],alpha=0.4, aes(col=pressure), position = position_nudge(y=11)) +  geom_histogram(bins=50,data=data_density[data_density$pressure=="urb",],alpha=0.4, aes(col=pressure), position = position_nudge(y=6)) +  geom_histogram(bins=50,data=data_density[data_density$pressure=="temp",],alpha=0.4, aes(col=pressure)) +
+geom_vline(xintercept = 0) +
+geom_segment(x = mean(data_density$value[data_density$pressure=="hico"]), y=15, xend= mean(data_density$value[data_density$pressure=="hico"]), yend=23,linetype=11) +  geom_segment(x = mean(data_density$value[data_density$pressure=="forest"]), y=11, xend= mean(data_density$value[data_density$pressure=="forest"]), yend=15,linetype=11) +
+geom_segment(x = mean(data_density$value[data_density$pressure=="urb"]), y=6, xend= mean(data_density$value[data_density$pressure=="urb"]), yend=11,linetype=11) +
+geom_segment(x = mean(data_density$value[data_density$pressure=="temp"]), y=0, xend= mean(data_density$value[data_density$pressure=="temp"]), yend=6,linetype=11) +  scale_fill_manual(values=c("hico"="#D302F9","urb"="#196DF6","forest"="#1BAE20","temp"="#FA0900")) +
+ scale_color_manual(values=c("hico"="#D302F9","urb"="#196DF6","forest"="#1BAE20","temp"="#FA0900")) +
+theme_modern() +
+labs(x ="Correlation",y="Density") +
+theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank())
 
-```
-
-
-
-
-```{r}
-country_data_temp <- data.frame(year=1980:2016,country_data[61:97,])
-#data.frame(year=1980:2016,apply(country_data[61:97,],2,function(x){x/x[21]}))
-country_data_temp2 <- melt(country_data_temp, id.vars="year")
-
-country_data_urb <- data.frame(year=2004:2016,country_data[13:25,])
-#data.frame(year=2004:2016,apply(country_data[13:25,],2,function(x){x/x[1]}))
-#data.frame(year=1992:2016,apply(country_data[1:25,],2,function(x){x/x[9]}))
-#data.frame(year=c(1992,2000,2006,2012,2016),apply(country_data[c(1,9,15,21,25),],2,function(x){x/x[2]})) 
-country_data_urb2 <- melt(country_data_urb, id.vars="year")
-
-country_data_hic <- data.frame(year=2005:2016,country_data[534:545,])
-# data.frame(year=2005:2016,apply(country_data[534:545,],2,function(x){x/mean(x[1:5])}))
-country_data_hic[country_data_hic==0]<-NA
-country_data_hic2 <- melt(country_data_hic, id.vars="year")
-
-country_data_hico <- data.frame(year=2007:2016,country_data[551:560,])
-country_data_hico[country_data_hico==0]<-NA
-country_data_hicob <- data.frame(year=2007:2016,apply(country_data[551:560,],2,function(x){x/mean(x[1:3])}))
-country_data_hicob[,5] <- country_data[551:560,4]/country_data[557,4]
-country_data_hico2 <- melt(country_data_hico, id.vars="year")
-country_data_hico2b <- melt(country_data_hicob, id.vars="year")
-country_data_hico3 <- merge(country_data_hico2,country_data_hico2b, by=c("year","variable"))
-names(country_data_hico3)[3:4] <- c("value", "value.std")
-
-country_data_forest <- data.frame(year=c(1990,2000,2005,2010,2015, 2016),country_data[c(563,573,578,583,588,589),])
-#data.frame(year=c(1990,2000,2005,2010,2015),apply(country_data[c(563,573,578,583,588),],2,function(x){x/x[2]})) #data.frame(year=1990:2016,apply(country_data[563:589,],2,function(x){x/x[11]}))
-country_data_forest2 <- melt(country_data_forest, id.vars="year")
-
-country_data_pest <- data.frame(year=1990:2016,apply(country_data[252:278,],2,function(x){x/x[11]}))
-country_data_pest2 <- melt(country_data_pest, id.vars="year")
-
-country_data_inse <- data.frame(year=1990:2016,apply(country_data[222:248,],2,function(x){x/x[11]}))
-country_data_inse2 <- melt(country_data_inse, id.vars="year")
-```
-
-### Appying CCM and Smap on species/pressure time-series
-```{r}
-df_press <- as.data.frame(df)
-
-press <- country_data_temp2
-press$country <- as.character(press$variable)
-press$country[press$country=="Czech.Republic"] <- "Czech Republic"
-press$country[press$country=="UK"] <- "United Kingdom"
-press$country[press$country=="Ireland"] <- "Republic of Ireland"
-df_press2 <- merge(df_press, press, by.x=c("CountryGroup","Year"), by.y=c("country","year"), all.x=T)
-df_press2 <- droplevels(df_press2[which(df_press2$Index >= df_press2$Index_SE),])
-ccm_temp <- ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=300, press="long", .parallel = F, .progress = "text")
-names(ccm_temp)[5] <- "temp"
-
-press <- country_data_urb2
-press$country <- as.character(press$variable)
-press$country[press$country=="Czech.Republic"] <- "Czech Republic"
-press$country[press$country=="UK"] <- "United Kingdom"
-press$country[press$country=="Ireland"] <- "Republic of Ireland"
-df_press2 <- merge(df_press, press, by.x=c("CountryGroup","Year"), by.y=c("country","year"), all.x=T)
-df_press2 <- droplevels(df_press2[which(df_press2$Index >= df_press2$Index_SE),])
-ccm_urb<-ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=1000, press="mid", .parallel = F, .progress = "text")
-names(ccm_urb)[5]<-"urb"
-
-press <- country_data_hic2
-press$country<-as.character(press$variable)
-press$country[press$country=="Czech.Republic"]<-"Czech_Republic"
-press$country[press$country=="UK"]<-"United_Kingdom"
-press$country[press$country=="Ireland"]<-"Republic_of_Ireland"
-df_press2<-merge(df_press, press, by.x=c("CountryGroup","Year"), by.y=c("country","year"), all.x=T)
-df_press2<-droplevels(df_press2[which(df_press2$Index>=df_press2$Index_SE),])
-ccm_hic<-ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=1000, press="mid", .parallel = F, .progress = "text")
-names(ccm_hic)[5]<-"hic"
-
-press <- country_data_hico3
-press$country<-as.character(press$variable)
-press$country[press$country=="Czech.Republic"]<-"Czech_Republic"
-press$country[press$country=="UK"]<-"United_Kingdom"
-press$country[press$country=="Ireland"]<-"Republic_of_Ireland"
-df_press2<-merge(df_press, press, by.x=c("CountryGroup","Year"), by.y=c("country","year"), all.x=T)
-df_press2<-droplevels(df_press2[which(df_press2$Index>=df_press2$Index_SE),])
-ccm_hico<-ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=1000, press="mid", .parallel = F, .progress = "text")
-names(ccm_hico)[5]<-"hico"
-
-press <- country_data_pest2
-press$country<-as.character(press$variable)
-press$country[press$country=="Czech.Republic"]<-"Czech_Republic"
-press$country[press$country=="UK"]<-"United_Kingdom"
-press$country[press$country=="Ireland"]<-"Republic_of_Ireland"
-df_press2<-merge(df_press, press, by.x=c("CountryGroup","Year"), by.y=c("country","year"), all.x=T)
-df_press2<-droplevels(df_press2[which(df_press2$Index>=df_press2$Index_SE),])
-ccm_pest<-ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=1000, press="mid", .parallel = F, .progress = "text")
-names(ccm_pest)[5]<-"pest"
-
-press <- country_data_inse2
-press$country<-as.character(press$variable)
-press$country[press$country=="Czech.Republic"]<-"Czech_Republic"
-press$country[press$country=="UK"]<-"United_Kingdom"
-press$country[press$country=="Ireland"]<-"Republic_of_Ireland"
-df_press2<-merge(df_press, press, by.x=c("CountryGroup","Year"), by.y=c("country","year"), all.x=T)
-df_press2<-droplevels(df_press2[which(df_press2$Index>=df_press2$Index_SE),])
-ccm_inse<-ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=1000, press="mid", .parallel = F, .progress = "text")
-names(ccm_inse)[5]<-"inse"
-
-press<-country_data_forest2
-press$country<-as.character(press$variable)
-press$country[press$country=="Czech.Republic"]<-"Czech_Republic"
-press$country[press$country=="UK"]<-"United_Kingdom"
-press$country[press$country=="Ireland"]<-"Republic_of_Ireland"
-df_press2<-merge(df_press, press, by.x=c("CountryGroup","Year"), by.y=c("country","year"), all.x=T)
-df_press2<-droplevels(df_press2[which(df_press2$Index>=df_press2$Index_SE),])
-ccm_for<-ddply(df_press2, .(Species), .fun = CCM_EU, column="Index", niter=1000, press="short", .parallel = F, .progress = "text")
-names(ccm_for)[5]<-"forest"
-
-sp_data<-merge(ccm_temp[,c(1,5)],ccm_urb[,c(1,5)], by="Species", all.x=T)
-sp_data<-merge(sp_data,ccm_hico[,c(1,5)], by="Species", all.x=T)
-sp_data<-merge(sp_data,ccm_for[,c(1,5)], by="Species", all.x=T)
 
 sp_data<-smap_sp_mean
 
@@ -1621,7 +1525,9 @@ sp_data$forest[is.na(sp_data$forest)]<-0
 sp_data$is_urban[is.na(sp_data$is_urban)]<-0
 sp_data$is_forest<-as.factor(sp_data$Habitat=="Forest")
 sp_data$is_farmland<-as.factor(sp_data$Habitat=="Farmland")
+
 ```
+
 
 ### Applying PLS on pressure influence vs. species traits
 
