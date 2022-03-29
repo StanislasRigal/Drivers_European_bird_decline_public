@@ -589,7 +589,6 @@ ggplot(df_pop3b$msi, aes(x = c(1980:2016), y = mean_msi_final)) +
 
 ```{r}
 # Load data
-
   
 # Select species
 
@@ -742,10 +741,6 @@ df_trend <- droplevels(subset(df_trend, Year %in% c(1995:2016)))
 
 trend_species <- ddply(df_trend, .(Species, CountryGroup), .fun=function(x){re=summary(lm(Index~Year, x))$coef;return(data.frame(slope=re[2,1],pval=re[2,4],slope_pe=re[2,1]/x$Index[1]))}, .parallel = F, .progress = "text")
 
-# Clean up outputs
-
-#trend_species$linear <- substr(trend_species$max_shape, 1, 8)
-#trend_species$linear[trend_species$linear=="stable_c"] <- "stable"
 ```
 
 ### Pressures
@@ -821,9 +816,9 @@ row.names(urban_country)[29] <- "urb_mean"
 
 # Trend over the period
 
-urban_country[30,] <- apply(urban_country[1:25,], 2, function(x){summary(lm(x~c(1992:2016)))$coef[2,1]})/urban_country[9,]
+urban_country[30,] <- apply(urban_country[13:25,], 2, function(x){summary(lm(x~c(2004:2016)))$coef[2,1]})/urban_country[13,]
 row.names(urban_country)[30] <- "d_urb"
-urb_sig_trend <- apply(urban_country[1:25,], 2, function(x){summary(lm(x~c(1992:2016)))$coef[2,4]})
+urb_sig_trend <- apply(urban_country[13:25,], 2, function(x){summary(lm(x~c(2004:2016)))$coef[2,4]})
 #urban_country[30,which(urb_sig_trend>0.05)] <- 0
 
 # Dataset to merge with other pressures
@@ -989,7 +984,7 @@ row.names(country_data)[100] <- "temp_mean"
 
 # Trend over the period
 
-country_data[101,] <- apply(country_data[61:97,], 2, function(x){summary(lm(x~c(1980:2016)))$coef[2,1]})/country_data[38,]
+country_data[101,] <- apply(country_data[77:97,], 2, function(x){summary(lm(x~c(1996:2016)))$coef[2,1]})/country_data[77,]
 row.names(country_data)[101] <- "d_temp"
 temp_sig_trend <- apply(country_data[61:97,], 2, function(x){summary(lm(x~c(1980:2016)))$coef[2,4]})
 #country_data[101,which(temp_sig_trend>0.05)] <- 0
@@ -1010,157 +1005,39 @@ uaa_country[uaa_country=="United Kingdom of Great Britain and Northern Ireland"]
 uaa_country[uaa_country=="Czechia"] <- "Czech Republic"
 uaa_country <- droplevels(uaa_country[uaa_country$Area %in% country_name,c("Area","Year","Value")])
 uaa_country$Value <- 1000*uaa_country$Value
-
-
-# Pesticides
-# Load data
-# from https://www.fao.org/faostat/en/#data/RP
-
-pest_country <- read.csv("raw_data/FAOSTAT_data_RP.csv", header = T)
-pest_country$Area <- as.character(pest_country$Area)
-pest_country[pest_country=="United Kingdom of Great Britain and Northern Ireland"] <- "UK"
-pest_country[pest_country=="Czechia"] <- "Czech Republic"
-pest_country$Item <- as.character(pest_country$Item)
-pest_country[pest_country=="Pesticides (total)"] <- "pest"
-pest_country[pest_country=="Fungicides and Bactericides"] <- "fung"
-pest_country[pest_country=="Herbicides"] <- "herb"
-pest_country[pest_country=="Insecticides"] <- "inse"
-pest_country <- droplevels(pest_country[pest_country$Area %in% country_name & pest_country$Item %in% c("pest","fung","herb","inse"), c("Area","Item","Year","Value")])
-
-pest_country <- merge(pest_country, uaa_country, by=c("Area","Year"), all.x=T)
-pest_country$Value <- pest_country$Value.x/pest_country$Value.y
-pest_country <- dcast(pest_country, Item+Year~Area, fun.aggregate=sum, value.var="Value")
-
-uaa_country <- dcast(uaa_country, Year~Area, fun.aggregate=sum, value.var="Value")
-row.names(uaa_country) <- paste0("uaa",sep="_",uaa_country$Year)
+uaa_country <- dcast(uaa_country[uaa_country$Year>1999,], Year~Area, fun.aggregate=sum, value.var="Value")
+row.names(uaa_country) <- paste0("uaa",sep="_", uaa_country$Year)
 uaa_country$Year <- NULL
-uaa_country[60,] <- apply(uaa_country[40:56,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/uaa_country[11,]
-row.names(uaa_country)[60] <- "d_uaa"
-fung_sig_trend <- apply(uaa_country[40:56,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,4]})
-#uaa_country[60,which(fung_sig_trend>0.05)] <- 0
-
-# Mean value over the period
-
-pest_country[pest_country==0] <- NA
-row.names(pest_country) <- paste0(pest_country$Item,sep="_",pest_country$Year)
-pest_country$Year <- pest_country$Item <- NULL
-pest_country[121,] <- apply(pest_country[11:27,], 2, function(x){mean(x, na.rm=T)})
-row.names(pest_country)[121] <- "fung_mean"
-pest_country[122,] <- apply(pest_country[41:57,], 2, function(x){mean(x, na.rm=T)})
-row.names(pest_country)[122] <- "herb_mean"
-pest_country[123,] <- apply(pest_country[71:87,], 2, function(x){mean(x, na.rm=T)})
-row.names(pest_country)[123] <- "inse_mean"
-pest_country[124,] <- apply(pest_country[101:117,], 2, function(x){mean(x, na.rm=T)})
-row.names(pest_country)[124] <- "pest_mean"
-
-# Trend over the period
-
-pest_country[11:27,14] <- 0
-pest_country[125,] <- apply(pest_country[11:27,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/pest_country[11,]
-row.names(pest_country)[125] <- "d_fung"
-fung_sig_trend <- apply(pest_country[11:27,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,4]})
-#pest_country[125,which(fung_sig_trend>0.05)] <- 0
-
-pest_country[126,] <- apply(pest_country[41:57,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/pest_country[41,]
-row.names(pest_country)[126] <- "d_herb"
-herb_sig_trend <- apply(pest_country[41:57,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,4]})
-#pest_country[126,which(herb_sig_trend>0.05)] <- 0
-
-pest_country[127,] <- apply(pest_country[71:87,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/pest_country[71,]
-row.names(pest_country)[127] <- "d_inse"
-inse_sig_trend <- apply(pest_country[71:87,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,4]})
-#pest_country[127,which(inse_sig_trend>0.05)] <- 0
-
-pest_country[128,] <- apply(pest_country[101:117,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/pest_country[101,]
-row.names(pest_country)[128] <- "d_pest"
-pest_sig_trend <- apply(pest_country[101:117,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,4]})
-#pest_country[128,which(pest_sig_trend>0.05)] <- 0
-
-# Fertiliser
-# Load data
-# from https://www.fao.org/faostat/en/#data/EF
-
-fert_country <- read.csv("raw_data/FAOSTAT_data_EF.csv", header = T)
-fert_country$Area <- as.character(fert_country$Area)
-fert_country[fert_country=="United Kingdom of Great Britain and Northern Ireland"] <- "UK"
-fert_country[fert_country=="Czechia"] <- "Czech Republic"
-fert_country$Item <- as.character(fert_country$Item)
-fert_country[fert_country=="Nutrient nitrogen N (total)"] <- "nitr"
-fert_country[fert_country=="Nutrient phosphate P2O5 (total)"] <- "phos"
-fert_country[fert_country=="Nutrient potash K2O (total)"] <- "pota"
-fert_country <- droplevels(fert_country[fert_country$Area %in% country_name, c("Area","Item","Year","Value")])
-fert_total_country <- data.frame(fert_country %>% group_by(Area,Year) %>% summarize(fert=sum(Value)))
-fert_country <- dcast(fert_country, Item+Year~Area, fun.aggregate=sum, value.var="Value")
-fert_total_country <- dcast(fert_total_country, Year~Area, fun.aggregate=sum, value.var="fert")
-
-
-# Mean value over the period
-
-fert_country[fert_country==0] <- NA
-row.names(fert_country) <- paste0(fert_country$Item,sep="_",fert_country$Year)
-fert_country$Year <- fert_country$Item <- NULL
-fert_country[178,] <- apply(fert_country[40:56,], 2, function(x){mean(x, na.rm=T)})
-row.names(fert_country)[178] <- "nitr_mean"
-fert_country[179,] <- apply(fert_country[99:115,], 2, function(x){mean(x, na.rm=T)})
-row.names(fert_country)[179] <- "phos_mean"
-fert_country[180,] <- apply(fert_country[158:174,], 2, function(x){mean(x, na.rm=T)})
-row.names(fert_country)[180] <- "pota_mean"
-
-fert_total_country[fert_total_country==0] <- NA
-row.names(fert_total_country) <- paste0("fert",sep="_",fert_total_country$Year)
-fert_total_country$Year <- NULL
-fert_total_country[60,] <- apply(fert_total_country[40:56,], 2, function(x){mean(x, na.rm=T)})
-row.names(fert_total_country)[60] <- "fert_mean"
-
-# Trend over the period
-
-fert_country[181,] <- apply(fert_country[40:56,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/fert_country[40,]
-row.names(fert_country)[181] <- "d_nitr"
-nitr_sig_trend <- apply(fert_country[40:56,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,4]})
-#fert_country[181,which(nitr_sig_trend>0.05)] <- 0
-
-fert_country[182,] <- apply(fert_country[99:115,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/fert_country[99,]
-row.names(fert_country)[182] <- "d_phos"
-phos_sig_trend <- apply(fert_country[99:115,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,4]})
-#fert_country[182,which(phos_sig_trend>0.05)] <- 0
-
-fert_country[183,] <- apply(fert_country[158:174,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/fert_country[158,]
-row.names(fert_country)[183] <- "d_pota"
-pota_sig_trend <- apply(fert_country[158:174,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,4]})
-#fert_country[183,which(pota_sig_trend>0.05)] <- 0
-
-fert_total_country[61,] <- apply(fert_total_country[40:56,], 2, function(x){summary(lm(x~c(2000:2016)))$coef[2,1]})/fert_total_country[40,]
-row.names(fert_total_country)[61] <- "d_fert"
-fert_sig_trend <- apply(fert_total_country[40:56,], 2, function(x){summary(lm(x~c(2000:2016))4)$coef[2,4]})
-#fert_total_country[61,which(fert_sig_trend>0.05)] <- 0
-
-# Merge data
-
-country_data <- rbind(country_data, uaa_country, pest_country, fert_country, fert_total_country)
+uaa_country[21,] <- apply(uaa_country[1:17,], 2, function(x){mean(x, na.rm=T)})
+row.names(uaa_country)[21] <- "uaa_mean"
+country_data <- rbind(country_data, uaa_country)
+ 
 
 # High input farm cover
 
-input_country <- read.csv("raw_data/aei_ps_inp.csv", header = T)
+input_country <- read.csv("raw_data/aei_ps_inp_1_Data.csv", header = T)
  
-input_country <- na.omit(droplevels(input_country[input_country$indic_ag=="HIGH_INP",c("geo","TIME_PERIOD","OBS_VALUE","indic_ag")]))
- 
-input_country <- dcast(input_country, TIME_PERIOD~geo, fun.aggregate=sum, value.var="OBS_VALUE")
+input_country <- na.omit(droplevels(input_country[input_country$INDIC_AG=="High-input farms",]))
+input_country$Value <- as.character(input_country$Value)
+input_country$Value <- gsub(" ","",input_country$Value)
+input_country$Value <- as.numeric(input_country$Value)
+input_country <- dcast(input_country, TIME~GEO, fun.aggregate=sum, value.var="Value")
 
-names(input_country) <- c("Year","Austria","Belgium","Bulgaria","Cyprus","Czech Republic","Germany","Denmark","Estonia","Greece","Spain","Finland","France","Croatia","Hungary","Ireland","Italy","Lithuania","Luxembourg","Latvia","Malta","Netherlands","Poland","Portugal","Romania","Sweden","Slovenia","Slovakia","UK")
+names(input_country) <- c("Year","Austria","Belgium","Bulgaria","Croatia","Cyprus","Czech Republic","Denmark","Estonia","EU","Finland","France","Germany","Greece","Hungary","Ireland","Italy","Latvia","Lithuania","Luxembourg","Malta","Netherlands","Poland","Portugal","Romania","Slovakia","Slovenia","Spain","Sweden","UK")
 
 input_country[input_country==0] <- NA
  
-row.names(input_country) <- paste0("hic",sep="_",input_country$Year)
+row.names(input_country) <- paste0("hico",sep="_",input_country$Year)
  
-input_country$Year <- NULL
+input_country$Year <- input_country$EU <- NULL
  
-input_country[16,] <- apply(input_country[1:12,], 2, function(x){mean(x, na.rm=T)})
+input_country[11,] <- apply(input_country[1:10,], 2, function(x){mean(x, na.rm=T)})
  
-row.names(input_country)[16] <- "hic_mean"
+row.names(input_country)[11] <- "hico_mean"
 
-input_country[17,] <- apply(input_country[1:12,], 2, function(x){summary(lm(x~c(2005:2016)))$coef[2,1]})/apply(input_country[1:3,], 2,function(x){mean(x, na.rm=T)})
+input_country[12,] <- apply(input_country[1:10,], 2, function(x){summary(lm(x~c(2007:2016)))$coef[2,1]})/apply(input_country[1:3,], 2,function(x){mean(x, na.rm=T)})
  
-row.names(input_country)[17] <- "d_hic"
+row.names(input_country)[12] <- "d_hico"
 
 
 input_country <- input_country[,sort(names(input_country))]
@@ -1169,45 +1046,10 @@ input_country <- data.frame(input_country[,c(1:13)], Iceland=0, input_country[,c
  
 names(input_country)[6] <- "Czech Republic"
 
-country_data <- rbind(country_data, input_country)
+country_data <- rbind(country_data, input_country) # opposite sign for names(input_country)[c(2,12,17,28)] we choose this old dataset as it is more coherent with https://www.eea.europa.eu/publications/eea_report_2005_6 but see also https://link.springer.com/article/10.1007/s11356-021-17655-4
 
-
-# High input farm cover old
-
-input_country_old <- read.csv("raw_data/aei_ps_inp_1_Data.csv", header = T)
- 
-input_country_old <- na.omit(droplevels(input_country_old[input_country_old$INDIC_AG=="High-input farms",]))
-input_country_old$Value <- as.character(input_country_old$Value)
-input_country_old$Value <- gsub(" ","",input_country_old$Value)
-input_country_old$Value <- as.numeric(input_country_old$Value)
-input_country_old <- dcast(input_country_old, TIME~GEO, fun.aggregate=sum, value.var="Value")
-
-names(input_country_old) <- c("Year","Austria","Belgium","Bulgaria","Croatia","Cyprus","Czech Republic","Denmark","Estonia","EU","Finland","France","Germany","Greece","Hungary","Ireland","Italy","Latvia","Lithuania","Luxembourg","Malta","Netherlands","Poland","Portugal","Romania","Slovakia","Slovenia","Spain","Sweden","UK")
-
-input_country_old[input_country_old==0] <- NA
- 
-row.names(input_country_old) <- paste0("hico",sep="_",input_country_old$Year)
- 
-input_country_old$Year <- input_country_old$EU <- NULL
- 
-input_country_old[11,] <- apply(input_country_old[1:10,], 2, function(x){mean(x, na.rm=T)})
- 
-row.names(input_country_old)[11] <- "hico_mean"
-
-input_country_old[12,] <- apply(input_country_old[1:10,], 2, function(x){summary(lm(x~c(2007:2016)))$coef[2,1]})/apply(input_country_old[1:3,], 2,function(x){mean(x, na.rm=T)})
- 
-row.names(input_country_old)[12] <- "d_hico"
-
-
-input_country_old <- input_country_old[,sort(names(input_country_old))]
- 
-input_country_old <- data.frame(input_country_old[,c(1:13)], Iceland=0, input_country_old[,c(14:20)], Norway=0, input_country_old[,c(21:27)], Switzerland=0, UK=input_country_old$UK)
- 
-names(input_country_old)[6] <- "Czech Republic"
-
-country_data <- rbind(country_data, input_country_old) # opposite sign for names(input_country_old)[c(2,12,17,28)] we choose this old dataset as it is more coherent with https://www.eea.europa.eu/publications/eea_report_2005_6 but see also https://link.springer.com/article/10.1007/s11356-021-17655-4
-
-
+country_data[135,] <- country_data[133,]/country_data[122,]
+row.names(country_data)[135] <- "hico_mean_perc"
 
 ```
 
@@ -1257,7 +1099,482 @@ country_data2$country[country_data2$country=="UK"]<-"United Kingdom"
 country_data2[country_data2==0] <- NA
 country_data2$country <- as.factor(country_data2$country)
 
+```
 
+#### Plot pressures and species trends
+
+##### Map pressures
+
+```{r}
+
+library(sf)
+library(rnaturalearth)
+
+worldmap <- ne_countries(scale = 'medium', type = 'countries',returnclass = 'sf')
+
+europe_cropped <- st_crop(worldmap[worldmap$sovereignt %in% c("Austria","Belgium","Bulgaria","Cyprus","Czech Republic","Denmark",
+                                                           "Estonia","Finland","France","Germany","Greece","Hungary","Ireland",
+                                                           "Italy","Latvia","Lithuania","Netherlands","Norway","Portugal","Poland","Romania",
+                                                           "Slovakia","Spain","Sweden","Switzerland","United Kingdom",
+                                                           "Croatia","Republic of Serbia","Albania","Slovenia","Bosnia and Herzegovina","Kosovo",
+                                                           "Montenegro", "Belarus","Ukraine","Russia","Moldova","Macedonia","Luxembourg"),],
+                          xmin = -12, xmax = 35,ymin = 30, ymax = 73)
+                          
+europe_cropped$fill_param <- rep(NA,nrow(europe_cropped))
+
+europe_cropped$fill_param[europe_cropped$sovereignt %in% c("Austria","Belgium","Bulgaria","Cyprus","Czech Republic","Denmark",
+                                                          "Estonia","Finland","France","Germany","Greece","Hungary","Ireland",
+                                                          "Italy","Latvia","Lithuania","Netherlands","Norway","Portugal","Poland","Romania",
+                                                          "Slovakia","Spain","Sweden","Switzerland","United Kingdom","Slovenia","Luxembourg")] <- "PECBMS member (in 2016)"
+                                                          
+
+europe_cropped$Urbanisation <- country_data2$urb_mean[match(europe_cropped$sovereignt,country_data2$country)]
+
+europe_cropped$High_input_farm_cover <- country_data2$hico_mean_perc[match(europe_cropped$sovereignt,country_data2$country)]
+
+europe_cropped$Temperature <- country_data2$temp_mean[match(europe_cropped$sovereignt,country_data2$country)]
+
+europe_cropped$Forest_cover <- country_data2$for_mean[match(europe_cropped$sovereignt,country_data2$country)]
+
+europe_cropped[europe_cropped$sovereignt=="Croatia",c("Urbanisation","High_input_farm_cover","Temperature","Forest_cover")] <- NA
+                                                        
+```
+
+# Map species trends
+
+```{r}
+                                                        
+country_bird_trend_agri <- data.frame(year=NA,variable=NA,value=NA, slope=NA)
+
+for(ii in levels(df_pop$CountryGroup)){
+
+  df_agri_1 <- droplevels(df_pop[df_pop$Species %in% pecbms_hab$Species[pecbms_hab$Habitat=="Farmland"] & df_pop$CountryGroup==ii,])
+  
+  df_agri_1b <- as.data.frame(df_agri_1 %>% group_by(Species) %>% summarize(sum_ab=sum(Abd)))
+  
+  df_agri_1 <- as.data.frame(df_agri_1[!(df_agri_1$Species %in% levels(droplevels(df_agri_1b$Species[df_agri_1b$sum_ab==0]))),c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")])
+  
+  if(ii=="Netherlands"){
+    df_agri_1 <- as.data.frame(df_agri_1[!(df_agri_1$Species %in% c("Galerida cristata","Emberiza calandra",levels(droplevels(df_agri_1b$Species[df_agri_1b$sum_ab==0])))),c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")]) 
+  }
+  
+  if(ii=="Czech Republic"){
+    df_agri_1 <- as.data.frame(df_agri_1[!(df_agri_1$Species %in% c("Motacilla flava",levels(droplevels(df_agri_1b$Species[df_agri_1b$sum_ab==0])))),c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")]) 
+  }
+  
+  if(ii=="Latvia"){df_agri_1 <- droplevels(df_agri_1[df_agri_1$Year>2004,])}
+  if(ii=="Lithuania"){df_agri_1 <- droplevels(df_agri_1[df_agri_1$Year>2010,])}
+  if(ii=="Sweden"){df_agri_1 <- droplevels(df_agri_1[df_agri_1$Year>1990,])}
+  if(ii=="Switzerland"){df_agri_1 <- droplevels(df_agri_1[df_agri_1$Year>1999,])}
+  if(ii=="Germany"){df_agri_1 <- droplevels(df_agri_1[df_agri_1$Year>1990,])}
+  
+  names(df_agri_1) <- c("Species","Code","Year","Abundance","Abundance_SE","Index_imputed","Index_imputed_SE")
+  msi_agri_1 <- msi_fun3b(df_agri_1,ref_year = min(df_agri_1$Year), niter = niter, ref_value = "Abundance")
+  country_bird_trend_agri2 <- data.frame(year=c(min(df_agri_1$Year):max(df_agri_1$Year)),variable=ii,
+                                    value=msi_agri_1$msi$mean_msi_final,slope=msi_agri_1$coef$slope/msi_agri_1$msi$mean_msi_final[1])
+                                    
+  country_bird_trend_agri2$slope <- summary(lm(value~year,country_bird_trend_agri2))$coef[2,1]/msi_agri_1$msi$mean_msi_final[1]
+  
+  if(ii=="Czech Republic"){country_bird_trend_agri2$variable <- "Czech.Republic"}
+  if(ii=="Republic of Ireland"){country_bird_trend_agri2$variable <- "Ireland"}
+  if(ii=="United Kingdom"){country_bird_trend_agri2$variable <- "UK"}
+  country_bird_trend_agri <- rbind(country_bird_trend_agri,country_bird_trend_agri2)
+}
+
+
+country_bird_trend_forest <- data.frame(year=NA,variable=NA,value=NA, slope=NA)
+
+for(ii in levels(df_pop$CountryGroup)){
+
+  df_forest_1 <-  droplevels(df_pop[df_pop$Species %in% pecbms_hab$Species[pecbms_hab$Habitat=="Forest"] & df_pop$CountryGroup==ii,])
+  
+  df_forest_1b <- as.data.frame(df_forest_1 %>% group_by(Species) %>% summarize(sum_ab=sum(Abd), count=n()))
+  
+  df_forest_1 <- as.data.frame(df_forest_1[!(df_forest_1$Species %in% levels(droplevels(df_forest_1b$Species[df_forest_1b$sum_ab==0]))) & df_forest_1$Year %in% as.numeric(levels(as.factor(as.character(df_forest_1$Year[df_forest_1$Species %in% droplevels(df_forest_1b$Species[which(df_forest_1b$count==max(df_forest_1b$count))])])))),c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")])
+  
+  if(ii=="Latvia"){df_forest_1 <- droplevels(df_forest_1[df_forest_1$Year>2004,])}
+  if(ii=="Lithuania"){df_forest_1 <- droplevels(df_forest_1[df_forest_1$Year>2010,])}
+  if(ii=="Sweden"){df_forest_1 <- droplevels(df_forest_1[df_forest_1$Year>1990,])}
+  if(ii=="Switzerland"){df_forest_1 <- droplevels(df_forest_1[df_forest_1$Year>1999,])}
+  if(ii=="Germany"){df_forest_1 <- droplevels(df_forest_1[df_forest_1$Year>1990,])}
+  
+  names(df_forest_1) <- c("Species","Code","Year","Abundance","Abundance_SE","Index_imputed","Index_imputed_SE")
+  msi_forest_1 <- msi_fun3b(df_forest_1,ref_year = min(df_forest_1$Year), niter = niter, ref_value = "Abundance")
+  
+  country_bird_trend_forest2 <- data.frame(year=c(min(df_forest_1$Year):max(df_forest_1$Year)),variable=ii,value=msi_forest_1$msi$mean_msi_final,slope=msi_forest_1$coef$slope/msi_forest_1$msi$mean_msi_final[1])
+  
+  country_bird_trend_forest2$slope <- summary(lm(value~year,country_bird_trend_forest2))$coef[2,1]/msi_forest_1$msi$mean_msi_final[1]
+  
+  if(ii=="Czech Republic"){country_bird_trend_forest2$variable <- "Czech.Republic"}
+  if(ii=="Republic of Ireland"){country_bird_trend_forest2$variable <- "Ireland"}
+  if(ii=="United Kingdom"){country_bird_trend_forest2$variable <- "UK"}
+  
+  country_bird_trend_forest <- rbind(country_bird_trend_forest,country_bird_trend_forest2)
+}
+
+
+country_bird_trend_build <- data.frame(year=NA,variable=NA,value=NA, slope=NA)
+
+for(ii in levels(df_pop$CountryGroup)){
+
+  df_build_1 <- droplevels(df_pop[df_pop$Species %in% levels(as.factor(eunis_hab$speciesname[eunis_hab$season=="B" & eunis_hab$codeeco=="urban"])) & df_pop$CountryGroup==ii,])
+  
+  df_build_1b <- as.data.frame(df_build_1 %>% group_by(Species) %>% summarize(sum_ab=sum(Abd), count=n()))
+  
+  df_build_1 <- as.data.frame(df_build_1[!(df_build_1$Species %in% levels(droplevels(df_build_1b$Species[df_build_1b$sum_ab==0]))) & df_build_1$Year %in% as.numeric(levels(as.factor(as.character(df_build_1$Year[df_build_1$Species %in% droplevels(df_build_1b$Species[which(df_build_1b$count==max(df_build_1b$count))])])))),c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")])
+  
+    if(ii=="Netherlands"){
+    df_build_1 <- as.data.frame(df_build_1[!(df_build_1$Species %in% c("Galerida cristata","Emberiza calandra",levels(droplevels(df_build_1b$Species[df_build_1b$sum_ab==0])))),c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")]) 
+    }
+    
+    if(ii=="Czech Republic"){
+    df_build_1 <- as.data.frame(df_build_1[!(df_build_1$Species %in% c("Motacilla flava",levels(droplevels(df_build_1b$Species[df_build_1b$sum_ab==0])))),c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")]) 
+    }
+    
+  if(ii=="Latvia"){df_build_1 <- droplevels(df_build_1[df_build_1$Year>2004,])}
+  if(ii=="Lithuania"){df_build_1 <- droplevels(df_build_1[df_build_1$Year>2010,])}
+  if(ii=="Sweden"){df_build_1 <- droplevels(df_build_1[df_build_1$Year>1990,])}
+  if(ii=="Switzerland"){df_build_1 <- droplevels(df_build_1[df_build_1$Year>1999,])}
+  if(ii=="Germany"){df_build_1 <- droplevels(df_build_1[df_build_1$Year>1990,])}
+  
+  names(df_build_1) <- c("Species","Code","Year","Abundance","Abundance_SE","Index_imputed","Index_imputed_SE")
+  msi_build_1 <- msi_fun3b(df_build_1,ref_year = min(df_build_1$Year), niter = niter, ref_value = "Abundance")
+  
+  country_bird_trend_build2 <- data.frame(year=c(min(df_build_1$Year):max(df_build_1$Year)),variable=ii,value=msi_build_1$msi$mean_msi_final,slope=msi_build_1$coef$slope/msi_build_1$msi$mean_msi_final[1])
+  country_bird_trend_build2$slope <- summary(lm(value~year,country_bird_trend_build2))$coef[2,1]/msi_build_1$msi$mean_msi_final[1]
+  
+  if(ii=="Czech Republic"){country_bird_trend_build2$variable <- "Czech.Republic"}
+  if(ii=="Republic of Ireland"){country_bird_trend_build2$variable <- "Ireland"}
+  if(ii=="United Kingdom"){country_bird_trend_build2$variable <- "UK"}
+  country_bird_trend_build <- rbind(country_bird_trend_build,country_bird_trend_build2)
+}
+
+
+country_bird_trend_temp_warm <- data.frame(year=NA,variable=NA,value=NA,slope=NA)
+
+for(ii in levels(df_pop$CountryGroup)){
+
+  df_temp_warm_1 <- droplevels(df_pop[df_pop$Species %in% as.character(sti$SPECIES[sti$STI>quantile(sti$STI[sti$SPECIES %in% levels(droplevels(df_pop$Species))], 0.7)]) & df_pop$CountryGroup==ii,])
+  
+  df_temp_warm_1b <- as.data.frame(df_temp_warm_1 %>% group_by(Species) %>% summarize(sum_ab=sum(Abd)))
+  
+  df_temp_warm_1 <- as.data.frame(df_temp_warm_1[!(df_temp_warm_1$Species %in% levels(droplevels(df_temp_warm_1b$Species[df_temp_warm_1b$sum_ab==0]))),c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")])
+  
+  df_temp_warm_1b <- as.data.frame(df_temp_warm_1 %>% group_by(Species) %>% summarize(sum_ab=sum(Abd), count=n()))
+  
+  df_temp_warm_1 <- as.data.frame(df_temp_warm_1[!(df_temp_warm_1$Species %in% levels(droplevels(df_temp_warm_1b$Species[df_temp_warm_1b$sum_ab==0]))) & df_temp_warm_1$Year %in% as.numeric(levels(as.factor(as.character(df_temp_warm_1$Year[df_temp_warm_1$Species %in% droplevels(df_temp_warm_1b$Species[which(df_temp_warm_1b$count==max(df_temp_warm_1b$count))])])))),c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")])
+  
+  if(ii=="Netherlands"){
+    df_temp_warm_1 <- as.data.frame(df_temp_warm_1[!(df_temp_warm_1$Species %in% c("Galerida cristata","Emberiza calandra",levels(droplevels(df_temp_warm_1b$Species[df_temp_warm_1b$sum_ab==0])))),c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")]) 
+  }
+  
+  if(ii=="Latvia"){df_temp_warm_1 <- droplevels(df_temp_warm_1[df_temp_warm_1$Year>2004,])}
+  if(ii=="Lithuania"){df_temp_warm_1 <- droplevels(df_temp_warm_1[df_temp_warm_1$Year>2010,])}
+  if(ii=="Switzerland"){
+    df_temp_warm_1 <- as.data.frame(df_temp_warm_1[df_temp_warm_1$Year>1999,c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")]) 
+  }
+  if(ii=="Sweden"){
+    df_temp_warm_1 <- as.data.frame(df_temp_warm_1[df_temp_warm_1$Year>1990,c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")]) 
+  }
+  if(ii=="Germany"){
+    df_temp_warm_1 <- as.data.frame(df_temp_warm_1[df_temp_warm_1$Year>1990,c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")]) 
+  }
+  names(df_temp_warm_1) <- c("Species","Code","Year","Abundance","Abundance_SE","Index_imputed","Index_imputed_SE")
+  msi_temp_warm_1 <- msi_fun3b(df_temp_warm_1,ref_year = min(df_temp_warm_1$Year), niter = niter, ref_value = "Abundance")
+  
+  country_bird_trend_temp_warm2 <- data.frame(year=c(min(df_temp_warm_1$Year):max(df_temp_warm_1$Year)),variable=ii,value=msi_temp_warm_1$msi$mean_msi_final,slope=msi_temp_warm_1$coef$slope/msi_temp_warm_1$msi$mean_msi_final[1])
+  country_bird_trend_temp_warm2$slope <- summary(lm(value~year,country_bird_trend_temp_warm2))$coef[2,1]/msi_temp_warm_1$msi$mean_msi_final[1]
+  
+  if(ii=="Czech Republic"){country_bird_trend_temp_warm2$variable <- "Czech.Republic"}
+  if(ii=="Republic of Ireland"){country_bird_trend_temp_warm2$variable <- "Ireland"}
+  if(ii=="United Kingdom"){country_bird_trend_temp_warm2$variable <- "UK"}
+  
+  country_bird_trend_temp_warm <- rbind(country_bird_trend_temp_warm,country_bird_trend_temp_warm2)
+}
+
+
+country_bird_trend_temp_cold <- data.frame(year=NA,variable=NA,value=NA, slope=NA)
+
+for(ii in levels(df_pop$CountryGroup)[-c(2,3,9)]){
+
+  df_temp_cold_1 <-  droplevels(df_pop[df_pop$Species %in% as.character(sti$SPECIES[sti$STI<quantile(sti$STI[sti$SPECIES %in% levels(droplevels(df_pop$Species))], 0.3)]) & df_pop$CountryGroup==ii,])
+  
+  df_temp_cold_1b <- as.data.frame(df_temp_cold_1 %>% group_by(Species) %>% summarize(sum_ab=sum(Abd)))
+  
+  df_temp_cold_1 <- as.data.frame(df_temp_cold_1[!(df_temp_cold_1$Species %in% levels(droplevels(df_temp_cold_1b$Species[df_temp_cold_1b$sum_ab==0]))),c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")])
+  
+  df_temp_cold_1b <- as.data.frame(df_temp_cold_1 %>% group_by(Species) %>% summarize(sum_ab=sum(Abd), count=n()))
+  
+  df_temp_cold_1 <- as.data.frame(df_temp_cold_1[!(df_temp_cold_1$Species %in% levels(droplevels(df_temp_cold_1b$Species[df_temp_cold_1b$sum_ab==0]))) & df_temp_cold_1$Year %in% as.numeric(levels(as.factor(as.character(df_temp_cold_1$Year[df_temp_cold_1$Species %in% droplevels(df_temp_cold_1b$Species[which(df_temp_cold_1b$count==max(df_temp_cold_1b$count))])])))),c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")])
+  
+  if(ii=="Netherlands"){
+    df_temp_cold_1 <- as.data.frame(df_temp_cold_1[!(df_temp_cold_1$Species %in% c("Galerida cristata","Emberiza calandra",levels(droplevels(df_temp_cold_1b$Species[df_temp_cold_1b$sum_ab==0])))),c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")]) 
+  }
+  if(ii=="Latvia"){df_temp_cold_1 <- droplevels(df_temp_cold_1[df_temp_cold_1$Year>2004,])}
+  if(ii=="Lithuania"){df_temp_cold_1 <- droplevels(df_temp_cold_1[df_temp_cold_1$Year>2010,])}
+  if(ii=="Sweden"){
+    df_temp_cold_1 <- as.data.frame(df_temp_cold_1[df_temp_cold_1$Year>1990,c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")]) 
+  }
+  if(ii=="Switzerland"){
+    df_temp_cold_1 <- as.data.frame(df_temp_cold_1[df_temp_cold_1$Year>1999,c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")]) 
+  }
+  if(ii=="Germany"){
+    df_temp_cold_1 <- as.data.frame(df_temp_cold_1[df_temp_cold_1$Year>1990,c("Species","Code","Year","Abd","SE_Abd","Index","Index_SE")]) 
+  }
+  names(df_temp_cold_1) <- c("Species","Code","Year","Abundance","Abundance_SE","Index_imputed","Index_imputed_SE")
+  if(!(ii %in% c(2,3,9))){
+    msi_temp_cold_1 <- msi_fun3b(df_temp_cold_1,ref_year = min(df_temp_cold_1$Year), niter = niter, ref_value = "Abundance")
+    
+    country_bird_trend_temp_cold2 <- data.frame(year=c(min(df_temp_cold_1$Year):max(df_temp_cold_1$Year)),variable=ii,value=msi_temp_cold_1$msi$mean_msi_final,slope=msi_temp_cold_1$coef$slope/msi_temp_cold_1$msi$mean_msi_final[1])
+    
+    country_bird_trend_temp_cold2$slope <- summary(lm(value~year,country_bird_trend_temp_cold2))$coef[2,1]/msi_temp_cold_1$msi$mean_msi_final[1]
+    
+  }else{country_bird_trend_temp_cold2 <- data.frame(year=NA,variable=NA,value=NA, slope=NA)
+  }
+ 
+  if(ii=="Czech Republic"){country_bird_trend_temp_cold2$variable <- "Czech.Republic"}
+  if(ii=="Republic of Ireland"){country_bird_trend_temp_cold2$variable <- "Ireland"}
+  if(ii=="United Kingdom"){country_bird_trend_temp_cold2$variable <- "UK"}
+  
+  country_bird_trend_temp_cold <- rbind(country_bird_trend_temp_cold,country_bird_trend_temp_cold2)
+}
+
+country_bird_trend_temp <- merge(country_bird_trend_temp_warm,country_bird_trend_temp_cold, by=c("year","variable"), all=T)
+names(country_bird_trend_temp)[3:6]<-c("value_warm","slope_warm","value_cold","slope_cold")
+
+country_bird_trend_agrib <- data.frame(droplevels(country_bird_trend_agri) %>% group_by(variable) %>% summarize(slope_agri2=mean(slope)))
+country_bird_trend_buildb<-data.frame(droplevels(country_bird_trend_build) %>% group_by(variable) %>% summarize(slope_build2=mean(slope)))
+country_bird_trend_forestb<-data.frame(droplevels(country_bird_trend_forest) %>% group_by(variable) %>% summarize(slope_forest2=mean(slope)))
+country_bird_trend_tempb<-data.frame(droplevels(country_bird_trend_temp) %>% group_by(variable) %>% summarize(slope_warm2=mean(slope_warm),slope_cold2=mean(slope_cold)))
+
+country_bird_trend_agrib$variable[country_bird_trend_agrib$variable=="UK"] <- country_bird_trend_buildb$variable[country_bird_trend_buildb$variable=="UK"] <-
+  country_bird_trend_forestb$variable[country_bird_trend_forestb$variable=="UK"] <- country_bird_trend_tempb$variable[country_bird_trend_tempb$variable=="UK"] <- "United Kingdom"
+country_bird_trend_agrib$variable[country_bird_trend_agrib$variable=="Czech.Republic"] <- country_bird_trend_buildb$variable[country_bird_trend_buildb$variable=="Czech.Republic"] <-
+  country_bird_trend_forestb$variable[country_bird_trend_forestb$variable=="Czech.Republic"] <- country_bird_trend_tempb$variable[country_bird_trend_tempb$variable=="Czech.Republic"] <- "Czech Republic"
+
+europe_cropped$slope_agri <- country_bird_trend_agrib$slope_agri2[match(europe_cropped$sovereignt,country_bird_trend_agrib$variable)]
+
+europe_cropped$slope_build <- country_bird_trend_buildb$slope_build2[match(europe_cropped$sovereignt,country_bird_trend_buildb$variable)]
+europe_cropped$slope_build[europe_cropped$slope_build>0.05] <- 0.05
+
+europe_cropped$slope_forest <- country_bird_trend_forestb$slope_forest2[match(europe_cropped$sovereignt,country_bird_trend_forestb$variable)]
+europe_cropped$slope_forest[europe_cropped$slope_forest>0.05] <- 0.05
+
+europe_cropped$slope_warm <- country_bird_trend_tempb$slope_warm2[match(europe_cropped$sovereignt,country_bird_trend_tempb$variable)]
+europe_cropped$slope_warm[europe_cropped$slope_warm>0.07] <- 0.07
+
+europe_cropped$slope_cold <- country_bird_trend_tempb$slope_cold2[match(europe_cropped$sovereignt,country_bird_trend_tempb$variable)]
+europe_cropped$slope_cold[europe_cropped$slope_cold>0.07] <- 0.07
+
+# Reproject data
+
+europe_map <- sf::st_transform(
+  europe_cropped,
+  "+init=epsg:27572"
+)
+
+# Simplify map
+
+library(rmapshaper)
+europe_map_simpl <- ms_simplify(europe_map, keep = 0.07,
+                                keep_shapes = FALSE)
+
+pres1 <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = High_input_farm_cover)) + scale_fill_gradient(low="white",high="#D302F9",na.value="lightgrey")+
+  theme_void()+ coord_sf(datum = NA)+
+  annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = High_input_farm_cover)) + scale_fill_gradient(low="white",high="#D302F9",na.value="lightgrey")+
+                                                                      theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
+                                                                      
+pres2 <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = Urbanisation)) + scale_fill_gradient(low="white",high="#196DF6",na.value="lightgrey")+
+  theme_void()+ coord_sf(datum = NA)+
+  annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = Urbanisation)) +scale_fill_gradient(low="white",high="#196DF6",na.value="lightgrey")+
+                                                                      theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
+                                                                      
+pres3 <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = Temperature)) + scale_fill_gradient(low="white",high="#FA0900",na.value="lightgrey")+
+  theme_void()+ coord_sf(datum = NA)+
+  annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = Temperature)) + scale_fill_gradient(low="white",high="#FA0900",na.value="lightgrey")+
+                                                                      theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
+
+pres4 <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = Forest_cover)) + scale_fill_gradient(low="white",high="#1BAE20",na.value="lightgrey")+
+  theme_void()+ coord_sf(datum = NA)+
+  annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = Forest_cover)) + scale_fill_gradient(low="white",high="#1BAE20",na.value="lightgrey")+
+                                                                      theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
+
+
+pres_tend_agri <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_agri)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20", mid="white",midpoint = 0,na.value="lightgrey")+theme_void()+ coord_sf(datum = NA)+
+  annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_agri)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20",mid="white",midpoint = 0,na.value="white")+#scale_fill_viridis(option = "C",na.value="lightgrey")+
+                                                                      theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
+
+pres_tend_forest <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_forest)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20", mid="white",midpoint = 0,na.value="lightgrey")+
+  theme_void()+ coord_sf(datum = NA)+
+  annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_forest)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20",mid="white",midpoint = 0,na.value="white")+                                                                      theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
+
+pres_tend_build <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_build)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20", mid="white",midpoint = 0,na.value="lightgrey")+
+  theme_void()+ coord_sf(datum = NA)+
+  annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_build)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20",mid="white",midpoint = 0,na.value="lightgrey")+                                                                      theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
+
+pres_tend_warm <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_warm)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20", mid="white",midpoint = 0,na.value="lightgrey")+
+  theme_void()+ coord_sf(datum = NA)+
+  annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_warm)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20",mid="white",midpoint = 0,na.value="lightgrey")+                                                                      theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
+
+pres_tend_cold <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_cold)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20", mid="white",midpoint = 0,na.value="lightgrey")+
+  theme_void()+ coord_sf(datum = NA)+
+  annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_cold)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20",mid="white",midpoint = 0,na.value="lightgrey")+                                                                      theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
+  
+pres_tend_temp <- ggplot() + geom_sf(data = europe_map_simpl, fill="transparent")+theme_void()+ coord_sf(datum = NA)
+```
+
+##### Trend
+```{r}
+require("pacman") 
+p_load(ggplot2, ggtree, dplyr, tidyr, sp, maps, pipeR, grid, XML, gtable)
+
+getLabelPoint <- function(county) {Polygon(county[c('long', 'lat')])@labpt}
+map_base_data <- droplevels(subset(map_data("world"), region %in% c("Austria","Belgium","Bulgaria","Cyprus","Czech Republic","Denmark", #2000
+                                                                  "Estonia","Finland","France","Germany","Greece","Hungary","Italy",
+                                                                  "Latvia","Lithuania","Luxembourg","Netherlands","Norway",
+                                                                  "Poland","Portugal","Ireland","Romania","Slovakia","Slovenia","Spain","Sweden","Switzerland","UK")))
+                                                                  
+map_base_data2 <- droplevels(map_base_data[which(is.na(map_base_data$subregion) | map_base_data$region=="UK"),])
+
+centroids <- by(map_base_data2, map_base_data2$region, getLabelPoint)     # Returns list
+
+centroids <- do.call("rbind.data.frame", centroids)  # Convert to Data Frame
+
+names(centroids) <- c('long', 'lat')                 # Appropriate Header
+
+rownames(centroids) <- c("Austria","Belgium","Bulgaria","Cyprus","Czech.Republic","Denmark","Estonia","Finland","France","Germany",
+                       "Greece","Hungary","Ireland","Italy","Latvia","Lithuania","Luxembourg","Netherlands","Norway",
+                       "Poland","Portugal","Romania","Slovakia","Slovenia","Spain","Sweden","Switzerland","UK")
+
+data_pres_wide <- melt(data.frame(year=sub(".*_","",row.names(input_country[1:10,])),input_country[1:10,]))
+data_pres_wide <- droplevels(country_data_taille2)
+data_pres_wide <- droplevels(country_data_clc2)
+data_pres_wide[c(11,12,121,122,146,151),3] <- NA
+data_pres_wide <- droplevels(country_data_clc_new2)
+country_data_temp3<-country_data_temp2[country_data_temp2$year>=1979,]
+country_data_temp3$year2<-sort(rep(seq(from=1979, to=2018,by=5),5))
+data_pres_wide<-as.data.frame(country_data_temp3 %>% group_by(variable, year2) %>% summarize(sd_val=sd(value),value=mean(value)))
+data_pres_wide<-data.frame(year=10*as.numeric(data_pres_wide$year2), variable=data_pres_wide$variable, value=data_pres_wide$value, sd_val=data_pres_wide$sd_val)
+data_pres_wide<-droplevels(country_data_forest2)
+data_pres_wide<-droplevels(country_bird_trend_agri)
+data_pres_wide<-droplevels(country_bird_trend_forest)
+data_pres_wide<-droplevels(country_bird_trend_build)
+data_pres_wide<-droplevels(country_bird_trend_temp)
+
+#country_data_temp3<-country_data_temp2[country_data_temp2$year>=1975,] #for temperature change graph
+#country_data_temp3<-ddply(country_data_temp3,.(variable),
+#                       .fun=function(x){
+#                         y<-data.frame(year=NA,part_der=NA)
+#                         for(i in 1:8){
+#                           y[i,1]<-(1975+5*i-1)
+#                           y[i,2]<-summary(lm(value~year,x[x$year %in% c((1975+5*i-1-4):(1975+5*i-1+4)),]))$coef[2,1]
+#                         }
+#                         y2<-summary(lm(value~year,x))$coef[2,1]
+#                         return(data.frame(y,mean_der=rep(y2,length(y))))
+#                         })
+#data_pres_wide<-data.frame(year=country_data_temp3$year, variable=country_data_temp3$variable, value=country_data_temp3$part_der)
+
+names(data_pres_wide)[2] <- "Country"
+data_pres_long <- add_rownames(centroids, "Country") %>% left_join(data_pres_wide) %>% split(., .$Country)
+
+#data_pres_long$Switzerland<-data_pres_long$Norway<-NULL #pour hic
+
+graph <- setNames(lapply(1:length(data_pres_long), function(i){
+  test<-data_pres_long[[i]]
+  
+  if(length(test$value[!is.na(test$value)])<0){
+    
+    ggplot(na.omit(test), aes(x=year, y=value)) +
+      #geom_ribbon(aes(ymin=value-sd(value),ymax=value+sd(value)),alpha=0.5, col="black",fill="white")+
+      geom_line(col="black" ,size=1.5, alpha=0.5)+
+      #scale_y_continuous(breaks = seq(limy_bas,limy_haut,0.1),limits = c(limy_bas,limy_haut))+ 
+      scale_y_continuous(breaks = seq(limy_bas,limy_haut,0.01),limits = c(limy_bas,limy_haut))+ 
+      #geom_point(shape=21,color="black", fill="white", size=3)+
+      xlab(NULL) + 
+      ylab(NULL) + 
+      theme_modern() +theme_transparent()+
+      theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
+            axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)
+  }else{
+
+  lim_centre<-mean(test$value,na.rm=T)
+  #limy_bas<-max(lim_centre-0.1,0) #hic
+  #limy_haut<-min(lim_centre+0.1,0.9)
+  
+  #limy_bas<-max(lim_centre-0.065,0) #forest
+  #limy_haut<-min(lim_centre+0.05,1)
+  
+  limy_bas<-max(lim_centre-0.0033,0) #urb
+  limy_haut<-min(lim_centre+0.002,1)
+  
+  #limy_bas<-lim_centre-1.5 #temp
+  #limy_haut<-lim_centre+1.5
+
+  ggplot(na.omit(test), aes(x=year, y=value)) +
+    #geom_ribbon(aes(ymin=value-sd(value),ymax=value+sd(value)),alpha=0.5, col="black",fill="white")+
+    geom_line(col="black" ,size=1.5, alpha=0.5)+
+    #scale_y_continuous(breaks = seq(limy_bas,limy_haut,0.1),limits = c(limy_bas,limy_haut))+ 
+    scale_y_continuous(breaks = seq(limy_bas,limy_haut,0.01),limits = c(limy_bas,limy_haut))+ 
+    #geom_point(shape=21,color="black", fill="white", size=3)+
+    xlab(NULL) + 
+    ylab(NULL) + 
+    theme_modern() +theme_transparent()+
+    theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
+          axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)}
+}), names(data_pres_long))
+
+graph <- setNames(lapply(1:length(data_pres_long), function(i){# pour tendance oiseau par country
+  test<-data_pres_long[[i]]
+    
+    ggplot(na.omit(test), aes(x=year, y=value)) +
+      #geom_ribbon(aes(ymin=value-sd(value),ymax=value+sd(value)),alpha=0.5, col="black",fill="white")+
+      geom_line(col="black" ,size=1.5, alpha=0.5)+
+      xlab(NULL) + 
+      ylab(NULL) + 
+      theme_modern() +theme_transparent()+
+      theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
+            axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)
+}), names(data_pres_long))
+
+graph <- setNames(lapply(1:length(data_pres_long), function(i){# pour tendance oiseau par country temperature
+  test<-data_pres_long[[i]]
+  
+  ggplot() +
+    geom_line(data=na.omit(test[,1:5]), aes(x=year, y=scale(value_chaud)),col="black" ,size=1.5, alpha=0.5)+
+    geom_line(data=na.omit(test[,c(1:4,7)]), aes(x=year, y=scale(value_froid)),col="black" ,size=1.5, alpha=0.3)+
+    xlab(NULL) + 
+    ylab(NULL) + 
+    theme_modern() +theme_transparent()+
+    theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
+          axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)
+}), names(data_pres_long))
+
+centroid_b<-data.frame(add_rownames(centroids))
+names(centroid_b)[1]<-"Country"
+centroid_coord<-centroid_b[,c("long","lat")]
+centroid_coord<-SpatialPoints(centroid_coord,proj4string = CRS("+proj=longlat +datum=WGS84"))
+centroid_coord<-spTransform(centroid_coord, CRS("+init=epsg:27572"))
+centroid_b$lon2<- as.data.frame(centroid_coord)[,1]
+centroid_b$lat2<- as.data.frame(centroid_coord)[,2]
+
+#centroid_b<-centroid_b[-c(19,27),] #pour hic
+
+centroid_c<-tibble(x=centroid_b$lon2,
+                   y=centroid_b$lat2,
+                   width=350000,
+                   pie = graph)
+library(ggimage)
+pres1 + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
+pres2 + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
+pres5 + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
+pres6 + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
+pres7 + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
+pres_tend_agri + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
+pres_tend_forest + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
+pres_tend_build + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
+pres_tend_chaud + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
+pres_tend_froid + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
+pres_tend_temp + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
 ```
 
 ### Preparing data for partial least square regression (PLS)
@@ -1265,7 +1582,7 @@ country_data2$country <- as.factor(country_data2$country)
 #### Species data
 
 ```{r}
-#Load data
+# Load data
 
 ssi_eu <- read.csv("raw_data/SSI_EU.csv") # from LeViol et al. (2012)
 sxi <- read.csv("raw_data/SXI_EU.csv") # from Godet et al. (2015)
@@ -1319,7 +1636,7 @@ global_data_scale <- data.frame(global_data[,1:57],apply(global_data[,58:ncol(gl
 
 # Selecting data
 
-data_pls <- global_data_scale[, c("slope","hico_2007","d_hico","for_2000","d_for","urb_2000","d_urb","temp_2000","d_temp")]
+data_pls <- global_data_scale[, c("slope","hico_2007","d_hico","for_2000","d_for","urb_2004","d_urb","temp_2000","d_temp")]
 data_pls$slope <- scale(data_pls$slope)
 
 # Initiate PLS
@@ -1334,45 +1651,46 @@ colSums(res1$pvalstep)
 cv.modpls<-cv.plsR(slope~.,data=data_pls,K=10,nt=10, grouplist = createFolds(data_pls[,1], k = 10, list = F, returnTrain = FALSE),NK=100)
 res.cv.modpls=cvtable(summary(cv.modpls))
 
-# Using CV PRESS, 1 or 2 components must be kept
+# Using CV PRESS, 2 or 4 components must be kept
 
 # PLS with 2 components
 res <- plsR(slope~.,data=data_pls,nt=2,pvals.expli=TRUE)
 trend.bootYT1=bootpls(res,typeboot="fmodel_np",R=2000)
-temp.ci=confints.bootpls(trend.bootYT1,indices=2:ncol(data_pls))
-plots.confints.bootpls(temp.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),legendpos ="topright")
+pls.ci=confints.bootpls(trend.bootYT1,indices=2:ncol(data_pls))
+plots.confints.bootpls(pls.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),legendpos ="topright")
 
-# PLS with 1 component
-resb <- plsR(slope~.,data=data_pls,nt=1,pvals.expli=TRUE)
+# PLS with 4 component
+resb <- plsR(slope~.,data=data_pls,nt=4,pvals.expli=TRUE)
 trend.bootYT1b=bootpls(resb,typeboot="fmodel_np",R=2000)
-temp.cib=confints.bootpls(trend.bootYT1b,indices=2:ncol(data_pls))
+pls.cib=confints.bootpls(trend.bootYT1b,indices=2:ncol(data_pls))
+plots.confints.bootpls(pls.cib,typeIC="BCa",colIC=c("blue","blue","blue","blue"),legendpos ="topright")
 
 # Using the empirical distribution of the best number of component, we can obtain an empircal measure of the significance of each effect.
-ind.BCa.YT1 <- (temp.ci[,7]<0&temp.ci[,8]<0)|(temp.ci[,7]>0&temp.ci[,8]>0) 
-ind.BCa.YT1b <- (temp.cib[,7]<0&temp.cib[,8]<0)|(temp.cib[,7]>0&temp.cib[,8]>0)
-(matind=(rbind(YT1b=ind.BCa.YT1b, YT1=ind.BCa.YT1)))
-pi.e=prop.table(res.cv.modpls$CVPress)[1:2]%*%matind
-signpred(t(matind),labsize=.5, plotsize = 12)
+ind.BCa.YT1 <- (pls.ci[,7] < 0 & pls.ci[,8] < 0)|(pls.ci[,7] > 0 & pls.ci[,8] > 0) 
+ind.BCa.YT1b <- (pls.cib[,7] < 0 & pls.cib[,8] < 0)|(pls.cib[,7] > 0 & pls.cib[,8] > 0)
+matind <- rbind(YT1b=ind.BCa.YT1b, YT1=ind.BCa.YT1)
+pi.e <- prop.table(res.cv.modpls$CVPress)[1:2] %*% matind
 
 coef_plot <- data.frame(var=c("High input farm cover", "High input farm cover trend","Forest cover","Forest cover trend","Artificialised cover","Artificialisation trend","Mean temperature","Temperature trend"),val=trend.bootYT1$t0[-1,1],
                       inf=temp.ci[,1],sup=temp.ci[,2],t(matind), sig=t(pi.e))
-coef_plot$col_val<-"ns"
-coef_plot$col_val[which(coef_plot$sig>=0.95 & coef_plot$val>0)]<-"pos"
-coef_plot$col_val[which(coef_plot$sig>=0.95 & coef_plot$val<0)]<-"neg"
+coef_plot$col_val <- "ns"
+coef_plot$col_val[which(coef_plot$sig>=0.95 & coef_plot$val>0)] <- "pos"
+coef_plot$col_val[which(coef_plot$sig>=0.95 & coef_plot$val<0)] <- "neg"
 coef_plot$var <- as.character(coef_plot$var)
 coef_plot$var <- factor(coef_plot$var, levels = c("Temperature trend","Mean temperature","Artificialisation trend","Artificialised cover", 
                                                 "Forest cover trend","Forest cover", "High input farm cover trend","High input farm cover"))
-ggplot(coef_plot, aes(y=val, x=var))+
-  geom_rect(fill = "#CECEF6",xmin = -Inf,xmax = Inf,    ymin = 0,ymax = Inf, alpha = 0.1) +
+                                                
+ggplot(coef_plot, aes(y=val, x=var)) +
+  geom_rect(fill = "#DDF9DD",xmin = -Inf,xmax = Inf,    ymin = 0,ymax = Inf, alpha = 0.1) +
   geom_rect(fill = "#F5A9A9",xmin = -Inf,xmax = Inf,ymin = -Inf,ymax = 0, alpha = 0.1) +
   geom_bar(stat="identity", position=position_dodge(), alpha=0.7,aes(fill=var)) +
   scale_fill_manual(values=c("High input farm cover"="#D302F9","High input farm cover trend"="#D302F9",
                              "Artificialised cover"="#196DF6","Artificialisation trend"="#196DF6",
                              "Forest cover"="#1BAE20","Forest cover trend"="#1BAE20",
                              "Mean temperature"="#FA0900","Temperature trend"="#FA0900"))+
-  geom_errorbar(aes(ymin=inf, ymax=sup), width=.2,position=position_dodge(.9))+
-  theme_modern()+
-  theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank())+
+  geom_errorbar(aes(ymin=inf, ymax=sup), width=.2,position=position_dodge(.9)) +
+  theme_modern() +
+  theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank()) +
   geom_hline(yintercept=0, linetype="dashed", size=1) + 
   coord_flip()
 ```
@@ -1388,6 +1706,8 @@ source("CCM_Smap_function.R")
 ### Pressure time-series
 
 ```{r}
+# Select
+
 country_data_temp <- data.frame(year=2007:2016,country_data[88:97,])
 country_data_temp2 <- melt(country_data_temp, id.vars="year")
 names(country_data_temp2)[3] <- "temp"
@@ -1401,6 +1721,8 @@ names(country_data_hico2)[3] <- "hico"
 country_data_forest <- data.frame(year=c(2007:2016),country_data[c(580:589),])
 country_data_forest2 <- melt(country_data_forest, id.vars="year")
 names(country_data_forest2)[3] <- "forest"
+
+# Group
 
 country_data_press <- merge(country_data_temp2, country_data_urb2, by=c("variable","year"))
 country_data_press <- merge(country_data_press, country_data_hico2, by=c("variable","year"))
@@ -1417,52 +1739,77 @@ press$country[press$country=="Ireland"] <- "Republic of Ireland"
 df_press2 <- merge(press, df_press[,c("Species","CountryGroup","Year","Index","Index_SE","Abd")], by.x=c("country","year"), by.y=c("CountryGroup","Year"), all.x=T)
 df_press2 <- droplevels(df_press2[which(df_press2$Index >= df_press2$Index_SE),])
 
+# Specify country or species with not enough data (at least 5 year with data, an non null index over the period and a change in pressure through time)
+
 to_remove <- data.frame(df_press2 %>% group_by(Species, country) %>% summarize(count=n()))
 df_press3 <- merge(df_press2,to_remove, by=c("Species","country"))
 to_remove2 <- data.frame(df_press2 %>% group_by(Species, country) %>% summarize(sum_ab=sum(Index)))
 df_press3 <- merge(df_press3,to_remove2, by=c("Species","country"))
 df_press3 <- df_press3[order(df_press3$Species, df_press3$country, df_press3$year),]
 
-# detrend when needed
+# Detrend when needed
 
-df_press4 <- data.frame(droplevels(na.omit(df_press3[df_press3$count>4 & df_press3$sum_ab>20 & df_press3$country!="Luxembourg",])) %>% group_by(Species, country) %>% mutate(temp_std=detrend_data(temp), urb_std=detrend_data(urb), hico_std=detrend_data(hico), forest_std=detrend_data(forest), Index_std=detrend_data(Index), Abd_std=detrend_data(Abd)))
+df_press4 <- data.frame(droplevels(na.omit(df_press3[df_press3$count > 4 & df_press3$sum_ab > 20 & df_press3$country!="Luxembourg",])) %>% group_by(Species, country) %>% mutate(temp_std=detrend_data(temp), urb_std=detrend_data(urb), hico_std=detrend_data(hico), forest_std=detrend_data(forest), Index_std=detrend_data(Index), Abd_std=detrend_data(Abd)))
+```
 
-# multispatialCCM
+### Apply multispatial CCM
+
+```{r}
+# MultispatialCCM
 
 ccm_sp <- ddply(df_press4, .(Species), .fun = multisp_CCM, niter=1000, .parallel = F, .progress = "text")
 ccm_sp2 <- ccm_sp
 ccm_sp2[is.na(ccm_sp2)] <- 1
 
+```
+
+### Apply multispatial S-map
+
+```{r}
 # S-map
 
 smap_sp <- dlply(droplevels(df_press4), .(Species, country), .fun = smap_fun_signif, ccm_sp2, .parallel = F, .progress = "text")
 
 smap_sp_res <- data.frame(.id=NA,temp_smap=NA,urb_smap=NA,hico_smap=NA,forest_smap=NA)
+
 for(i in levels(df_press4$Species)){
  sub_smap_sp <- smap_sp[grepl(i,names(smap_sp))]
+ 
  sub_smap_sp_res <- ldply(sub_smap_sp, .fun=function(x){
+ 
  if(is.na(x$res_ccm)){
   temp_smap <- urb_smap <- hico_smap <- forest_smap <- NA
  }else{
+ 
   if(x$pvalue<0.05 & x$res_ccm$temp_cause_species<0.05 & !is.null(x$coefficients$temp)){
    temp_smap <- na.omit(x$coefficients$temp)
   }else{temp_smap <- NA}
+  
   if(x$pvalue<0.05 & x$res_ccm$urb_cause_species<0.05 & !is.null(x$coefficients$urb)){
    urb_smap <- na.omit(x$coefficients$urb)
   }else{urb_smap <- NA}
+  
   if(x$pvalue<0.05 & x$res_ccm$hico_cause_species<0.05 & !is.null(x$coefficients$hico)){
    hico_smap <- na.omit(x$coefficients$hico)
   }else{hico_smap <- NA}
+  
   if(x$pvalue<0.05 & x$res_ccm$forest_cause_species<0.05 & !is.null(x$coefficients$forest)){
    forest_smap <- na.omit(x$coefficients$forest)
   }else{forest_smap <- NA}
  }
+ 
  return(data.frame(temp_smap, urb_smap, hico_smap, forest_smap))
+ 
  })
+ 
  smap_sp_res <- rbind(smap_sp_res,sub_smap_sp_res)
+
 }
+
 smap_sp_res <- smap_sp_res[-1,]
 smap_sp_res$Species <- sub("\\..*","",smap_sp_res$.id)
+
+# Plot by species
 
 smap_sp_res_long <- melt(smap_sp_res[,-1], id.vars="Species")
 for(i in levels(as.factor(smap_sp_res_long$Species))){
@@ -1475,15 +1822,14 @@ for(i in levels(as.factor(smap_sp_res_long$Species))){
     )+xlab(i))
 }
 
+# Summarise data by species
+
 smap_sp_mean <- data.frame(smap_sp_res[,-1] %>% group_by(Species) %>% summarize(temp=mean(temp_smap, na.rm=T),temp_sd=sd(temp_smap, na.rm=T),
 urb=mean(urb_smap, na.rm=T),urb_sd=sd(urb_smap, na.rm=T),
 hico=mean(hico_smap, na.rm=T),hico_sd=sd(hico_smap, na.rm=T),
 forest=mean(forest_smap, na.rm=T),forest_sd=sd(forest_smap, na.rm=T)))
 
-smap_sp_med <- data.frame(smap_sp_res[,-1] %>% group_by(Species) %>% summarize(temp=median(temp_smap, na.rm=T),
-urb=median(urb_smap, na.rm=T),
-hico=median(hico_smap, na.rm=T),
-forest=median(forest_smap, na.rm=T)))
+# Plot sumarised s-map results
 
 data_density <- data.frame(pressure=c(rep("hico",length(na.omit(smap_sp_mean$hico[smap_sp_mean$hico!=0]))),
 rep("urb",length(na.omit(smap_sp_mean$urb[smap_sp_mean$urb!=0]))),
@@ -1495,47 +1841,50 @@ na.omit(smap_sp_mean$forest[smap_sp_mean$forest!=0]),
 na.omit(smap_sp_mean$temp[smap_sp_mean$temp!=0])))
                                  
 ggplot(data_density, aes(x=value, fill=pressure)) +
-geom_rect(fill = "#DDF9DD",xmin = 0,xmax = Inf,    ymin = -Inf,ymax = Inf, alpha = 0.1) +
-geom_rect(fill = "#F5A9A9",xmin = -Inf,xmax = 0,ymin = -Inf,ymax = Inf, alpha = 0.1) +
-geom_histogram(bins=50,data=data_density[data_density$pressure=="hico",],alpha=0.7, aes(col=pressure), position = position_nudge(y=15)) +
-geom_histogram(bins=50,data=data_density[data_density$pressure=="forest",],alpha=0.4, aes(col=pressure), position = position_nudge(y=11)) +  geom_histogram(bins=50,data=data_density[data_density$pressure=="urb",],alpha=0.4, aes(col=pressure), position = position_nudge(y=6)) +  geom_histogram(bins=50,data=data_density[data_density$pressure=="temp",],alpha=0.4, aes(col=pressure)) +
-geom_vline(xintercept = 0) +
-geom_segment(x = mean(data_density$value[data_density$pressure=="hico"]), y=15, xend= mean(data_density$value[data_density$pressure=="hico"]), yend=23,linetype=11) +  geom_segment(x = mean(data_density$value[data_density$pressure=="forest"]), y=11, xend= mean(data_density$value[data_density$pressure=="forest"]), yend=15,linetype=11) +
-geom_segment(x = mean(data_density$value[data_density$pressure=="urb"]), y=6, xend= mean(data_density$value[data_density$pressure=="urb"]), yend=11,linetype=11) +
-geom_segment(x = mean(data_density$value[data_density$pressure=="temp"]), y=0, xend= mean(data_density$value[data_density$pressure=="temp"]), yend=6,linetype=11) +  scale_fill_manual(values=c("hico"="#D302F9","urb"="#196DF6","forest"="#1BAE20","temp"="#FA0900")) +
- scale_color_manual(values=c("hico"="#D302F9","urb"="#196DF6","forest"="#1BAE20","temp"="#FA0900")) +
-theme_modern() +
-labs(x ="Correlation",y="Density") +
-theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank())
-
-
-sp_data<-smap_sp_mean
-
-sp_data<-merge(sp_data,sxi, by.x="Species", by.y="Name",all.x=T)
-sp_data<-merge(sp_data,sti, by.x="Species", by.y="SPECIES",all.x=T)
-sp_data<-merge(sp_data,trait[,c("Species","Granivore_B","is_migrant","is_insectivore")], by="Species",all.x=T)
-sp_data<-merge(sp_data,pecbms_hab, by="Species",all.x=T)
-sp_data<-merge(sp_data,ssi_eu, by="Species",all.x=T)
-sp_data<-merge(sp_data,eunis_hab3, by="Species",all.x=T)
-
-sp_data$temp[is.na(sp_data$temp)]<-0
-sp_data$urb[is.na(sp_data$urb)]<-0
-sp_data$hico[is.na(sp_data$hico)]<-0
-sp_data$forest[is.na(sp_data$forest)]<-0
-sp_data$is_urban[is.na(sp_data$is_urban)]<-0
-sp_data$is_forest<-as.factor(sp_data$Habitat=="Forest")
-sp_data$is_farmland<-as.factor(sp_data$Habitat=="Farmland")
+    geom_rect(fill = "#DDF9DD",xmin = 0,xmax = Inf,    ymin = -Inf,ymax = Inf, alpha = 0.1) +
+    geom_rect(fill = "#F5A9A9",xmin = -Inf,xmax = 0,ymin = -Inf,ymax = Inf, alpha = 0.1) +
+    geom_histogram(bins=50,data=data_density[data_density$pressure=="hico",],alpha=0.7, aes(col=pressure), position = position_nudge(y=15)) +
+    geom_histogram(bins=50,data=data_density[data_density$pressure=="forest",],alpha=0.4, aes(col=pressure), position = position_nudge(y=11)) +  geom_histogram(bins=50,data=data_density[data_density$pressure=="urb",],alpha=0.4, aes(col=pressure), position = position_nudge(y=8)) +  geom_histogram(bins=50,data=data_density[data_density$pressure=="temp",],alpha=0.4, aes(col=pressure)) +
+    geom_vline(xintercept = 0) +
+    geom_segment(x = mean(data_density$value[data_density$pressure=="hico"]), y=15, xend= mean(data_density$value[data_density$pressure=="hico"]), yend=23,linetype=11) +  geom_segment(x = mean(data_density$value[data_density$pressure=="forest"]), y=11, xend= mean(data_density$value[data_density$pressure=="forest"]), yend=15,linetype=11) +
+    geom_segment(x = mean(data_density$value[data_density$pressure=="urb"]), y=8, xend= mean(data_density$value[data_density$pressure=="urb"]), yend=11,linetype=11) +
+    geom_segment(x = mean(data_density$value[data_density$pressure=="temp"]), y=0, xend= mean(data_density$value[data_density$pressure=="temp"]), yend=8,linetype=11) +  scale_fill_manual(values=c("hico"="#D302F9","urb"="#196DF6","forest"="#1BAE20","temp"="#FA0900")) +
+    scale_color_manual(values=c("hico"="#D302F9","urb"="#196DF6","forest"="#1BAE20","temp"="#FA0900")) +
+    theme_modern() +
+    labs(x ="Correlation",y="Density") +
+    theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank())
 
 ```
 
 
 ### Applying PLS on pressure influence vs. species traits
 
+#### Prepare data
+
+```{r}
+sp_data <- smap_sp_mean
+
+sp_data <- merge(sp_data,sxi, by.x="Species", by.y="Name",all.x=T)
+sp_data <- merge(sp_data,sti, by.x="Species", by.y="SPECIES",all.x=T)
+sp_data <- merge(sp_data,trait[,c("Species","Granivore_B","is_migrant","is_insectivore")], by="Species",all.x=T)
+sp_data <- merge(sp_data,pecbms_hab, by="Species",all.x=T)
+sp_data <- merge(sp_data,ssi_eu, by="Species",all.x=T)
+sp_data <- merge(sp_data,eunis_hab3, by="Species",all.x=T)
+
+sp_data$temp[is.na(sp_data$temp)] <- 0
+sp_data$urb[is.na(sp_data$urb)] <- 0
+sp_data$hico[is.na(sp_data$hico)] <- 0
+sp_data$forest[is.na(sp_data$forest)] <- 0
+sp_data$is_urban[is.na(sp_data$is_urban)] <- 0
+sp_data$is_forest <- as.factor(sp_data$Habitat=="Forest")
+sp_data$is_farmland <- as.factor(sp_data$Habitat=="Farmland")
+```
+
 #### Temperature vs traits
 ```{r}
 # Select data for PLS
 
-trait_inter_data_temp <- sp_data[which(sp_data$temp!=0), c("temp","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
+trait_inter_data_temp <- sp_data[, c("temp","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
 
 # Scale data
 
@@ -1587,7 +1936,7 @@ coef_plot_temp$col_val[which(coef_plot_temp$sig >= 0.95 & coef_plot_temp$val < 0
 ```{r}
 # Select data for PLS
 
-trait_inter_data_urb <- sp_data[,#which(sp_data$urb!=0),
+trait_inter_data_urb <- sp_data[,
 c("urb","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
 
 # Scale data
@@ -1640,7 +1989,7 @@ coef_plot_urb$col_val[which(coef_plot_urb$sig >= 0.95 & coef_plot_urb$val < 0)]<
 ```{r}
 # Select data for PLS
 
-trait_inter_data_hico <- sp_data[which(sp_data$hico!=0), c("hico","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
+trait_inter_data_hico <- sp_data[, c("hico","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
 
 # Scale data
 
@@ -1692,7 +2041,7 @@ coef_plot_hico$col_val[which(coef_plot_hico$sig >= 0.95 & coef_plot_hico$val < 0
 ```{r}
 # Select data for PLS
 
-trait_inter_data_forest <- sp_data[which(sp_data$forest!=0), c("forest","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
+trait_inter_data_forest <- sp_data[, c("forest","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
 
 # Scale data
 
@@ -1751,27 +2100,31 @@ library(networkD3)
 
 # Group all data to get flows
 
-data_trait_pression<-rbind(data.frame(coef_plot_temp[,c("var","val","inf","sup","col_val")],pressure="Temperature",value2=coef_plot_temp$val/sum(abs(coef_plot_temp$val))),
-                           data.frame(coef_plot_urb[,c("var","val","inf","sup","col_val")],pressure="Urbanisation",value2=coef_plot_urb$val/sum(abs(coef_plot_urb$val))),
-                           data.frame(coef_plot_hico[,c("var","val","inf","sup","col_val")],pressure="High input farm cover",value2=coef_plot_hico$val/sum(abs(coef_plot_hico$val))),
-                           data.frame(coef_plot_forest[,c("var","val","inf","sup","col_val")],pressure="Forest cover",value2=coef_plot_forest$val/sum(abs(coef_plot_forest$val))))
+data_trait_pression <- rbind(data.frame(coef_plot_temp[,c("var","val","inf","sup","col_val")],pressure="Temperature",value2=coef_plot_temp$val/coef_plot_temp$val),
+                           data.frame(coef_plot_urb[,c("var","val","inf","sup","col_val")],pressure="Urbanisation",value2=coef_plot_urb$val/coef_plot_urb$val),
+                           data.frame(coef_plot_hico[,c("var","val","inf","sup","col_val")],pressure="High input farm cover",value2=coef_plot_hico$val/coef_plot_hico$val),
+                           data.frame(coef_plot_forest[,c("var","val","inf","sup","col_val")],pressure="Forest cover",value2=coef_plot_forest$val/coef_plot_forest$val))
+              
+data_trait_pression$var <- as.character(data_trait_pression$var) 
+data_trait_pression[data_trait_pression=="STI"] <- "Species Temperature Index"
+data_trait_pression[data_trait_pression=="SSI"] <- "Species Specialisation Index"
 
-data_trait_pression2<-data.frame(source=data_trait_pression$pressure,target=data_trait_pression$var,
-                                 value=abs(data_trait_pression$value2),col_link=data_trait_pression$col_val)
+data_trait_pression2 <- data.frame(source=data_trait_pression$pressure,target=data_trait_pression$var,
+                                 value=abs(data_trait_pression$value2), col_link=data_trait_pression$col_val)
 
 # From these flows we need to create a node data frame: it lists every entities involved in the flow
 
 nodes <- data.frame(name=c(as.character(data_trait_pression2$source), as.character(data_trait_pression2$target)) %>% unique())
 nodes$group<-as.factor(c("Temperature","Urbanisation","Input","Forestc","trait","trait","trait","trait","trait","trait","trait","trait"))
 
-# With networkD3, connection must be provided using id, not using real name like in the links dataframe.. So we need to reformat it.
+# With networkD3, connection must be provided using id, not using real name like in the links dataframe. So we need to reformat it.
 
-data_trait_pression2$IDsource=match(data_trait_pression2$source, nodes$name)-1 
-data_trait_pression2$IDtarget=match(data_trait_pression2$target, nodes$name)-1
+data_trait_pression2$IDsource <- match(data_trait_pression2$source, nodes$name)-1 
+data_trait_pression2$IDtarget <- match(data_trait_pression2$target, nodes$name)-1
 
 # Prepare colour scale
 
-ColourScal <-  'd3.scaleOrdinal() .domain(["neg", "ns","pos","Temperature","Urbanisation","Input","Forestc","trait","trait","trait","trait","trait","trait","trait","trait"]) .range(["red","grey", "blue", "#FA0900","#196DF6","#D302F9","#1BAE20", "black", "black", "black", "black", "black", "black", "black", "black"])'
+ColourScal <-  'd3.scaleOrdinal() .domain(["neg", "ns","pos","Temperature","Urbanisation","Input","Forestc","trait","trait","trait","trait","trait","trait","trait","trait"]) .range(["#F6CECE","#E6E6E6", "#CEF6CE", "#FA0900","#196DF6","#D302F9","#1BAE20", "black", "black", "black", "black", "black", "black", "black", "black"])'
 
 # Make the Network
 
@@ -1780,66 +2133,6 @@ sankeyNetwork(Links = data_trait_pression2, Nodes = nodes,
               Value = "value", NodeID = "name",  LinkGroup = "col_link", NodeGroup="group",
               sinksRight=FALSE, colourScale=ColourScal, nodeWidth=40, fontSize=13, nodePadding=20)
 
-data_trait_pressionb<-rbind(data.frame(coef_plot_hico[coef_plot_hico$col_val!="ns",c("var","val","inf","sup","col_val")],pressure="High input farm cover",value2=sign(coef_plot_hico$val[coef_plot_hico$sig==1])),
-                            data.frame(coef_plot_forest[coef_plot_forest$col_val!="ns",c("var","val","inf","sup","col_val")],pressure="Forest cover",value2=sign(coef_plot_forest$val[coef_plot_forest$sig==1])),
-                            data.frame(coef_plot_urb[coef_plot_urb$col_val!="ns",c("var","val","inf","sup","col_val")],pressure="Urbanisation",value2=sign(coef_plot_urb$val[coef_plot_urb$sig==1])),
-                            data.frame(coef_plot_temp[coef_plot_temp$col_val!="ns",c("var","val","inf","sup","col_val")],pressure="Temperature",value2=sign(coef_plot_temp$val[coef_plot_temp$sig==1])))
-
-data_trait_pression3<-data.frame(source=data_trait_pressionb$pressure,target=data_trait_pressionb$var,
-                                 value=abs(data_trait_pressionb$value2),col_link=data_trait_pressionb$col_val)
-
-nodes <- data.frame(name=c(as.character(data_trait_pression3$source), as.character(data_trait_pression3$target)) %>% unique())
-nodes$group<-as.factor(c("Input","Forestc","Urbanisation","Temperature","trait","trait","trait","trait","trait","trait","trait","trait"))
-
-data_trait_pression3$IDsource=match(data_trait_pression3$source, nodes$name)-1 
-data_trait_pression3$IDtarget=match(data_trait_pression3$target, nodes$name)-1
-
-ColourScal <-  'd3.scaleOrdinal() .domain(["neg", "pos","Input","Forestc","Urbanisation","Temperature","trait","trait","trait","trait","trait","trait","trait","trait"]) .range(["#F6CECE","#CECEF6","#D302F9","#1BAE20","#196DF6", "#FA0900", "black", "black", "black", "black", "black", "black", "black", "black"])'
-ColourScal <-  'd3.scaleOrdinal() .domain(["neg", "pos","Input","Forestc","Urbanisation","Temperature","trait","trait","trait","trait","trait","trait","trait","trait"]) .range(["#F6CECE","#CEF6CE","#D302F9","#1BAE20","#196DF6", "#FA0900", "black", "black", "black", "black", "black", "black", "black", "black"])'
-
-
-sn<-sankeyNetwork(Links = data_trait_pression3, Nodes = nodes,
-              Source = "IDsource", Target = "IDtarget",
-              Value = "value", NodeID = "name",  LinkGroup = "col_link", NodeGroup="group",
-              sinksRight=FALSE, colourScale=ColourScal, nodeWidth=40, fontSize=13, nodePadding=20)
-
-
-saveNetwork(sn, "sn.html")
-
-library(webshot)
-# you convert it as png
-webshot("sn.html","sn.png", vwidth = 1200, vheight = 900)
-
-library(htmlwidgets)
-onRender(
-  sn,
-  '
-function(el,x){
-  // select all our node text
-  var node_text = d3.select(el)
-    .selectAll(".node text")
-    //and make them match
-    //https://github.com/christophergandrud/networkD3/blob/master/inst/htmlwidgets/sankeyNetwork.js#L180-L181
-    .attr("x", 20 + x.options.nodeWidth)
-    .attr("text-anchor", "start");
-}
-'
-)
-
-
-onRender(
-  sn,
-  '
-  function(el,x){
-  // select all our node text
-  d3.select(el)
-  .selectAll(".node text")
-  .filter(function(d) { return d.name.startsWith("Temperature"); })
-  .attr("x", x.options.nodeWidth - 16)
-  .attr("text-anchor", "end");
-  }
-  '
-)
 ```
 
 # References

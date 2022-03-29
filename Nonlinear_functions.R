@@ -567,3 +567,160 @@ res_trend2 <- function(dataset, niter, ref_year=NULL, mid, correction){tryCatch(
                                                                                 error=function(e) data.frame(alpha2=NA, alpha1=NA,sd_alpha1=NA, inter=NA, strd=NA, p_1=NA, 
                                                                                                              sd_p_1=NA, p_2=NA, sd_p_2=NA, p_3=NA, sd_p_3=NA, second_order_pvalue=NA,
                                                                                                              first_order_pvalue=NA,slope=NA, slope_sd=NA, ref_year=NA, max_shape=NA))}
+
+msi_fun3b <-  function(dataset, ref_year, niter, ref_value="Index"){
+  df_add<-dataset
+  aaa <-  mc_trend3(dataset, ref_year, ref_value)
+  for(i in 2:niter){
+    aaa <-  rbind(aaa,mc_trend3(dataset, ref_year, ref_value))
+  }
+  
+  aaa_finish<- as.data.frame(aaa %>% group_by(Year) %>%summarize(Index_SE=sd(Index, na.rm=T), Index=mean(Index, na.rm=T)))
+  mean_msi <-  aaa_finish$Index
+  sd_msi <-  aaa_finish$Index_SE
+  
+  aaa2 <-  data.frame(matrix(NA, ncol=length(table(dataset$Year)), nrow=niter))
+  
+  b <- data.frame(t(rep(NA, 12)))
+  attributes(b)$names <- c("second_order_coef", "first_order_coef", "strd_error", "shape_class", "intercept", "p_1", "p_2", "p_3", "second_order_pvalue", "slope_p_value","linear_slope","r.sq")
+  
+  
+  if(ref_value=="Abundance"){
+    ab_init<-sum(as.numeric(dataset$Abundance[dataset$Year==ref_year]))
+  }
+  
+  if(ref_value=="Biomass"){
+    bio_init<-sum(as.numeric(dataset$biomass[dataset$Year==ref_year]))
+  }
+  
+  for(i in 1:niter){
+    aaa2[i,] <- rnorm(length(table(dataset$Year)), mean=mean_msi, sd=sd_msi)
+    
+    aaa2_mod <- exp(aaa2[i,]-aaa2[i, which(as.numeric(names(table(dataset$Year))) == ref_year)] + log(100))
+    
+    if(ref_value=="Abundance"){
+      aaa2_mod<-aaa2_mod*ab_init/100
+    }
+    
+    if(ref_value=="Biomass"){
+      aaa2_mod<-aaa2_mod*bio_init/100
+    }
+    
+    if(ref_value=="CWI"){
+      aaa2_mod<-aaa2[i,]#/aaa2[i, which(as.numeric(names(table(dataset$Year))) == ref_year)]
+    }
+    
+    
+    a <- class.trajectory(unlist(aaa2_mod), as.numeric(names(table(dataset$Year))))
+    b[i, 1] <- a$second_order_coef
+    b[i, 2] <- a$first_order_coef
+    b[i, 3] <- a$strd_error
+    b[i, 4] <- a$shape_class
+    b[i, 5] <- a$intercept
+    if(a$second_order_coef!=0){
+      if(findInterval(a$p1, c(min(dataset$Year), max(dataset$Year))) == 1){
+        b[i, 6] <- a$p1}else{b[i, 6] <- NA}
+      if(findInterval(a$p2, c(min(dataset$Year), max(dataset$Year))) == 1){
+        b[i, 7] <- a$p2}else{b[i, 7] <- NA}
+      if(findInterval(a$p3, c(min(dataset$Year), max(dataset$Year))) == 1){
+        b[i, 8] <- a$p3}else{b[i, 8] <- NA}
+    }else{
+      b[i, 6] <- NA
+      b[i, 7] <- NA
+      b[i, 8] <- NA
+    }
+    b[i, 9] <- a$second_order_pvalue
+    b[i, 10] <- a$first_order_pvalue
+    b[i, 11] <- a$linear_slope
+    b[i, 12] <- max(0,a$r.sq)
+  }
+  b[, 4] <- as.factor(b[, 4])
+  
+  max_max<-NULL
+  
+  if(length(levels(b$shape_class))>1){
+    test<-multinomial.theo.multcomp(b$shape_class, p = rep(1/length(levels(b$shape_class)),
+                                                           length(levels(b$shape_class))), prop=TRUE)
+    if(min(test$p.value2[test$observed>test$expected])<0.05){
+      max_shape <- row.names(test$p.value)[which(test$observed == max(test$observed[test$observed>test$expected]))]
+      if(max_shape %in% c("increase_decelerated","stable_concave","decrease_accelerated")){
+        max_max<-max_shape
+        interval_mid<-(max(dataset$Year)-min(dataset$Year))/2+min(dataset$Year)
+        interval_quart1<-interval_mid-(max(dataset$Year)-min(dataset$Year))*0.25
+        interval_quart3<-interval_mid+(max(dataset$Year)-min(dataset$Year))*0.25
+        if(in.interval.lo(interval_quart1, lo=(mean(b$p_1, na.rm=T)-sd(b$p_1, na.rm=T)), hi=(mean(b$p_1, na.rm=T)+sd(b$p_1, na.rm=T)))){
+          max_max<-"decrease_accelerated"
+        }
+        if(in.interval.lo(interval_quart3, lo=(mean(b$p_1, na.rm=T)-sd(b$p_1, na.rm=T)), hi=(mean(b$p_1, na.rm=T)+sd(b$p_1, na.rm=T)))){
+          max_max<-"increase_decelerated"
+        }
+        max_shape <- c("increase_decelerated","stable_concave","decrease_accelerated")
+      }
+      if(max_shape %in% c("decrease_decelerated","stable_convex","increase_accelerated")){
+        max_max<-max_shape
+        interval_mid<-(max(dataset$Year)-min(dataset$Year))/2+min(dataset$Year)
+        interval_quart1<-interval_mid-(max(dataset$Year)-min(dataset$Year))*0.25
+        interval_quart3<-interval_mid+(max(dataset$Year)-min(dataset$Year))*0.25
+        if(in.interval.lo(interval_quart1, lo=(mean(b$p_1, na.rm=T)-sd(b$p_1, na.rm=T)), hi=(mean(b$p_1, na.rm=T)+sd(b$p_1, na.rm=T)))){
+          max_max<-"increase_accelerated"
+        }
+        if(in.interval.lo(interval_quart3, lo=(mean(b$p_1, na.rm=T)-sd(b$p_1, na.rm=T)), hi=(mean(b$p_1, na.rm=T)+sd(b$p_1, na.rm=T)))){
+          max_max<-"decrease_decelerated"
+        }
+        max_shape <- c("decrease_decelerated","stable_convex","increase_accelerated")
+      }
+    }else{
+      max_shape <- c("increase_constant","decrease_constant","stable_constant")[which.max(c(length(grep("increase",b$shape_class)),
+                                                                                            length(grep("decrease",b$shape_class)),
+                                                                                            length(grep("stable",b$shape_class))))]
+    }
+  }
+  if(length(levels(b$shape_class)) == 1){max_shape <- levels(b$shape_class)}
+  if(is.null(max_max)){max_max<-max_shape}
+  
+  alpha2 <- weighted.mean(as.numeric(b[b$shape_class %in% max_shape, 1]),as.numeric(b[b$shape_class %in% max_shape, 12]))
+  sd_alpha2 <- sd(as.numeric(b[b$shape_class %in% max_shape, 1]))
+  alpha1 <- weighted.mean(as.numeric(b[b$shape_class %in% max_shape, 2]),as.numeric(b[b$shape_class %in% max_shape, 12]))
+  sd_alpha1 <- sd(as.numeric(b[b$shape_class %in% max_shape, 2]))
+  inter <- weighted.mean(as.numeric(b[b$shape_class %in% max_shape, 5]),as.numeric(b[b$shape_class %in% max_shape, 12]))
+  strd <- weighted.mean(as.numeric(b[b$shape_class %in% max_shape, 3]),as.numeric(b[b$shape_class %in% max_shape, 12]))
+  p_1 <- weighted.mean(as.numeric(b[b$shape_class==max_max, 6]),as.numeric(b[b$shape_class==max_max, 12]), na.rm=T)
+  sd_p_1 <- sd(as.numeric(b[b$shape_class==max_max, 6]), na.rm=T)
+  if( !is.na(p_1) && !in.interval.lo(p_1, lo=min(dataset$Year), hi=max(dataset$Year))){p_1 <- sd_p_1 <- as.numeric(NA)}
+  p_2 <- weighted.mean(as.numeric(b[b$shape_class==max_max, 7]),as.numeric(b[b$shape_class==max_max, 12]), na.rm=T)
+  sd_p_2 <- sd(as.numeric(b[b$shape_class==max_max, 7]), na.rm=T)
+  if( !is.na(p_2) && !in.interval.lo(p_2, lo=min(dataset$Year), hi=max(dataset$Year))){p_2 <- sd_p_2 <- as.numeric(NA)}
+  p_3 <- weighted.mean(as.numeric(b[b$shape_class==max_max, 8]),as.numeric(b[b$shape_class==max_max, 12]), na.rm=T)
+  sd_p_3 <- sd(as.numeric(b[b$shape_class==max_max, 8]), na.rm=T)
+  if( !is.na(p_3) && !in.interval.lo(p_3, lo=min(dataset$Year), hi=max(dataset$Year))){p_3 <- sd_p_3 <- as.numeric(NA)}
+  second_order_pvalue <- weighted.mean(as.numeric(b[b$shape_class %in% max_shape, 9]),as.numeric(b[b$shape_class %in% max_shape, 12]), na.rm=T)
+  first_order_pvalue <- weighted.mean(as.numeric(b[b$shape_class %in% max_shape, 10]),as.numeric(b[b$shape_class %in% max_shape, 12]), na.rm=T)
+  slope <- weighted.mean(as.numeric(b[b$shape_class %in% max_shape, 11]),as.numeric(b[b$shape_class %in% max_shape, 12]), na.rm=T)
+  slope_sd <- sd(as.numeric(b[b$shape_class %in% max_shape, 11]), na.rm=T)
+  
+  if(ref_value!="CWI"){
+    mean_msi_final<-apply(aaa2, 2, function(x){exp(mean(x,na.rm = T))})
+    sd_msi_final<-apply(aaa2, 2, function(x){sd(x,na.rm = T)})
+    sd_msi_final<-sd_msi_final*mean_msi_final
+    sd_msi_final<-sd_msi_final/mean_msi_final[which(levels(as.factor(df_add$Year))==ref_year)]*100
+    mean_msi_final<-mean_msi_final/mean_msi_final[which(levels(as.factor(df_add$Year))==ref_year)]*100
+  }else{
+    mean_msi_final<-apply(aaa2, 2, function(x){mean(x,na.rm = T)})
+    sd_msi_final<-apply(aaa2, 2, function(x){sd(x,na.rm = T)})
+  }
+  
+  if(ref_value=="Abundance"){
+    mean_msi_final<-mean_msi_final*ab_init/100
+    sd_msi_final<-sd_msi_final*ab_init/100
+  }
+  
+  if(ref_value=="Biomass"){
+    mean_msi_final<-mean_msi_final*bio_init/100
+    sd_msi_final<-sd_msi_final*bio_init/100
+  }
+  
+  if(!is.null(max_max)){max_shape<-max_max}
+  return(list(msi = data.frame(mean_msi_final, sd_msi_final),
+              coef = data.frame(alpha2, alpha1,sd_alpha1, inter, strd, p_1, sd_p_1, p_2, sd_p_2, p_3, sd_p_3,
+                                second_order_pvalue, first_order_pvalue, slope, slope_sd, max_shape = as.factor(max_shape))))
+}
