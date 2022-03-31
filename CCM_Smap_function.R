@@ -330,10 +330,10 @@ smap_fun_signif <- function(data_ccm, res_ccm){
   res_ccm <- droplevels(res_ccm[res_ccm$Species==levels(as.factor(data_ccm$Species)),])
   res_smap2 <- res_ccm[,c("temp_cause_species","urb_cause_species",
                           "hico_cause_species","forest_cause_species","E_A")]
-  if(res_ccm$temp_cause_species < 0.05 |
+  if((res_ccm$temp_cause_species < 0.05 |
      res_ccm$urb_cause_species < 0.05 |
      res_ccm$hico_cause_species < 0.05 |
-     res_ccm$forest_cause_species < 0.05){
+     res_ccm$forest_cause_species < 0.05) & sum(abs(diff(data_ccm$urb_std)))!=0){
     res_smap <- smap_fun(data_ccm,res_smap2)
   }else{
     res_smap <- list(coefficients = NA, rho = NA, pvalue = NA, theta = NA, res_ccm =NA)

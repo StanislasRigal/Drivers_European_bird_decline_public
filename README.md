@@ -1673,7 +1673,7 @@ names(country_data_forest2)[3] <- "forest"
 # Group
 
 country_data_press <- merge(country_data_temp2, country_data_urb2, by=c("variable","year"))
-country_data_press <- merge(country_data_press, country_data_hico2, by=c("variable","year"))
+country_data_press <- merge(country_data_press, country_data_hico2, by=c("variable","year"),all.x=T)
 country_data_press <- merge(country_data_press, country_data_forest2, by=c("variable","year"))
 
 df_press <- as.data.frame(df)
@@ -1689,15 +1689,15 @@ df_press2 <- droplevels(df_press2[which(df_press2$Index >= df_press2$Index_SE),]
 
 # Specify country or species with not enough data (at least 5 year with data, an non null index over the period and a change in pressure through time)
 
-to_remove <- data.frame(df_press2 %>% group_by(Species, country) %>% summarize(count=n()))
+to_remove <- data.frame(na.omit(df_press2) %>% group_by(Species, country) %>% summarize(count=n()))
 df_press3 <- merge(df_press2,to_remove, by=c("Species","country"))
-to_remove2 <- data.frame(df_press2 %>% group_by(Species, country) %>% summarize(sum_ab=sum(Index)))
+to_remove2 <- data.frame(na.omit(df_press2) %>% group_by(Species, country) %>% summarize(sum_ab=sum(Index)))
 df_press3 <- merge(df_press3,to_remove2, by=c("Species","country"))
 df_press3 <- df_press3[order(df_press3$Species, df_press3$country, df_press3$year),]
 
 # Detrend when needed
 
-df_press4 <- data.frame(droplevels(na.omit(df_press3[df_press3$count > 4 & df_press3$sum_ab > 20 & df_press3$country!="Luxembourg",])) %>% group_by(Species, country) %>% mutate(temp_std=detrend_data(temp), urb_std=detrend_data(urb), hico_std=detrend_data(hico), forest_std=detrend_data(forest), Index_std=detrend_data(Index), Abd_std=detrend_data(Abd)))
+df_press4 <- data.frame(droplevels(df_press3[df_press3$count > 4 & df_press3$sum_ab > 20 & df_press3$country!="Luxembourg",]) %>% group_by(Species, country) %>% mutate(temp_std=detrend_data(temp), urb_std=detrend_data(urb), hico_std=detrend_data(hico), forest_std=detrend_data(forest), Index_std=detrend_data(Index), Abd_std=detrend_data(Abd)))
 ```
 
 ### Apply multispatial CCM
