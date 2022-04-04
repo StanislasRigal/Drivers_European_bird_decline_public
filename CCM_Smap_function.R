@@ -333,7 +333,7 @@ smap_fun_signif <- function(data_ccm, res_ccm){
   if((res_ccm$temp_cause_species < 0.05 |
      res_ccm$urb_cause_species < 0.05 |
      res_ccm$hico_cause_species < 0.05 |
-     res_ccm$forest_cause_species < 0.05) & sum(abs(diff(data_ccm$urb_std)))!=0){
+     res_ccm$forest_cause_species < 0.05) & sum(abs(diff(na.omit(data_ccm$urb_std))))!=0){
     res_smap <- smap_fun(data_ccm,res_smap2)
   }else{
     res_smap <- list(coefficients = NA, rho = NA, pvalue = NA, theta = NA, res_ccm =NA)

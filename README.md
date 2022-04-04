@@ -777,89 +777,70 @@ proj4string(country3) <- CRS("+init=epsg:27572")
 
 ```{r}
 # Load data
-# from https://land.copernicus.eu/pan-european/corine-land-cover
+# from https://www.fao.org/faostat/en/#data/LC
 
-clc_2000 <- raster("U2006_CLC2000_V2020_20u1.tif")
-clc_2006 <- raster("U2012_CLC2006_V2020_20u1.tif")
-clc_2012 <- raster("U2018_CLC2012_V2020_20u1.tif")
-clc_2018 <- raster("U2018_CLC2018_V2020_20u1.tif")
+fao_data_landcover <- read.csv("raw_data/FAOSTAT_data_LC.csv", header = T)
+fao_data_landcover$Area <- as.character(fao_data_landcover$Area)
+fao_data_landcover[fao_data_landcover=="United Kingdom of Great Britain and Northern Ireland"] <- "UK"
+fao_data_landcover[fao_data_landcover=="Czechia"] <- "Czech Republic"
+fao_data_landcover <- droplevels(fao_data_landcover[fao_data_landcover$Area %in% country_name,])
+write.csv(fao_data_landcover,"output/fao_data_landcover.csv", row.names = F)
 
-# Reproject country boundaries
+# from https://www.fao.org/faostat/en/#data/RL
 
-country4b <- spTransform(country3, CRS(proj4string(clc_2000)))
+fao_data_landuse <- read.csv("raw_data/FAOSTAT_data_RL.csv", header = T)
+fao_data_landuse$Area <- as.character(fao_data_landuse$Area)
+fao_data_landuse[fao_data_landuse=="United Kingdom of Great Britain and Northern Ireland"] <- "UK"
+fao_data_landuse[fao_data_landuse=="Czechia"] <- "Czech Republic"
+fao_data_landuse <- droplevels(fao_data_landuse[fao_data_landuse$Area %in% country_name,])
+write.csv(fao_data_landuse,"output/fao_data_landuse.csv", row.names = F)
 
-# Extract urban cover
+area_country <- read.csv("output/fao_data_landuse.csv", header = T)
+area_country <- area_country[area_country$Item=="Country area" & area_country$Year==2016, c("Area","Value")]
+area_country$Value <- 10*area_country$Value
+area_country <- area_country[order(area_country$Area),]
 
-urban_country <- data.frame(t(rep(NA,length(country4b))))
-names(urban_country) <- levels(as.factor(country_id$region))
+# Load data
+# from https://appsso.eurostat.ec.europa.eu/nui/show.do?dataset=lan_lcv_art&lang=en
 
-for(i in 1:length(country4b)){
-  print(i)
-  b <- extent(country4b[i])
-  country_cover <- crop(clc_2000, b)
-  country_cover[country_cover > 39] <- NA # water bodies
-  country_cover[country_cover <= 11] <- 1 # artificial surface: continuous urban fabric, discontinuous urban fabric, industrial or commercial units, road and rail networks
-  country_cover[country_cover > 11] <- 0 # agricultural areas, forest and seminatural areas
-  country_cover2 <- mask(country_cover,country4b[i])
-  urban_country[1, i] <- extract(country_cover2,extent(country_cover2), fun=mean, na.rm=T)
-  
-  country_cover <- crop(clc_2006, b)
-  country_cover[country_cover > 39] <- NA
-  country_cover[country_cover <= 11] <- 1
-  country_cover[country_cover > 11] <- 0
-  country_cover2 <- mask(country_cover, country4b[i])
-  urban_country[2, i] <- extract(country_cover2,extent(country_cover2), fun=mean, na.rm=T)
-  
-  country_cover <- crop(clc_2012, b)
-  country_cover[country_cover > 39] <- NA
-  country_cover[country_cover <= 11] <- 1
-  country_cover[country_cover > 11] <- 0
-  country_cover2 <- mask(country_cover, country4b[i])
-  urban_country[3, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
-  
-  country_cover <- crop(clc_2018, b)
-  country_cover[country_cover > 39] <- NA
-  country_cover[country_cover <= 11] <- 1
-  country_cover[country_cover > 11] <- 0
-  country_cover2 <- mask(country_cover, country4b[i])
-  urban_country[4, i] <- extract(country_cover2, extent(country_cover2), fun=mean, na.rm=T)
-  
-}
-row.names(urban_country)[1:4] <- c("clc_2000", "clc_2006", "clc_2012", "clc_2018")
-
-# Expand value between years
+urban_country <- read.csv("raw_data/lan_lcv_art_1_Data.csv", header = T)
+urban_country$Value <- as.numeric(as.character(urban_country$Value))
+urban_country <- dcast(urban_country, TIME~GEO, fun.aggregate=sum, value.var="Value")
+names(urban_country)[c(7,12,29)] <- c("Czech Republic", "Germany","UK")
+urban_country$TIME <- NULL
 
 urban_country <- as.data.frame(apply(urban_country,2,function(x){
-                                      a1 <- (x[2]-x[1])/(2006-2000)
-                                      b1 <- x[2]-a1*2006
-                                      a2 <- (x[3]-x[2])/(2012-2006)
-                                      b2 <- x[3]-a2*2012
-                                      a3 <- (x[4]-x[3])/(2018-2012)
+                                      a1 <- (x[2]-x[1])/(2012-2009)
+                                      b1 <- x[2]-a1*2012
+                                      a2 <- (x[3]-x[2])/(2015-2012)
+                                      b2 <- x[3]-a2*2015
+                                      a3 <- (x[4]-x[3])/(2018-2015)
                                       b3 <- x[4]-a3*2018
-                                      y <- c(x[1], a1*2001+b1, a1*2002+b1, a1*2003+b1, a1*2004+b1, a1*2005+b1,
-                                      x[2], a2*2007+b2, a2*2008+b2, a2*2009+b2, a2*2010+b2, a2*2011+b2,
-                                      x[3], a3*2013+b3, a3*2014+b3, a3*2015+b3, a3*2016+b3)
+                                      y <- c(x[1], a1*2010+b1, a1*2011+b1, x[2], a2*2013+b2, a2*2014+b2, x[3], a3*2016+b3)
                                       return(y)
 }))
 
-row.names(urban_country)[1:17] <- paste0("urb_", 2000:2016)
+row.names(urban_country)[1:8] <- paste0("urb_", 2009:2016)
 
 # Mean value over the period
 
-urban_country[18,] <- apply(urban_country,2,function(x){mean(x, na.rm=T)})
-row.names(urban_country)[18] <- "urb_mean"
+urban_country[9,] <- apply(urban_country,2,function(x){mean(x, na.rm=T)})
+row.names(urban_country)[9] <- "urb_mean"
 
 # Trend over the period
 
-urban_country[19,] <- apply(urban_country[1:17,],2,function(x){
-  summary(lm(x~c(2000:2016)))$coef[2,1]})/urban_country[1,]
-row.names(urban_country)[19] <- "d_urb"
+urban_country[10,] <- apply(urban_country[1:8,],2,function(x){
+  summary(lm(x~c(2009:2016)))$coef[2,1]})/urban_country[1,]
+row.names(urban_country)[10] <- "d_urb"
+
+urban_country <- data.frame(urban_country[,c(1:13)], Iceland=0, urban_country[,c(14:20)], Norway=0, urban_country[,c(21:27)], Switzerland=0, UK=urban_country$UK)
 
 names(urban_country)[6] <- "Czech Republic"
 
 # Dataset to merge with other pressures
 
 country_data <- urban_country
+
 ```
 
 #### Temperature
@@ -1656,24 +1637,28 @@ source("CCM_Smap_function.R")
 ```{r}
 # Select
 
-country_data_temp <- data.frame(year=2007:2016,country_data[77:86,])
-country_data_temp2 <- melt(country_data_temp, id.vars="year")
-names(country_data_temp2)[3] <- "temp"
-country_data_urb <- data.frame(year=2007:2016,country_data[8:17,])
+country_data_urb <- data.frame(year=2009:2016,country_data[1:8,])
+country_data_urb[country_data_urb==0]<-NA
 country_data_urb2 <- melt(country_data_urb, id.vars="year")
 names(country_data_urb2)[3] <- "urb"
-country_data_hico <- data.frame(year=2007:2016,country_data[112:121,])
+
+country_data_temp <- data.frame(year=2007:2016,country_data[68:77,])
+country_data_temp2 <- melt(country_data_temp, id.vars="year")
+names(country_data_temp2)[3] <- "temp"
+
+country_data_hico <- data.frame(year=2007:2016,country_data[103:112,])
 country_data_hico[country_data_hico==0]<-NA
 country_data_hico2 <- melt(country_data_hico, id.vars="year")
 names(country_data_hico2)[3] <- "hico"
-country_data_forest <- data.frame(year=c(2007:2016),country_data[c(142:151),])
+
+country_data_forest <- data.frame(year=c(2007:2016),country_data[c(133:142),])
 country_data_forest2 <- melt(country_data_forest, id.vars="year")
 names(country_data_forest2)[3] <- "forest"
 
 # Group
 
-country_data_press <- merge(country_data_temp2, country_data_urb2, by=c("variable","year"))
-country_data_press <- merge(country_data_press, country_data_hico2, by=c("variable","year"),all.x=T)
+country_data_press <- merge(country_data_temp2, country_data_urb2, by=c("variable","year"),all.x=T)
+country_data_press <- merge(country_data_press, country_data_hico2, by=c("variable","year"))
 country_data_press <- merge(country_data_press, country_data_forest2, by=c("variable","year"))
 
 df_press <- as.data.frame(df)
@@ -1708,7 +1693,6 @@ df_press4 <- data.frame(droplevels(df_press3[df_press3$count > 4 & df_press3$sum
 ccm_sp <- ddply(df_press4, .(Species), .fun = multisp_CCM, niter=1000, .parallel = F, .progress = "text")
 ccm_sp2 <- ccm_sp
 ccm_sp2[is.na(ccm_sp2)] <- 1
-
 ```
 
 ### Apply multispatial S-map
@@ -1783,10 +1767,10 @@ data_density <- data.frame(pressure=c(rep("hico",length(na.omit(smap_sp_mean$hic
 rep("urb",length(na.omit(smap_sp_mean$urb[smap_sp_mean$urb!=0]))),
 rep("forest",length(na.omit(smap_sp_mean$forest[smap_sp_mean$forest!=0]))),
 rep("temp",length(na.omit(smap_sp_mean$temp[smap_sp_mean$temp!=0])))),
-value=c(na.omit(smap_sp_mean$hico[smap_sp_mean$hico!=0]),
-na.omit(smap_sp_mean$urb[smap_sp_mean$urb!=0]),
-na.omit(smap_sp_mean$forest[smap_sp_mean$forest!=0]),
-na.omit(smap_sp_mean$temp[smap_sp_mean$temp!=0])))
+value=c(scale(na.omit(smap_sp_mean$hico[smap_sp_mean$hico!=0]), center=F),
+scale(na.omit(smap_sp_mean$urb[smap_sp_mean$urb!=0]), center=F),
+scale(na.omit(smap_sp_mean$forest[smap_sp_mean$forest!=0]), center=F),
+scale(na.omit(smap_sp_mean$temp[smap_sp_mean$temp!=0]), center=F)))
                                  
 ggplot(data_density, aes(x=value, fill=pressure)) +
     geom_rect(fill = "#DDF9DD",xmin = 0,xmax = Inf,    ymin = -Inf,ymax = Inf, alpha = 0.1) +
