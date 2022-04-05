@@ -49,7 +49,6 @@ df$Year <- as.numeric(as.character(df$Year))
 
 abd <- setDT(read.table("raw_data/Abundance_data_PECBMS.txt", header = T, sep="\t")) 
 
-
 ```
 
 ### Preparing data
@@ -57,6 +56,7 @@ abd <- setDT(read.table("raw_data/Abundance_data_PECBMS.txt", header = T, sep="\
 #### Species and coutry names
 
 ```{r}
+
 # Get species and coutry names
 
 S <- levels(df$Species)
@@ -207,6 +207,7 @@ df[Species=="Galerida cristata" & CountryGroup=="Czech Republic",c("Abd","SE_Abd
 df_pop <- droplevels(subset(df, Year %in% c(1980:2016)))
 df_pop <- droplevels(subset(df_pop, Species %in% levels(droplevels(subset(df_pop, start_year<=1981))$Species)))
 df_pop <- droplevels(df_pop[!which(df_pop$Species=="Passer domesticus" & df_pop$CountryGroup %in% levels(df_pop$CountryGroup)[23]),])
+
 ```
 
 ## Combining species indices and abundance at the European level: RTIM
@@ -216,6 +217,7 @@ df_pop <- droplevels(df_pop[!which(df_pop$Species=="Passer domesticus" & df_pop$
 See also details in `rtrim` documentation (Bogaart et al., 2016).
 
 ```{r}
+
 # Data import & variables
 
 S <- unique(df_pop$Species)
@@ -229,11 +231,13 @@ stratum_number <- data.frame(code_sp = C, site = 1:length(C))
 # assign species with their EURING code
 
 species_code <- df_pop[, .SD[1], by = .(Code)][, .(Code,Species)]
+
 ```
 
 ### RTRIM functions
 
 ```{r}
+
 # Load RTRIM functions
 
 source("RTRIM_functions.R")
@@ -242,6 +246,7 @@ source("RTRIM_functions.R")
 
 ### RTRIM preprocessing
 ```{r}
+
 # Set working directory to /output for intermediary results
 
 setwd("output/")
@@ -274,10 +279,12 @@ for (i in S){
   write.csv2(arg, file = paste0("BIRD_",df_pop[Species==i,Code][1],
                                 "_0_arg_input_stratum.csv"), row.names = FALSE)
 }
+
 ```
 
 ### Running RTRIM
 ```{r}
+
 # Select the directory which contains the files with counts that need to be analysed. 
 folder<-getwd()
 setwd(folder)
@@ -503,10 +510,12 @@ for(j in 1:numberSpeciesStratumCombinations){
 
 all_Indices_All_Trends <- all_Indices_All_Trends[order(all_Indices_All_Trends$Species_number, all_Indices_All_Trends$Stratum_number, all_Indices_All_Trends$Recordtype_number), ]
 write.csv2(all_Indices_All_Trends, "all_Indices_All_Trends.csv", row.names = FALSE)
+
 ```
 
 ### RTRIM postprocessing
 ```{r}
+
 Code <- unique(all_Indices_All_Trends$Species_number)
 
 # gather imputed COUNTRYWIDE species' ABUNDANCE time series into one file
@@ -545,6 +554,7 @@ for (k in Code){
   transfer <- import[,.(Code,Species,Year,Abundance,Abundance_SE,Index_imputed,Index_imputed_SE)]
   SI.imputed <- rbind(SI.imputed, transfer)
 }
+
 ```
 
 ## Estiamting abundance dynamics of the avifauna
@@ -563,6 +573,7 @@ source("Nonlinear_functions.R")
 
 ### Estimate dynamics for the common avifauna
 ```{r}
+
 # Load data
 
 df_pop2<-SI.imputed
@@ -581,6 +592,7 @@ ggplot(df_pop3b$msi, aes(x = c(1980:2016), y = mean_msi_final)) +
   stat_function(fun = function(x){df_pop3b$coef$alpha2*x^2 + df_pop3b$coef$alpha1*x + df_pop3b$coef$inter}) +
   stat_function(fun = function(x){df_pop3b$coef$alpha2*x^2 + df_pop3b$coef$alpha1*x + df_pop3b$coef$inter - 1.96*df_pop3b$coef$strd}, linetype = "dashed") +
   stat_function(fun = function(x){df_pop3b$coef$alpha2*x^2 + df_pop3b$coef$alpha1*x + df_pop3b$coef$inter + 1.96*df_pop3b$coef$strd}, linetype = "dashed")
+  
 ```
 
 ### Estimate dynamics by habitat
@@ -588,6 +600,7 @@ ggplot(df_pop3b$msi, aes(x = c(1980:2016), y = mean_msi_final)) +
 #### Farmland birds
 
 ```{r}
+
 # Load data
   
 # Select species
@@ -637,6 +650,7 @@ ggplot(msi_forest_pec_ab$msi, aes(x = c(1980:2016), y = mean_msi_final)) +
 #### Bird species breeding in urban area
 
 ```{r}
+
 # Load data
 # from https://www.eea.europa.eu/data-and-maps/data/linkages-of-species-and-habitat
 
@@ -687,6 +701,7 @@ ggplot(msi_build_eunis_ab$msi, aes(x = c(1980:2016), y = mean_msi_final)) +
 #### Hot and cold dwellers
 
 ```{r}
+
 # Load data
 # from (Devictor et al., 2012)
 
@@ -722,6 +737,7 @@ ggplot(msi_temp_ab3, aes(x = year, y = mean_msi_final)) +
   scale_fill_grey(start=0.8,end=0.2) +
   geom_point() + theme_modern(base_size = 20)+theme(legend.title = element_blank(), legend.position = c(0.8, 0.8)) +
   labs(x ="Year", y = "Abundance")
+  
 ```
 
 ## Trend analysis
@@ -729,6 +745,7 @@ ggplot(msi_temp_ab3, aes(x = year, y = mean_msi_final)) +
 ### Estimate trends for each species
 
 ```{r}
+
 # Select species with data bewteen 1995 and 2016 (+- tw0 years)
 
 df_trend <- droplevels(subset(df, start_year<=1997))
@@ -748,6 +765,7 @@ trend_species <- ddply(df_trend, .(Species, CountryGroup), .fun=function(x){re=s
 #### Geographical data
 
 ```{r}
+
 # Select countries involved in the PECBMS
 
 country_name <- c("Austria","Bulgaria","Croatia","Cyprus","Germany","France","UK", "Belgium","Netherlands","Switzerland","Greece","Hungary","Iceland","Ireland","Italy","Latvia","Lithuania","Luxembourg","Malta","Norway","Poland","Portugal","Romania","Slovakia","Denmark", "Czech Republic","Finland", "Sweden", "Estonia","Slovenia","Spain")
@@ -771,11 +789,13 @@ country_id <- country_id[order(country_id$group),]
 
 country3 <- unionSpatialPolygons(country3,country_id[,1])
 proj4string(country3) <- CRS("+init=epsg:27572")
+
 ```
 
 #### Urban cover
 
 ```{r}
+
 # Load data
 # from https://www.fao.org/faostat/en/#data/LC
 
@@ -846,6 +866,7 @@ country_data <- urban_country
 #### Temperature
 
 ```{r}
+
 # Load data
 # from http://surfobs.climate.copernicus.eu/dataaccess/access_eobs.php
 
@@ -923,6 +944,7 @@ temp_sig_trend <- apply(country_data[61:97,], 2, function(x){summary(lm(x~c(1980
 #### High input cover data
 
 ```{r}
+
 # Load data
 # from https://www.fao.org/faostat/en/#data/LC
 
@@ -985,6 +1007,7 @@ row.names(country_data)[135] <- "hico_mean_perc"
 #### Forest cover data
 
 ```{r}
+
 # Load data
 
 forest_country <- read.csv("output/fao_data_landuse.csv", header = T)
@@ -1019,6 +1042,11 @@ forest_country[94,which(for_sig_trend>0.05)] <- 0
 # Merge data
 
 country_data <- rbind(country_data, forest_country)
+
+# Save data (you can directly use this file to skip the previous steps)
+
+write.csv(country_data,"output/country_data.csv", row.names = F)
+# country_data <- read.csv("output/country_data.csv", header = T)
 
 # Clean up the final dataset
 
@@ -1178,7 +1206,6 @@ for(ii in levels(df_pop$CountryGroup)){
   country_bird_trend_build <- rbind(country_bird_trend_build,country_bird_trend_build2)
 }
 
-
 country_bird_trend_temp_warm <- data.frame(year=NA,variable=NA,value=NA,slope=NA)
 
 for(ii in levels(df_pop$CountryGroup)){
@@ -1220,7 +1247,6 @@ for(ii in levels(df_pop$CountryGroup)){
   
   country_bird_trend_temp_warm <- rbind(country_bird_trend_temp_warm,country_bird_trend_temp_warm2)
 }
-
 
 country_bird_trend_temp_cold <- data.frame(year=NA,variable=NA,value=NA, slope=NA)
 
@@ -1350,10 +1376,12 @@ pres_tend_cold <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_c
   annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_cold)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20",mid="white",midpoint = 0,na.value="lightgrey")+                                                                      theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
   
 pres_tend_temp <- ggplot() + geom_sf(data = europe_map_simpl, fill="transparent")+theme_void()+ coord_sf(datum = NA)
+
 ```
 
 ##### Trend
 ```{r}
+
 require("pacman") 
 p_load(ggplot2, ggtree, dplyr, tidyr, sp, maps, pipeR, grid, XML, gtable)
 
@@ -1504,6 +1532,7 @@ pres_tend_build + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=wi
 pres_tend_chaud + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
 pres_tend_froid + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
 pres_tend_temp + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
+
 ```
 
 ### Preparing data for partial least square regression (PLS)
@@ -1511,6 +1540,7 @@ pres_tend_temp + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=wid
 #### Species data
 
 ```{r}
+
 # Load data
 
 ssi_eu <- read.csv("raw_data/SSI_EU.csv") # from LeViol et al. (2012)
@@ -1530,6 +1560,7 @@ trait$is_insectivore[which(trait$Arthropods_B==1 & trait$Other.invertebrates_B==
 #### Merge species trends, traits and pressure data
 
 ```{r}
+
 # Species trends and traits
 
 global_data <- merge(trend_species, sxi, by.x="Species", by.y="Name",all.x=T)
@@ -1565,43 +1596,44 @@ global_data_scale <- data.frame(global_data[,1:57],apply(global_data[,58:ncol(gl
 
 # Selecting data
 
-data_pls <- global_data_scale[, c("slope","hico_2007","d_hico","for_2000","d_for","urb_2000","d_urb","temp_2000","d_temp")]
+data_pls <- global_data_scale[, c("slope","hico_2007","d_hico","for_2000","d_for","urb_2009","d_urb","temp_2000","d_temp")]
 data_pls$slope <- scale(data_pls$slope)
 
 # Initiate PLS
 
-cv.modpls<-cv.plsR(data_pls$slope,data_pls[,-1],K=10,nt=10, grouplist = createFolds(data_pls[,1], k = 10, list = F, returnTrain = FALSE))
-res.cv.modpls<-cvtable(summary(cv.modpls))
-res1<-plsR(data_pls$slope,data_pls[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative as NA in data
+cv.modpls <- cv.plsR(data_pls$slope,data_pls[,-1],K=10,nt=10, grouplist = createFolds(data_pls[,1], k = 10, list = F, returnTrain = FALSE))
+res.cv.modpls <- cvtable(summary(cv.modpls))
+res1 <- plsR(data_pls$slope,data_pls[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative as NA in data
 colSums(res1$pvalstep)
 
 # Searching the best number of component to keep via CV
 
-cv.modpls<-cv.plsR(slope~.,data=data_pls,K=10,nt=10, grouplist = createFolds(data_pls[,1], k = 10, list = F, returnTrain = FALSE),NK=100)
-res.cv.modpls=cvtable(summary(cv.modpls))
+cv.modpls <- cv.plsR(slope~.,data=data_pls,K=10,nt=10, grouplist = createFolds(data_pls[,1], k = 10, list = F, returnTrain = FALSE),NK=100)
+res.cv.modpls <- cvtable(summary(cv.modpls))
 
 # Using CV PRESS, 2 or 4 components must be kept
 
 # PLS with 2 components
 res <- plsR(slope~.,data=data_pls,nt=2,pvals.expli=TRUE)
-trend.bootYT1=bootpls(res,typeboot="fmodel_np",R=2000)
-pls.ci=confints.bootpls(trend.bootYT1,indices=2:ncol(data_pls))
+trend.bootYT1 <- bootpls(res,typeboot="fmodel_np",R=2000)
+pls.ci <- confints.bootpls(trend.bootYT1,indices=2:ncol(data_pls))
 plots.confints.bootpls(pls.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),legendpos ="topright")
 
-# PLS with 4 component
-resb <- plsR(slope~.,data=data_pls,nt=4,pvals.expli=TRUE)
+# PLS with 3 component
+resb <- plsR(slope~.,data=data_pls,nt=3,pvals.expli=TRUE)
 trend.bootYT1b=bootpls(resb,typeboot="fmodel_np",R=2000)
 pls.cib=confints.bootpls(trend.bootYT1b,indices=2:ncol(data_pls))
 plots.confints.bootpls(pls.cib,typeIC="BCa",colIC=c("blue","blue","blue","blue"),legendpos ="topright")
 
-# Using the empirical distribution of the best number of component, we can obtain an empircal measure of the significance of each effect.
+# Using the empirical distribution of the best number of component, we can obtain an empircal measure of the significance of each effect
 ind.BCa.YT1 <- (pls.ci[,7] < 0 & pls.ci[,8] < 0)|(pls.ci[,7] > 0 & pls.ci[,8] > 0) 
 ind.BCa.YT1b <- (pls.cib[,7] < 0 & pls.cib[,8] < 0)|(pls.cib[,7] > 0 & pls.cib[,8] > 0)
 matind <- rbind(YT1b=ind.BCa.YT1b, YT1=ind.BCa.YT1)
-pi.e <- prop.table(res.cv.modpls$CVPress)[1:2] %*% matind
+pi.e <- prop.table(res.cv.modpls$CVPress)[2:3] %*% matind
 
-coef_plot <- data.frame(var=c("High input farm cover", "High input farm cover trend","Forest cover","Forest cover trend","Artificialised cover","Artificialisation trend","Mean temperature","Temperature trend"),val=trend.bootYT1$t0[-1,1],
-                      inf=pls.ci[,1],sup=pls.ci[,2],t(matind), sig=t(pi.e))
+# Plot PLS results
+coef_plot <- data.frame(var=c("High input farm cover", "High input farm cover trend","Forest cover","Forest cover trend","Artificialised cover","Artificialisation trend","Mean temperature","Temperature trend"),val=trend.bootYT1b$t0[-1,1],
+                      inf=pls.cib[,1],sup=pls.cib[,2],t(matind), sig=t(pi.e))
 coef_plot$col_val <- "ns"
 coef_plot$col_val[which(coef_plot$sig>=0.95 & coef_plot$val>0)] <- "pos"
 coef_plot$col_val[which(coef_plot$sig>=0.95 & coef_plot$val<0)] <- "neg"
@@ -1610,8 +1642,8 @@ coef_plot$var <- factor(coef_plot$var, levels = c("Temperature trend","Mean temp
                                                 "Forest cover trend","Forest cover", "High input farm cover trend","High input farm cover"))
                                                 
 ggplot(coef_plot, aes(y=val, x=var)) +
-  geom_rect(fill = "#DDF9DD",xmin = -Inf,xmax = Inf,    ymin = 0,ymax = Inf, alpha = 0.1) +
-  geom_rect(fill = "#F5A9A9",xmin = -Inf,xmax = Inf,ymin = -Inf,ymax = 0, alpha = 0.1) +
+  geom_rect(fill = "#DDF9DD", xmin = -Inf, xmax = Inf, ymin = 0, ymax = Inf, alpha = 0.1) +
+  geom_rect(fill = "#F5A9A9", xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = 0, alpha = 0.1) +
   geom_bar(stat="identity", position=position_dodge(), alpha=0.7,aes(fill=var)) +
   scale_fill_manual(values=c("High input farm cover"="#D302F9","High input farm cover trend"="#D302F9",
                              "Artificialised cover"="#196DF6","Artificialisation trend"="#196DF6",
@@ -1622,6 +1654,7 @@ ggplot(coef_plot, aes(y=val, x=var)) +
   theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank()) +
   geom_hline(yintercept=0, linetype="dashed", size=1) + 
   coord_flip()
+  
 ```
 
 # Causal effect analysis
@@ -1635,7 +1668,8 @@ source("CCM_Smap_function.R")
 ### Pressure time-series
 
 ```{r}
-# Select
+
+# Select time-series
 
 country_data_urb <- data.frame(year=2009:2016,country_data[1:8,])
 country_data_urb[country_data_urb==0]<-NA
@@ -1683,21 +1717,25 @@ df_press3 <- df_press3[order(df_press3$Species, df_press3$country, df_press3$yea
 # Detrend when needed
 
 df_press4 <- data.frame(droplevels(df_press3[df_press3$count > 4 & df_press3$sum_ab > 20 & df_press3$country!="Luxembourg",]) %>% group_by(Species, country) %>% mutate(temp_std=detrend_data(temp), urb_std=detrend_data(urb), hico_std=detrend_data(hico), forest_std=detrend_data(forest), Index_std=detrend_data(Index), Abd_std=detrend_data(Abd)))
+
 ```
 
 ### Apply multispatial CCM
 
 ```{r}
+
 # MultispatialCCM
 
 ccm_sp <- ddply(df_press4, .(Species), .fun = multisp_CCM, niter=1000, .parallel = F, .progress = "text")
 ccm_sp2 <- ccm_sp
 ccm_sp2[is.na(ccm_sp2)] <- 1
+
 ```
 
 ### Apply multispatial S-map
 
 ```{r}
+
 # S-map
 
 smap_sp <- dlply(droplevels(df_press4), .(Species, country), .fun = smap_fun_signif, ccm_sp2, .parallel = F, .progress = "text")
@@ -1773,27 +1811,24 @@ scale(na.omit(smap_sp_mean$forest[smap_sp_mean$forest!=0]), center=F),
 scale(na.omit(smap_sp_mean$temp[smap_sp_mean$temp!=0]), center=F)))
                                  
 ggplot(data_density, aes(x=value, fill=pressure)) +
-    geom_rect(fill = "#DDF9DD",xmin = 0,xmax = Inf,    ymin = -Inf,ymax = Inf, alpha = 0.1) +
-    geom_rect(fill = "#F5A9A9",xmin = -Inf,xmax = 0,ymin = -Inf,ymax = Inf, alpha = 0.1) +
+    geom_rect(fill = "#E8FAE8", xmin = 0, xmax = Inf, ymin = -Inf, ymax = Inf, alpha = 0.1) +
+    geom_rect(fill = "#FACCCC", xmin = -Inf, xmax = 0, ymin = -Inf, ymax = Inf, alpha = 0.1) +
     geom_histogram(bins=50,data=data_density[data_density$pressure=="hico",],alpha=0.7, aes(col=pressure), position = position_nudge(y=15)) +
-    geom_histogram(bins=50,data=data_density[data_density$pressure=="forest",],alpha=0.4, aes(col=pressure), position = position_nudge(y=11)) +  geom_histogram(bins=50,data=data_density[data_density$pressure=="urb",],alpha=0.4, aes(col=pressure), position = position_nudge(y=8)) +  geom_histogram(bins=50,data=data_density[data_density$pressure=="temp",],alpha=0.4, aes(col=pressure)) +
-    geom_vline(xintercept = 0) +
-    geom_segment(x = mean(data_density$value[data_density$pressure=="hico"]), y=15, xend= mean(data_density$value[data_density$pressure=="hico"]), yend=23,linetype=11) +  geom_segment(x = mean(data_density$value[data_density$pressure=="forest"]), y=11, xend= mean(data_density$value[data_density$pressure=="forest"]), yend=15,linetype=11) +
-    geom_segment(x = mean(data_density$value[data_density$pressure=="urb"]), y=8, xend= mean(data_density$value[data_density$pressure=="urb"]), yend=11,linetype=11) +
-    geom_segment(x = mean(data_density$value[data_density$pressure=="temp"]), y=0, xend= mean(data_density$value[data_density$pressure=="temp"]), yend=8,linetype=11) +  scale_fill_manual(values=c("hico"="#D302F9","urb"="#196DF6","forest"="#1BAE20","temp"="#FA0900")) +
+    geom_histogram(bins=50,data=data_density[data_density$pressure=="forest",],alpha=0.4, aes(col=pressure), position = position_nudge(y=12)) +  geom_histogram(bins=50,data=data_density[data_density$pressure=="urb",],alpha=0.4, aes(col=pressure), position = position_nudge(y=4.5)) +  geom_histogram(bins=50,data=data_density[data_density$pressure=="temp",],alpha=0.4, aes(col=pressure)) +
+    scale_fill_manual(values=c("hico"="#D302F9","urb"="#196DF6","forest"="#1BAE20","temp"="#FA0900")) +
     scale_color_manual(values=c("hico"="#D302F9","urb"="#196DF6","forest"="#1BAE20","temp"="#FA0900")) +
     theme_modern() +
     labs(x ="Correlation",y="Density") +
     theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank())
-
+    
 ```
-
 
 ### Applying PLS on pressure influence vs. species traits
 
 #### Prepare data
 
 ```{r}
+
 sp_data <- smap_sp_mean
 
 sp_data <- merge(sp_data,sxi, by.x="Species", by.y="Name",all.x=T)
@@ -1810,10 +1845,13 @@ sp_data$forest[is.na(sp_data$forest)] <- 0
 sp_data$is_urban[is.na(sp_data$is_urban)] <- 0
 sp_data$is_forest <- as.factor(sp_data$Habitat=="Forest")
 sp_data$is_farmland <- as.factor(sp_data$Habitat=="Farmland")
+
 ```
 
 #### Temperature vs traits
+
 ```{r}
+
 # Select data for PLS
 
 trait_inter_data_temp <- sp_data[, c("temp","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
@@ -1861,11 +1899,14 @@ coef_plot_temp <- data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
                                  sig=t(pi.e))
 coef_plot_temp$col_val <- "ns"
 coef_plot_temp$col_val[which(coef_plot_temp$sig >= 0.95 & coef_plot_temp$val > 0)] <- "pos"
-coef_plot_temp$col_val[which(coef_plot_temp$sig >= 0.95 & coef_plot_temp$val < 0)]<-"neg"
+coef_plot_temp$col_val[which(coef_plot_temp$sig >= 0.95 & coef_plot_temp$val < 0)] <- "neg"
+
 ```
 
 #### Urbanisation vs traits
+
 ```{r}
+
 # Select data for PLS
 
 trait_inter_data_urb <- sp_data[,
@@ -1914,11 +1955,14 @@ coef_plot_urb <- data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
                                  sig=t(pi.e))
 coef_plot_urb$col_val <- "ns"
 coef_plot_urb$col_val[which(coef_plot_urb$sig >= 0.95 & coef_plot_urb$val > 0)] <- "pos"
-coef_plot_urb$col_val[which(coef_plot_urb$sig >= 0.95 & coef_plot_urb$val < 0)]<-"neg"
+coef_plot_urb$col_val[which(coef_plot_urb$sig >= 0.95 & coef_plot_urb$val < 0)] <- "neg"
+
 ```
 
 #### High input farm cover vs traits
+
 ```{r}
+
 # Select data for PLS
 
 trait_inter_data_hico <- sp_data[, c("hico","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
@@ -1966,11 +2010,14 @@ coef_plot_hico <- data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
                                  sig=t(pi.e))
 coef_plot_hico$col_val <- "ns"
 coef_plot_hico$col_val[which(coef_plot_hico$sig >= 0.95 & coef_plot_hico$val > 0)] <- "pos"
-coef_plot_hico$col_val[which(coef_plot_hico$sig >= 0.95 & coef_plot_hico$val < 0)]<-"neg"
+coef_plot_hico$col_val[which(coef_plot_hico$sig >= 0.95 & coef_plot_hico$val < 0)] <- "neg"
+
 ```
 
 #### Forest vs traits
+
 ```{r}
+
 # Select data for PLS
 
 trait_inter_data_forest <- sp_data[, c("forest","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
@@ -2018,11 +2065,14 @@ coef_plot_forest <- data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
                                  sig=t(pi.e))
 coef_plot_forest$col_val <- "ns"
 coef_plot_forest$col_val[which(coef_plot_forest$sig >= 0.95 & coef_plot_forest$val > 0)] <- "pos"
-coef_plot_forest$col_val[which(coef_plot_forest$sig >= 0.95 & coef_plot_forest$val < 0)]<-"neg"
+coef_plot_forest$col_val[which(coef_plot_forest$sig >= 0.95 & coef_plot_forest$val < 0)] <- "neg"
+
 ```
 
 #### Plot pressure vs traits
+
 ```{r}
+
 library(tidyverse)
 library(viridis)
 library(patchwork)
