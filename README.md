@@ -677,14 +677,18 @@ eunis_hab3$Species[eunis_hab3$Species=="Regulus ignicapillus"] <- "Regulus ignic
 eunis_hab3$Species[eunis_hab3$Species=="Carduelis spinus"] <- "Spinus spinus"
 eunis_hab3$Species <- as.factor(eunis_hab3$Species)
 eunis_hab3$is_urban[eunis_hab3$Species %in% levels(droplevels(eunis_hab$speciesname[eunis_hab$season=="B" & eunis_hab$codeeco=="urban"]))] <- TRUE
+eunis_hab3$is_forest2 <- FALSE
+eunis_hab3$is_forest2[eunis_hab3$Species %in% levels(droplevels(eunis_hab2$speciesname[eunis_hab2$woodlandForest!=0 & eunis_hab2$heathlandShrub!=0]))] <- TRUE
+eunis_hab3$is_farmland2 <- FALSE
+eunis_hab3$is_farmland2[eunis_hab3$Species %in% levels(droplevels(eunis_hab2$speciesname[eunis_hab2$cropland!=0 & eunis_hab2$grassland!=0]))] <- TRUE
 
 # Select species
 
-df_build_eunis <- droplevels(subset(df_pop2, Species %in% levels(as.factor(eunis_hab3$Species[eunis_hab3$is_urban==T]))))
+df_build_eunis <- droplevels(subset(df_pop2, Species %in% levels(droplevels(eunis_hab3$Species[eunis_hab3$is_urban==T]))))
 
 # Compute dynamic estimation
 
-msi_build_eunis_ab<- msi_fun3(df_build_eunis, ref_year = 1980, niter = niter, ref_value = "Abundance")
+msi_build_eunis_ab <- msi_fun3(df_build_eunis, ref_year = 1980, niter = niter, ref_value = "Abundance")
 
 # Plot
 
@@ -1552,8 +1556,10 @@ pecbms_hab <- read.csv2("raw_data/Habitat_class_PECBMS.csv") # available on http
 trait <- read.csv("raw_data/life_history_bird_2018.csv",header = TRUE) # from Storchová et al. (2018)
 trait$is_migrant <- rep(0, nrow(trait))
 trait$is_migrant[which(trait$Short.distance.migrant==1 | trait$Long.distance.migrant==1)] <- 1
-trait$is_insectivore<-rep(0, nrow(trait))
-trait$is_insectivore[which(trait$Arthropods_B==1 & trait$Other.invertebrates_B==1)]<-1
+trait$is_insectivore <- rep(0, nrow(trait))
+trait$is_insectivore[which(trait$Arthropods_B==1 & trait$Other.invertebrates_B==1 & trait$Granivore_B==0 & trait$Folivore_B==0 & trait$Frugivore_B==0 & trait$Fish_B==0 & trait$Other.vertebrates_B==0 & trait$Carrion_B==0 & trait$Omnivore_B==0)] <- 1
+trait$is_granivore <- rep(0, nrow(trait))
+trait$is_granivore[which(trait$Granivore_B==1 & trait$Folivore_B==0 & trait$Frugivore_B==0 & trait$Arthropods_B==0 & trait$Other.invertebrates_B==0 & trait$Fish_B==0 & trait$Other.vertebrates_B==0 & trait$Carrion_B==0 & trait$Omnivore_B==0)] <- 1
 
 ```
 
@@ -1611,15 +1617,15 @@ colSums(res1$pvalstep)
 cv.modpls <- cv.plsR(slope~.,data=data_pls,K=10,nt=10, grouplist = createFolds(data_pls[,1], k = 10, list = F, returnTrain = FALSE),NK=100)
 res.cv.modpls <- cvtable(summary(cv.modpls))
 
-# Using CV PRESS, 2 or 4 components must be kept
+# Using CV PRESS, 2 or 3 components must be kept
 
-# PLS with 2 components
+# Run PLS with 2 components
 res <- plsR(slope~.,data=data_pls,nt=2,pvals.expli=TRUE)
 trend.bootYT1 <- bootpls(res,typeboot="fmodel_np",R=2000)
 pls.ci <- confints.bootpls(trend.bootYT1,indices=2:ncol(data_pls))
 plots.confints.bootpls(pls.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),legendpos ="topright")
 
-# PLS with 3 component
+# Run PLS with 3 component
 resb <- plsR(slope~.,data=data_pls,nt=3,pvals.expli=TRUE)
 trend.bootYT1b=bootpls(resb,typeboot="fmodel_np",R=2000)
 pls.cib=confints.bootpls(trend.bootYT1b,indices=2:ncol(data_pls))
@@ -1833,7 +1839,7 @@ sp_data <- smap_sp_mean
 
 sp_data <- merge(sp_data,sxi, by.x="Species", by.y="Name",all.x=T)
 sp_data <- merge(sp_data,sti, by.x="Species", by.y="SPECIES",all.x=T)
-sp_data <- merge(sp_data,trait[,c("Species","Granivore_B","is_migrant","is_insectivore")], by="Species",all.x=T)
+sp_data <- merge(sp_data,trait[,c("Species","is_granivore","is_migrant","is_insectivore")], by="Species",all.x=T)
 sp_data <- merge(sp_data,pecbms_hab, by="Species",all.x=T)
 sp_data <- merge(sp_data,ssi_eu, by="Species",all.x=T)
 sp_data <- merge(sp_data,eunis_hab3, by="Species",all.x=T)
@@ -1854,7 +1860,7 @@ sp_data$is_farmland <- as.factor(sp_data$Habitat=="Farmland")
 
 # Select data for PLS
 
-trait_inter_data_temp <- sp_data[, c("temp","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
+trait_inter_data_temp <- sp_data[, c("temp","is_farmland","is_forest","STI","SSI","is_migrant","is_granivore","is_insectivore","is_urban")]
 
 # Scale data
 
@@ -1866,13 +1872,14 @@ trait_inter_data_temp$is_urban <- as.numeric(trait_inter_data_temp$is_urban)
 
 # Find the number of latent value
 
-cv.modpls_temp <- cv.plsR(trait_inter_data_temp$temp,trait_inter_data_temp[,-1],nt=10)
+cv.modpls_temp <- cv.plsR(trait_inter_data_temp$temp,trait_inter_data_temp[,-1],nt=10,grouplist = createFolds(trait_inter_data_temp[,1], k = 10, list = F, returnTrain = FALSE))
 res.cv.modpls_temp <- cvtable(summary(cv.modpls_temp))
 res_pls_temp <- plsR(trait_inter_data_temp$temp,trait_inter_data_temp[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative because NA in some columns
 colSums(res1$pvalstep)
-cv.modpls_temp <- cv.plsR(temp~.,data=trait_inter_data_temp,nt=10,NK=100)
+cv.modpls_temp <- cv.plsR(temp~.,data=trait_inter_data_temp,nt=10,grouplist = createFolds(trait_inter_data_temp[,1], k = 10, list = F, returnTrain = FALSE),NK=100)
 res.cv.modpls_temp <- cvtable(summary(cv.modpls_temp))
 
+# Using CV PRESS, 1 component must be kept
 # Run PLS
 
 res_pls_temp <- plsR(temp~.,data=trait_inter_data_temp,nt=1,pvals.expli=TRUE)
@@ -1908,9 +1915,8 @@ coef_plot_temp$col_val[which(coef_plot_temp$sig >= 0.95 & coef_plot_temp$val < 0
 ```{r}
 
 # Select data for PLS
-
-trait_inter_data_urb <- sp_data[,
-c("urb","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
+set.seed(1)
+trait_inter_data_urb <- sp_data[, c("urb","is_farmland","is_forest","STI","SSI","is_migrant","is_granivore","is_insectivore","is_urban")]
 
 # Scale data
 
@@ -1922,16 +1928,16 @@ trait_inter_data_urb$is_urban <- as.numeric(trait_inter_data_urb$is_urban)
 
 # Find the number of latent value
 
-cv.modpls_urb <- cv.plsR(trait_inter_data_urb$urb,trait_inter_data_urb[,-1],nt=10)
+cv.modpls_urb <- cv.plsR(trait_inter_data_urb$urb,trait_inter_data_urb[,-1],nt=10,grouplist = createFolds(trait_inter_data_urb[,1], k = 10, list = F, returnTrain = FALSE))
 res.cv.modpls_urb <- cvtable(summary(cv.modpls_urb))
 res_pls_urb <- plsR(trait_inter_data_urb$urb,trait_inter_data_urb[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative because NA in some columns
 colSums(res1$pvalstep)
-cv.modpls_urb <- cv.plsR(urb~.,data=trait_inter_data_urb,nt=10,NK=100)
+cv.modpls_urb <- cv.plsR(urb~.,data=trait_inter_data_urb,nt=10,grouplist = createFolds(trait_inter_data_urb[,1], k = 10, list = F, returnTrain = FALSE),NK=100)
 res.cv.modpls_urb <- cvtable(summary(cv.modpls_urb))
 
+# Using CV PRESS, 1 component must be kept
 # Run PLS
-
-res_pls_urb <- plsR(urb~.,data=trait_inter_data_urb,nt=1,pvals.expli=TRUE)
+res_pls_urb <- plsR(urb~., data=trait_inter_data_urb, nt=1, pvals.expli=TRUE)
 
 # Plot PLS
 
@@ -1965,7 +1971,7 @@ coef_plot_urb$col_val[which(coef_plot_urb$sig >= 0.95 & coef_plot_urb$val < 0)] 
 
 # Select data for PLS
 
-trait_inter_data_hico <- sp_data[, c("hico","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
+trait_inter_data_hico <- sp_data[, c("hico","is_farmland","is_forest","STI","SSI","is_migrant","is_granivore","is_insectivore","is_urban")]
 
 # Scale data
 
@@ -1977,13 +1983,14 @@ trait_inter_data_hico$is_urban <- as.numeric(trait_inter_data_hico$is_urban)
 
 # Find the number of latent value
 
-cv.modpls_hico <- cv.plsR(trait_inter_data_hico$hico,trait_inter_data_hico[,-1],nt=10)
+cv.modpls_hico <- cv.plsR(trait_inter_data_hico$hico,trait_inter_data_hico[,-1],nt=10,grouplist = createFolds(trait_inter_data_hico[,1], k = 10, list = F, returnTrain = FALSE))
 res.cv.modpls_hico <- cvtable(summary(cv.modpls_hico))
 res_pls_hico <- plsR(trait_inter_data_hico$hico,trait_inter_data_hico[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative because NA in some columns
 colSums(res1$pvalstep)
-cv.modpls_hico <- cv.plsR(hico~.,data=trait_inter_data_hico,nt=10,NK=100)
+cv.modpls_hico <- cv.plsR(hico~.,data=trait_inter_data_hico,nt=10,grouplist = createFolds(trait_inter_data_hico[,1], k = 10, list = F, returnTrain = FALSE),NK=100)
 res.cv.modpls_hico <- cvtable(summary(cv.modpls_hico))
 
+# Using CV PRESS, 1 component must be kept
 # Run PLS
 
 res_pls_hico <- plsR(hico~.,data=trait_inter_data_hico,nt=1,pvals.expli=TRUE)
@@ -2019,8 +2026,8 @@ coef_plot_hico$col_val[which(coef_plot_hico$sig >= 0.95 & coef_plot_hico$val < 0
 ```{r}
 
 # Select data for PLS
-
-trait_inter_data_forest <- sp_data[, c("forest","is_farmland","is_forest","STI","SSI","is_migrant","Granivore_B","is_insectivore","is_urban")]
+set.seed(1)
+trait_inter_data_forest <- sp_data[, c("forest","is_farmland","is_forest","STI","SSI","is_migrant","is_granivore","is_insectivore","is_urban")]
 
 # Scale data
 
@@ -2032,15 +2039,15 @@ trait_inter_data_forest$is_urban <- as.numeric(trait_inter_data_forest$is_urban)
 
 # Find the number of latent value
 
-cv.modpls_forest <- cv.plsR(trait_inter_data_forest$forest,trait_inter_data_forest[,-1],nt=10)
+cv.modpls_forest <- cv.plsR(trait_inter_data_forest$forest,trait_inter_data_forest[,-1],nt=10,grouplist = createFolds(trait_inter_data_forest[,1], k = 10, list = F, returnTrain = FALSE))
 res.cv.modpls_forest <- cvtable(summary(cv.modpls_forest))
 res_pls_forest <- plsR(trait_inter_data_forest$forest,trait_inter_data_forest[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative because NA in some columns
 colSums(res1$pvalstep)
-cv.modpls_forest <- cv.plsR(forest~.,data=trait_inter_data_forest,nt=10,NK=100)
+cv.modpls_forest <- cv.plsR(forest~.,data=trait_inter_data_forest,nt=10,grouplist = createFolds(trait_inter_data_forest[,1], k = 10, list = F, returnTrain = FALSE),NK=100)
 res.cv.modpls_forest <- cvtable(summary(cv.modpls_forest))
 
-# Run PLS
-
+# Using CV PRESS, 1 or 2 components must be kept
+# Run PLS with 1 component
 res_pls_forest <- plsR(forest~.,data=trait_inter_data_forest,nt=1,pvals.expli=TRUE)
 
 # Plot PLS
@@ -2050,18 +2057,30 @@ boxplots.bootpls(forest.bootYT1,indices=2:ncol(trait_inter_data_forest))
 forest.ci <- confints.bootpls(forest.bootYT1,indices=2:ncol(trait_inter_data_forest))
 plots.confints.bootpls(forest.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
                        legendpos ="topright")
+                       
+# Run PLS with 2 components
+res_pls_forest2 <- plsR(forest~.,data=trait_inter_data_forest,nt=2,pvals.expli=TRUE)
+
+# Plot PLS
+
+forest.bootYT2 <- bootpls(res_pls_forest2,typeboot="fmodel_np",R=10000)
+boxplots.bootpls(forest.bootYT2,indices=2:ncol(trait_inter_data_forest))
+forest.ci2 <- confints.bootpls(forest.bootYT2,indices=2:ncol(trait_inter_data_forest))
+plots.confints.bootpls(forest.ci2,typeIC="BCa",colIC=c("blue","blue","blue","blue"),
+                       legendpos ="topright")                      
 
 ind.BCa.forestYT1 <- (forest.ci[,7] < 0 & forest.ci[,8] < 0) | (forest.ci[,7] > 0 & forest.ci[,8] > 0)
+ind.BCa.forestYT2 <- (forest.ci2[,7] < 0 & forest.ci2[,8] < 0) | (forest.ci2[,7] > 0 & forest.ci2[,8] > 0)
 
 # Save results
 
-matind <- rbind(YT1=ind.BCa.forestYT1)
-pi.e <- (prop.table(res.cv.modpls_forest$CVPress)[c(1)]/sum(prop.table(res.cv.modpls_forest$CVPress)[c(1)])) %*% matind
+matind <- rbind(YT1=ind.BCa.forestYT1, YT2=ind.BCa.forestYT2)
+pi.e <- (prop.table(res.cv.modpls_forest$CVPress)[c(1:2)]/sum(prop.table(res.cv.modpls_forest$CVPress)[c(1:2)])) %*% matind
 
 coef_plot_forest <- data.frame(var=c("Farmland","Forest","STI","SSI","Migrant",
                                  "Granivorous diet","Invertebrate diet","Synanthropy"),
-                                 val=forest.bootYT1$t0[-1,1],
-                                 inf=forest.ci[,7],sup=forest.ci[,8],t(matind),
+                                 val=forest.bootYT2$t0[-1,1],
+                                 inf=forest.ci2[,7],sup=forest.ci2[,8],t(matind),
                                  sig=t(pi.e))
 coef_plot_forest$col_val <- "ns"
 coef_plot_forest$col_val[which(coef_plot_forest$sig >= 0.95 & coef_plot_forest$val > 0)] <- "pos"
@@ -2082,10 +2101,12 @@ library(networkD3)
 
 # Group all data to get flows
 
-data_trait_pression <- rbind(data.frame(coef_plot_temp[,c("var","val","inf","sup","col_val")],pressure="Temperature",value2=coef_plot_temp$val/coef_plot_temp$val),
-                           data.frame(coef_plot_urb[,c("var","val","inf","sup","col_val")],pressure="Urbanisation",value2=coef_plot_urb$val/coef_plot_urb$val),
-                           data.frame(coef_plot_hico[,c("var","val","inf","sup","col_val")],pressure="High input farm cover",value2=coef_plot_hico$val/coef_plot_hico$val),
-                           data.frame(coef_plot_forest[,c("var","val","inf","sup","col_val")],pressure="Forest cover",value2=coef_plot_forest$val/coef_plot_forest$val))
+data_trait_pression <- rbind(data.frame(coef_plot_hico[,c("var","val","inf","sup","col_val")],pressure="High input farm cover",value2=coef_plot_hico$val[coef_plot_hico$col_val!="ns"]/sum(abs(coef_plot_hico$val[coef_plot_hico$col_val!="ns"]))),
+                           data.frame(coef_plot_forest[,c("var","val","inf","sup","col_val")],pressure="Forest cover",value2=coef_plot_forest$val/sum(abs(coef_plot_forest$val[coef_plot_forest$col_val!="ns"]))),
+                           
+data.frame(coef_plot_urb[,c("var","val","inf","sup","col_val")],pressure="Urbanisation",value2=coef_plot_urb$val[coef_plot_urb$col_val!="ns"]/sum(abs(coef_plot_urb$val[coef_plot_urb$col_val!="ns"]))),
+
+data.frame(coef_plot_temp[,c("var","val","inf","sup","col_val")],pressure="Temperature",value2=coef_plot_temp$val[coef_plot_temp$col_val!="ns"]/sum(abs(coef_plot_temp$val[coef_plot_temp$col_val!="ns"]))))
               
 data_trait_pression$var <- as.character(data_trait_pression$var) 
 data_trait_pression[data_trait_pression=="STI"] <- "Species Temperature Index"
@@ -2097,7 +2118,7 @@ data_trait_pression2 <- data.frame(source=data_trait_pression$pressure,target=da
 # From these flows we need to create a node data frame: it lists every entities involved in the flow
 
 nodes <- data.frame(name=c(as.character(data_trait_pression2$source), as.character(data_trait_pression2$target)) %>% unique())
-nodes$group<-as.factor(c("Temperature","Urbanisation","Input","Forestc","trait","trait","trait","trait","trait","trait","trait","trait"))
+nodes$group <- as.factor(c("Input","Forestc","Urbanisation","Temperature","trait","trait","trait","trait","trait","trait","trait","trait"))
 
 # With networkD3, connection must be provided using id, not using real name like in the links dataframe. So we need to reformat it.
 
@@ -2106,14 +2127,14 @@ data_trait_pression2$IDtarget <- match(data_trait_pression2$target, nodes$name)-
 
 # Prepare colour scale
 
-ColourScal <-  'd3.scaleOrdinal() .domain(["neg", "ns","pos","Temperature","Urbanisation","Input","Forestc","trait","trait","trait","trait","trait","trait","trait","trait"]) .range(["#F6CECE","#E6E6E6", "#CEF6CE", "#FA0900","#196DF6","#D302F9","#1BAE20", "black", "black", "black", "black", "black", "black", "black", "black"])'
+ColourScal <-  'd3.scaleOrdinal() .domain(["neg","ns","pos","Temperature","Urbanisation","Input","Forestc","trait","trait","trait","trait","trait","trait","trait","trait"]) .range(["#F6CECE","#E6E6E6", "#CEF6CE", "#FA0900","#196DF6","#D302F9","#1BAE20", "black", "black", "black", "black", "black", "black", "black", "black"])'
 
 # Make the Network
 
 sankeyNetwork(Links = data_trait_pression2, Nodes = nodes,
               Source = "IDsource", Target = "IDtarget",
               Value = "value", NodeID = "name",  LinkGroup = "col_link", NodeGroup="group",
-              sinksRight=FALSE, colourScale=ColourScal, nodeWidth=40, fontSize=13, nodePadding=20)
+              sinksRight=FALSE, colourScale=ColourScal, nodeWidth=60, fontSize=13, nodePadding=20, iteration=0)
 
 ```
 
