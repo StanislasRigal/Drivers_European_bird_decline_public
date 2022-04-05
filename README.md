@@ -1003,8 +1003,8 @@ names(input_country)[6] <- "Czech Republic"
 
 country_data <- rbind(country_data, input_country) # opposite sign for names(input_country)[c(2,12,17,28)] we choose this old dataset as it is more coherent with https://www.eea.europa.eu/publications/eea_report_2005_6 but see also https://link.springer.com/article/10.1007/s11356-021-17655-4
 
-country_data[135,] <- country_data[133,]/country_data[122,]
-row.names(country_data)[135] <- "hico_mean_perc"
+country_data[115,] <- country_data[113,]/country_data[102,]
+row.names(country_data)[115] <- "hico_mean_perc"
 
 ```
 
@@ -1302,9 +1302,9 @@ country_bird_trend_temp <- merge(country_bird_trend_temp_warm,country_bird_trend
 names(country_bird_trend_temp)[3:6]<-c("value_warm","slope_warm","value_cold","slope_cold")
 
 country_bird_trend_agrib <- data.frame(droplevels(country_bird_trend_agri) %>% group_by(variable) %>% summarize(slope_agri2=mean(slope)))
-country_bird_trend_buildb<-data.frame(droplevels(country_bird_trend_build) %>% group_by(variable) %>% summarize(slope_build2=mean(slope)))
-country_bird_trend_forestb<-data.frame(droplevels(country_bird_trend_forest) %>% group_by(variable) %>% summarize(slope_forest2=mean(slope)))
-country_bird_trend_tempb<-data.frame(droplevels(country_bird_trend_temp) %>% group_by(variable) %>% summarize(slope_warm2=mean(slope_warm),slope_cold2=mean(slope_cold)))
+country_bird_trend_buildb <- data.frame(droplevels(country_bird_trend_build) %>% group_by(variable) %>% summarize(slope_build2=mean(slope)))
+country_bird_trend_forestb <- data.frame(droplevels(country_bird_trend_forest) %>% group_by(variable) %>% summarize(slope_forest2=mean(slope)))
+country_bird_trend_tempb <- data.frame(droplevels(country_bird_trend_temp) %>% group_by(variable) %>% summarize(slope_warm2=mean(slope_warm),slope_cold2=mean(slope_cold)))
 
 country_bird_trend_agrib$variable[country_bird_trend_agrib$variable=="UK"] <- country_bird_trend_buildb$variable[country_bird_trend_buildb$variable=="UK"] <-
   country_bird_trend_forestb$variable[country_bird_trend_forestb$variable=="UK"] <- country_bird_trend_tempb$variable[country_bird_trend_tempb$variable=="UK"] <- "United Kingdom"
@@ -1386,6 +1386,8 @@ pres_tend_temp <- ggplot() + geom_sf(data = europe_map_simpl, fill="transparent"
 ##### Trend
 ```{r}
 
+# Compute coordinate centroids of eahc country
+
 require("pacman") 
 p_load(ggplot2, ggtree, dplyr, tidyr, sp, maps, pipeR, grid, XML, gtable)
 
@@ -1407,7 +1409,29 @@ rownames(centroids) <- c("Austria","Belgium","Bulgaria","Cyprus","Czech.Republic
                        "Greece","Hungary","Ireland","Italy","Latvia","Lithuania","Luxembourg","Netherlands","Norway",
                        "Poland","Portugal","Romania","Slovakia","Slovenia","Spain","Sweden","Switzerland","UK")
 
-data_pres_wide <- melt(data.frame(year=sub(".*_","",row.names(input_country[1:10,])),input_country[1:10,]))
+# Get trend by country for high input farm cover
+
+data_pres_wide <- melt(data.frame(year=sub(".*_","",row.names(input_country[2:10,])),apply(rbind(input_country[1:10,],country_data[102,]),2,function(x){y <- x[2:10]/x[11]})))
+
+names(data_pres_wide)[2] <- "Country"
+data_pres_long <- add_rownames(centroids, "Country") %>% left_join(data_pres_wide) %>% split(., .$Country)
+
+data_pres_long$Switzerland <- data_pres_long$Norway <- NULL
+
+graph_hico <- setNames(lapply(1:length(data_pres_long), function(i){
+  test <- data_pres_long[[i]]
+  
+  ggplot(na.omit(test), aes(x=year, y=value, group=Country)) + # ici
+      geom_line(col="black" ,size=1.5, alpha=0.5)+
+      xlab(NULL) + 
+      ylab(NULL) + 
+      theme_modern() + theme_transparent()+
+      theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
+            axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)}), names(data_pres_long))
+            
+            
+            
+            
 data_pres_wide <- droplevels(country_data_taille2)
 data_pres_wide <- droplevels(country_data_clc2)
 data_pres_wide[c(11,12,121,122,146,151),3] <- NA
@@ -1441,48 +1465,15 @@ data_pres_long <- add_rownames(centroids, "Country") %>% left_join(data_pres_wid
 #data_pres_long$Switzerland<-data_pres_long$Norway<-NULL #pour hic
 
 graph <- setNames(lapply(1:length(data_pres_long), function(i){
-  test<-data_pres_long[[i]]
+  test <- data_pres_long[[i]]
   
-  if(length(test$value[!is.na(test$value)])<0){
-    
-    ggplot(na.omit(test), aes(x=year, y=value)) +
-      #geom_ribbon(aes(ymin=value-sd(value),ymax=value+sd(value)),alpha=0.5, col="black",fill="white")+
+  ggplot(na.omit(test), aes(x=year, y=value, group=Country)) +
       geom_line(col="black" ,size=1.5, alpha=0.5)+
-      #scale_y_continuous(breaks = seq(limy_bas,limy_haut,0.1),limits = c(limy_bas,limy_haut))+ 
-      scale_y_continuous(breaks = seq(limy_bas,limy_haut,0.01),limits = c(limy_bas,limy_haut))+ 
-      #geom_point(shape=21,color="black", fill="white", size=3)+
       xlab(NULL) + 
       ylab(NULL) + 
-      theme_modern() +theme_transparent()+
+      theme_modern() + theme_transparent()+
       theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
-            axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)
-  }else{
-
-  lim_centre<-mean(test$value,na.rm=T)
-  #limy_bas<-max(lim_centre-0.1,0) #hic
-  #limy_haut<-min(lim_centre+0.1,0.9)
-  
-  #limy_bas<-max(lim_centre-0.065,0) #forest
-  #limy_haut<-min(lim_centre+0.05,1)
-  
-  limy_bas<-max(lim_centre-0.0033,0) #urb
-  limy_haut<-min(lim_centre+0.002,1)
-  
-  #limy_bas<-lim_centre-1.5 #temp
-  #limy_haut<-lim_centre+1.5
-
-  ggplot(na.omit(test), aes(x=year, y=value)) +
-    #geom_ribbon(aes(ymin=value-sd(value),ymax=value+sd(value)),alpha=0.5, col="black",fill="white")+
-    geom_line(col="black" ,size=1.5, alpha=0.5)+
-    #scale_y_continuous(breaks = seq(limy_bas,limy_haut,0.1),limits = c(limy_bas,limy_haut))+ 
-    scale_y_continuous(breaks = seq(limy_bas,limy_haut,0.01),limits = c(limy_bas,limy_haut))+ 
-    #geom_point(shape=21,color="black", fill="white", size=3)+
-    xlab(NULL) + 
-    ylab(NULL) + 
-    theme_modern() +theme_transparent()+
-    theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
-          axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)}
-}), names(data_pres_long))
+            axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)}), names(data_pres_long))
 
 graph <- setNames(lapply(1:length(data_pres_long), function(i){# pour tendance oiseau par country
   test<-data_pres_long[[i]]
