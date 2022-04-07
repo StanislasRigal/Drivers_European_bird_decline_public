@@ -1421,18 +1421,99 @@ data_pres_long$Switzerland <- data_pres_long$Norway <- NULL
 graph_hico <- setNames(lapply(1:length(data_pres_long), function(i){
   test <- data_pres_long[[i]]
   
+  bound <- max(test$value)-min(test$value)
+  med_val <- bound/2+min(test$value)
+  if(bound<0.10){ylimit <- c((med_val-0.05),(med_val+0.05))
+  }else{ylimit <- c(min(test$value),max(test$value))}
+  
   ggplot(na.omit(test), aes(x=year, y=value, group=Country)) + # ici
       geom_line(col="black" ,size=1.5, alpha=0.5)+
       xlab(NULL) + 
       ylab(NULL) + 
       theme_modern() + theme_transparent()+
+      scale_y_continuous(limits = ylimit) +
       theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
             axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)}), names(data_pres_long))
             
             
+# Get trend by country for urbanisation
+
+data_pres_wide <- melt(data.frame(year=sub(".*_","",row.names(urban_country[1:8,])),urban_country[1:8,]))
+
+names(data_pres_wide)[2] <- "Country"
+data_pres_long <- add_rownames(centroids, "Country") %>% left_join(data_pres_wide) %>% split(., .$Country)
+
+data_pres_long$Switzerland <- data_pres_long$Norway <- NULL
+data_pres_long$Lithuania$value[8] <- data_pres_long$Luxembourg$value[8] <- NA
+
+graph_urb <- setNames(lapply(1:length(data_pres_long), function(i){
+  test <- data_pres_long[[i]]
+  
+  bound <- max(test$value, na.rm=T)-min(test$value,na.rm=T)
+  med_val <- bound/2+min(test$value, na.rm=T)
+  if(bound<1){ylimit <- c((med_val-0.5),(med_val+0.5))
+  }else{ylimit <- c(min(test$value, na.rm=T),max(test$value, na.rm=T))}
+  
+  ggplot(na.omit(test), aes(x=year, y=value, group=Country)) + # ici
+      geom_line(col="black" ,size=1.5, alpha=0.5)+
+      xlab(NULL) + 
+      ylab(NULL) + 
+      theme_modern() + theme_transparent()+
+      scale_y_continuous(limits = ylimit) +
+      theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
+            axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)}), names(data_pres_long))
             
             
-data_pres_wide <- droplevels(country_data_taille2)
+# Get trend by country for forest
+
+data_pres_wide <- melt(data.frame(year=sub(".*_","",row.names(forest_country[7:27,])),forest_country[7:27,]))
+
+names(data_pres_wide)[2] <- "Country"
+data_pres_long <- add_rownames(centroids, "Country") %>% left_join(data_pres_wide) %>% split(., .$Country)
+
+graph_forest <- setNames(lapply(1:length(data_pres_long), function(i){
+  test <- data_pres_long[[i]]
+  
+  bound <- max(test$value, na.rm=T)-min(test$value,na.rm=T)
+  med_val <- bound/2+min(test$value, na.rm=T)
+  if(bound<0.04){ylimit <- c((med_val-0.02),(med_val+0.02))
+  }else{ylimit <- c(min(test$value, na.rm=T),max(test$value, na.rm=T))}
+  
+  ggplot(na.omit(test), aes(x=year, y=value, group=Country)) + # ici
+      geom_line(col="black" ,size=1.5, alpha=0.5)+
+      xlab(NULL) + 
+      ylab(NULL) + 
+      theme_modern() + theme_transparent()+
+      scale_y_continuous(limits = ylimit) +
+      theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
+            axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)}), names(data_pres_long))
+                        
+                        
+# Get trend by country for temperature
+
+data_pres_wide <- melt(data.frame(year=sub(".*_","",row.names(country_data[57:77,])),country_data[57:77,]))
+
+names(data_pres_wide)[2] <- "Country"
+data_pres_long <- add_rownames(centroids, "Country") %>% left_join(data_pres_wide) %>% split(., .$Country)
+
+graph_temp <- setNames(lapply(1:length(data_pres_long), function(i){
+  test <- data_pres_long[[i]]
+  
+  bound <- max(test$value, na.rm=T)-min(test$value,na.rm=T)
+  med_val <- bound/2+min(test$value, na.rm=T)
+  if(bound<4){ylimit <- c((med_val-2),(med_val+2))
+  }else{ylimit <- c(min(test$value, na.rm=T),max(test$value, na.rm=T))}
+  
+  ggplot(na.omit(test), aes(x=year, y=value, group=Country)) + # ici
+      geom_line(col="black" ,size=1.5, alpha=0.5)+
+      xlab(NULL) + 
+      ylab(NULL) + 
+      theme_modern() + theme_transparent()+
+      scale_y_continuous(limits = ylimit) +
+      theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
+            axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)}), names(data_pres_long))
+                                    
+
 data_pres_wide <- droplevels(country_data_clc2)
 data_pres_wide[c(11,12,121,122,146,151),3] <- NA
 data_pres_wide <- droplevels(country_data_clc_new2)
