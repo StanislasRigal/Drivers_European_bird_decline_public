@@ -1820,6 +1820,398 @@ ggplot(data_density, aes(x=value, fill=pressure)) +
     
 ```
 
+### Test ccm and smap
+
+#### Influence of countries
+
+```{r}
+# Testing how one-by-one country removal affects ccm and smap output
+
+test_country_remove <- function(df_press4, niter=100){
+  
+  test_ccm_sp_tot <- data.frame(Species=levels(df_press4$Species))
+  n <- levels(as.factor(df_press4$country))
+    
+  for(j in n){
+   
+    df_press4j <- droplevels(subset(df_press4, country!=j))
+
+    test_ccm_sp <- ddply(df_press4j, .(Species), .fun = multisp_CCM, niter=niter, .parallel = F, .progress = "text")
+    test_ccm_sp2 <- test_ccm_sp
+    test_ccm_sp2[is.na(test_ccm_sp2)] <- 1
+
+    test_smap_sp <- dlply(droplevels(df_press4j), .(Species, country), .fun = smap_fun_signif, test_ccm_sp2, .parallel = F, .progress = "text")
+
+    test_smap_sp_res <- data.frame(.id=NA,temp_smap=NA,urb_smap=NA,hico_smap=NA,forest_smap=NA)
+
+    for(i in levels(df_press4j$Species)){
+      sub_smap_sp <- test_smap_sp[grepl(i,names(test_smap_sp))]
+ 
+      sub_smap_sp_res <- ldply(sub_smap_sp, .fun=function(x){
+ 
+        if(is.na(x$res_ccm)){
+          temp_smap <- urb_smap <- hico_smap <- forest_smap <- NA
+        }else{
+ 
+        if(x$pvalue<0.05 & x$res_ccm$temp_cause_species<0.05 & !is.null(x$coefficients$temp)){
+          temp_smap <- na.omit(x$coefficients$temp)
+        }else{temp_smap <- NA}
+  
+        if(x$pvalue<0.05 & x$res_ccm$urb_cause_species<0.05 & !is.null(x$coefficients$urb)){
+          urb_smap <- na.omit(x$coefficients$urb)
+        }else{urb_smap <- NA}
+  
+        if(x$pvalue<0.05 & x$res_ccm$hico_cause_species<0.05 & !is.null(x$coefficients$hico)){
+          hico_smap <- na.omit(x$coefficients$hico)
+        }else{hico_smap <- NA}
+  
+        if(x$pvalue<0.05 & x$res_ccm$forest_cause_species<0.05 & !is.null(x$coefficients$forest)){
+          forest_smap <- na.omit(x$coefficients$forest)
+        }else{forest_smap <- NA}
+      }
+ 
+    return(data.frame(temp_smap, urb_smap, hico_smap, forest_smap))
+ 
+  })
+ 
+ test_smap_sp_res <- rbind(test_smap_sp_res,sub_smap_sp_res)
+
+  }
+
+  test_smap_sp_res <- test_smap_sp_res[-1,]
+  test_smap_sp_res$Species <- sub("\\..*","",test_smap_sp_res$.id)
+
+  test_smap_sp_mean <- data.frame(test_smap_sp_res[,-1] %>% group_by(Species) %>% summarize(temp=mean(temp_smap, na.rm=T),temp_sd=sd(temp_smap, na.rm=T),
+urb=mean(urb_smap, na.rm=T),urb_sd=sd(urb_smap, na.rm=T),
+hico=mean(hico_smap, na.rm=T),hico_sd=sd(hico_smap, na.rm=T),
+forest=mean(forest_smap, na.rm=T),forest_sd=sd(forest_smap, na.rm=T)))
+
+    names(test_smap_sp_mean)[2:9] <- paste0(j,sep="_",names(test_smap_sp_mean)[2:9])
+    
+    test_ccm_sp_tot <- merge(test_ccm_sp_tot, test_smap_sp_mean, by="Species", all.x=T)
+    
+    print(j)
+  }
+  return(test_ccm_sp_tot)
+}
+
+influence_country <- test_country_remove(df_press4, niter=100)
+ncol_test <- ncol(influence_country)
+influence_country <- merge(influence_country, smap_sp_mean, by="Species", all.x=T)
+
+influence_country$temp_sign_m <- apply(sign(influence_country[,seq(from=2,to=ncol_test,by=8)]), 1,function(x){sum(x,na.rm=T)})
+influence_country$temp_nb_neg <- apply(sign(influence_country[,seq(from=2,to=ncol_test,by=8)]), 1,function(x){length(na.omit(x[x<0]))})
+influence_country$temp_nb_pos <- apply(sign(influence_country[,seq(from=2,to=ncol_test,by=8)]), 1,function(x){length(na.omit(x[x>0]))})
+influence_country$temp_nb_nna <- apply(sign(influence_country[,seq(from=2,to=ncol_test,by=8)]), 1,function(x){sum(abs(x),na.rm=T)})
+influence_country$temp_m <- apply(influence_country[,seq(from=2,to=ncol_test,by=8)], 1,function(x){mean(x,na.rm=T)})
+
+influence_country$urb_sign_m <- apply(sign(influence_country[,seq(from=4,to=ncol_test,by=8)]), 1,function(x){sum(x,na.rm=T)})
+influence_country$urb_nb_neg <- apply(sign(influence_country[,seq(from=4,to=ncol_test,by=8)]), 1,function(x){length(na.omit(x[x<0]))})
+influence_country$urb_nb_pos <- apply(sign(influence_country[,seq(from=4,to=ncol_test,by=8)]), 1,function(x){length(na.omit(x[x>0]))})
+influence_country$urb_nb_nna <- apply(sign(influence_country[,seq(from=4,to=ncol_test,by=8)]), 1,function(x){sum(abs(x),na.rm=T)})
+influence_country$urb_m <- apply(influence_country[,seq(from=4,to=ncol_test,by=8)], 1,function(x){mean(x,na.rm=T)})
+
+influence_country$hico_sign_m <- apply(sign(influence_country[,seq(from=6,to=ncol_test,by=8)]), 1,function(x){sum(x,na.rm=T)})
+influence_country$hico_nb_neg <- apply(sign(influence_country[,seq(from=6,to=ncol_test,by=8)]), 1,function(x){length(na.omit(x[x<0]))})
+influence_country$hico_nb_pos <- apply(sign(influence_country[,seq(from=6,to=ncol_test,by=8)]), 1,function(x){length(na.omit(x[x>0]))})
+influence_country$hico_nb_nna <- apply(sign(influence_country[,seq(from=6,to=ncol_test,by=8)]), 1,function(x){sum(abs(x),na.rm=T)})
+influence_country$hico_m <- apply(influence_country[,seq(from=6,to=ncol_test,by=8)], 1,function(x){mean(x,na.rm=T)})
+
+influence_country$forest_sign_m <- apply(sign(influence_country[,seq(from=8,to=ncol_test,by=8)]), 1,function(x){sum(x,na.rm=T)})
+influence_country$forest_nb_neg <- apply(sign(influence_country[,seq(from=8,to=ncol_test,by=8)]), 1,function(x){length(na.omit(x[x<0]))})
+influence_country$forest_nb_pos <- apply(sign(influence_country[,seq(from=8,to=ncol_test,by=8)]), 1,function(x){length(na.omit(x[x>0]))})
+influence_country$forest_nb_nna <- apply(sign(influence_country[,seq(from=8,to=ncol_test,by=8)]), 1,function(x){sum(abs(x),na.rm=T)})
+influence_country$forest_m <- apply(influence_country[,seq(from=8,to=ncol_test,by=8)], 1,function(x){mean(x,na.rm=T)})
+
+influence_country_temp <- apply(influence_country[,seq(from=2,to=(ncol_test+8),by=8)], 2, function(x){length(na.omit(x[x!=0]))})
+influence_country_urb <- apply(influence_country[,seq(from=4,to=(ncol_test+8),by=8)], 2, function(x){length(na.omit(x[x!=0]))})
+influence_country_hico <- apply(influence_country[,seq(from=6,to=(ncol_test+8),by=8)], 2, function(x){length(na.omit(x[x!=0]))})
+influence_country_forest <- apply(influence_country[,seq(from=8,to=(ncol_test+8),by=8)], 2, function(x){length(na.omit(x[x!=0]))})
+
+
+influence_plot <- melt(influence_country, id.vars="country",measure.vars=c("forest","clc","hic","temp"))
+influence_plotb <- melt(influence_countryb, id.vars="country",measure.vars=c("forest","clc","hic","temp"))
+influence_plot$raw<-influence_plotb$value
+influence_plot<-rbind(influence_plot, data.frame(country="Total",variable=c("forest","clc","hic","temp"),value=c(0,0,0,0),
+                                                 raw=c(influence_country_for2[[29]],influence_country_clc2[[29]],
+                                                       influence_country_hic2[[29]],influence_country_temp2[[29]])))
+ggplot(data = influence_plot, aes(x=country, y=variable, fill=value)) + 
+  geom_tile()+ theme_minimal()+ coord_fixed()+
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1,1))+
+  #scale_fill_viridis(option = "C",na.value="white")+
+  scale_y_discrete(labels=c("Forest cover","Artificialisation","High input farm cover","Temperature"))+
+  theme(axis.title = element_blank(), legend.position = "none",
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))+geom_text(aes(label = round(raw, 1)))
+
+
+influence_country_for3<-apply(influence_country_for[,2:29], 1, function(x){length(na.omit(x[x!=0]))})
+influence_country_clc3<-apply(influence_country_clc[,2:29], 1, function(x){length(na.omit(x[x!=0]))})
+influence_country_hic3<-apply(influence_country_hic[,2:29], 1, function(x){length(na.omit(x[x!=0]))})
+influence_country_temp3<-apply(influence_country_temp[,2:29], 1, function(x){length(na.omit(x[x!=0]))})
+
+influence_country2<-data.frame(species=influence_country_clc$Species,
+                              forest=influence_country_for3/28,
+                              forest_all=as.numeric(!is.na(influence_country_for$forest) & influence_country_for$forest!=0),
+                              clc=influence_country_clc3/28,
+                              clc_all=as.numeric(!is.na(influence_country_clc$clc) & influence_country_clc$clc!=0),
+                              hic=influence_country_hic3/28,
+                              hic_all=as.numeric(!is.na(influence_country_hic$hic) & influence_country_hic$hic!=0),
+                              temp=influence_country_temp3/28,
+                              temp_all=as.numeric(!is.na(influence_country_temp$temp) & influence_country_temp$temp!=0))
+influence_country2$group<-c(rep("A",85),rep("B",85))
+influence_country3<-influence_country2
+influence_country3$comb<-paste0(influence_country3$forest_all,sep="-",influence_country3$clc_all,sep="-",influence_country3$hic_all,sep="-",influence_country3$temp_all)
+
+influence_plot2 <- melt(influence_country2, id.vars=c("species","group"),measure.vars=c("forest","forest_all","clc","clc_all",
+                                                                                        "hic","hic_all","temp","temp_all"))
+diag_sp1<-ggplot(data = droplevels(influence_plot2[influence_plot2$group=="A",]), aes(x=species, y=variable, fill=value)) + 
+  geom_tile(col="white")+ theme_minimal()+ coord_fixed()+
+  #scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1,1))+
+  #scale_fill_viridis(option = "C",na.value="white")+
+  scale_y_discrete(labels=c("Forest cover (removing 1 country)","Forest cover (all countries)",
+                            "Urbanisation (removing 1 country)","Urbanisation (all countries)",
+                            "High input farm cover (removing 1 country)","High input farm cover (all countries)",
+                            "Temperature (removing 1 country)","Temperature (all countries)"))+
+  scale_fill_gradient2(low = "blue", high = "black", mid = "white", midpoint = 0, limit = c(-1,1))+
+  theme(axis.title = element_blank(), legend.position = "none",plot.margin = unit(c(0, 0, 0, 0), "cm"),
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))#+facet_grid(rows = vars(group))
+
+diag_sp2<-ggplot(data = droplevels(influence_plot2[influence_plot2$group=="B",]), aes(x=species, y=variable, fill=value)) + 
+  geom_tile(col="white")+ theme_minimal()+ coord_fixed()+
+  #scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1,1))+
+  #scale_fill_viridis(option = "C",na.value="white")+
+  scale_y_discrete(labels=c("Forest cover (removing 1 country)","Forest cover (all countries)",
+                            "Urbanisation (removing 1 country)","Urbanisation (all countries)",
+                            "High input farm cover (removing 1 country)","High input farm cover (all countries)",
+                            "Temperature (removing 1 country)","Temperature (all countries)"))+
+  scale_fill_gradient2(low = "blue", high = "black", mid = "white", midpoint = 0, limit = c(-1,1))+
+  theme(axis.title = element_blank(), legend.position = "none",plot.margin = unit(c(0, 0, 0, 0), "cm"),
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))#+face
+
+
+library(egg)      
+diag_sp3<-ggarrange(diag_sp1,diag_sp2,ncol = 1)
+
+
+
+influence_plot3<-droplevels(influence_plot2[influence_plot2$variable %in% c("forest_all","clc_all","hic_all","temp_all"),])
+influence_plot3$col_var<-as.character(as.numeric(influence_plot3$variable)*influence_plot3$value)
+diag_sp1b<-ggplot(data = droplevels(influence_plot3[influence_plot3$group=="A",]), aes(x=species, y=variable, fill=value)) + 
+  geom_tile(col="white",aes(fill=col_var))+ theme_minimal()+ coord_fixed()+
+  scale_y_discrete(labels=c("Forest cover","Urbanisation","High input farm cover","Temperature"))+
+  scale_fill_manual(values=c("0"="white","1"="#1BAE20","2"="#196DF6","3"="#D302F9","4"="#FA0900"))+
+  theme(axis.title = element_blank(), legend.position = "none",plot.margin = unit(c(0, 0, 0, 0), "cm"),
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+diag_sp2b<-ggplot(data = droplevels(influence_plot3[influence_plot3$group=="B",]), aes(x=species, y=variable, fill=value)) + 
+  geom_tile(col="white",aes(fill=col_var))+ theme_minimal()+ coord_fixed()+
+  scale_y_discrete(labels=c("Forest cover","Urbanisation","High input farm cover","Temperature"))+
+  scale_fill_manual(values=c("0"="white","1"="#1BAE20","2"="#196DF6","3"="#D302F9","4"="#FA0900"))+
+  theme(axis.title = element_blank(), legend.position = "none",plot.margin = unit(c(0, 0, 0, 0), "cm"),
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+diag_sp3b<-ggarrange(diag_sp1b,diag_sp2b,ncol = 1)
+
+```
+
+#### Changing pressure strength
+
+```{r}
+# test avec force changeante pour chaque pays
+
+test_template <- function(df_press4, nb_iter2=1000, force_int=1.25){
+
+  nb_iter <- 100
+
+  lg_ts <- 10
+  
+  nb_country <- length(levels(as.factor(df_press4$country)))
+  
+  country_name <- levels(as.factor(df_press4$country))
+  
+  result_tempo_tot <- data.frame(species_cause_pressure=NA, pressure_cause_species=NA)
+  
+  for(row_num in 1:nb_iter2){
+    
+      rancor <- data.frame(country=NA,Year=NA,Index=NA,value=NA)
+  
+      for(u in country_name){
+        
+          ccm_data_out <- make_ccm_data(number_of_chains = 1, time=lg_ts, Sstr = force_int, seednum = round(runif(1,min=1, max=10000)))
+          
+          rancor0 <- data.frame(country=u,Year=na.omit(ccm_data_out$time_ccm),Index=na.omit(ccm_data_out$Accm),value=na.omit(ccm_data_out$Bccm))
+          
+          rancor <- as.data.frame(rbind(rancor,rancor0))
+        }
+        
+      rancor <- na.omit(rancor)
+      rancor$country <- as.factor(rancor$country)
+      
+      result_tempo <- multisp_CCM_test(rancor,niter=nb_iter)
+      
+      result_tempo_tot <- rbind(result_tempo_tot,result_tempo)
+        
+    }
+    
+    return(result_tempo_tot)
+}
+
+# with varying proportion of countries where strength = 0
+
+test_ccm_force1 <- function(df_press4, nb_iter2=1000){
+
+  nb_iter <- 100
+
+  lg_ts <- 10
+  
+  nb_country <- length(levels(as.factor(df_press4$country)))
+  
+  country_name <- levels(as.factor(df_press4$country))
+  
+  result_tempo_tot <- data.frame(species_cause_pressure=NA, pressure_cause_species=NA, proba=NA)
+  
+  for(row_num in 1:nb_iter2){
+      print(row_num)
+  
+      if(row_num <= round(nb_iter2/6)){proba <- 0}
+      if(row_num > round(nb_iter2/6) & row_num <= round(nb_iter2/3)){proba <- 0.2}
+      if(row_num > round(nb_iter2/3) & row_num <= round(nb_iter2/2)){proba <- 0.4}
+      if(row_num > round(nb_iter2/2) & row_num <= round(2*nb_iter2/3)){proba <- 0.6}
+      if(row_num > round(2*nb_iter2/3) & row_num <= round(5*nb_iter2/6)){proba <- 0.8}
+      if(row_num > round(5*nb_iter2/6)){proba <- 1}
+      
+      rancor <- data.frame(country=NA,Year=NA,Index=NA,value=NA)
+  
+      for(u in country_name){
+      
+          force_int <- 1.25*rbinom(1,1,proba)
+        
+          ccm_data_out <- make_ccm_data(number_of_chains = 1, time=lg_ts, Sstr = force_int, seednum = round(runif(1,min=1, max=10000)))
+          
+          rancor0 <- data.frame(country=u,Year=na.omit(ccm_data_out$time_ccm),Index=na.omit(ccm_data_out$Accm),value=na.omit(ccm_data_out$Bccm))
+          
+          rancor <- as.data.frame(rbind(rancor,rancor0))
+        }
+        
+      rancor <- na.omit(rancor)
+      rancor$country <- as.factor(rancor$country)
+      
+      result_tempo <- multisp_CCM_test(rancor,niter=nb_iter)
+      
+      result_tempo_tot <- rbind(result_tempo_tot,data.frame(result_tempo, proba=proba))
+        
+    }
+    
+    return(result_tempo_tot)
+}
+
+# with varying values of strength
+
+test_ccm_force2 <- function(df_press4, nb_iter2=1000){
+
+  nb_iter <- 100
+
+  lg_ts <- 10
+  
+  nb_country <- length(levels(as.factor(df_press4$country)))
+  
+  country_name <- levels(as.factor(df_press4$country))
+  
+  result_tempo_tot <- data.frame(species_cause_pressure=NA, pressure_cause_species=NA,low_bound=NA)
+  
+  for(row_num in 1:nb_iter2){
+      print(row_num)
+  
+      if(row_num <= round(nb_iter2/5)){low_bound <- 1.2; high_bound <- 1.3}
+      if(row_num > round(nb_iter2/5) & row_num <= round(2*nb_iter2/5)){low_bound <- 0.9; high_bound <- 1.6}
+      if(row_num > round(2*nb_iter2/5) & row_num <= round(3*nb_iter2/5)){low_bound <- 0.6; high_bound <- 1.9}
+      if(row_num > round(3*nb_iter2/5) & row_num <= round(4*nb_iter2/5)){low_bound <- 0.3; high_bound <- 2.2}
+      if(row_num > round(4*nb_iter2/5)){low_bound <- 0; high_bound <- 2.5}
+      
+      rancor <- data.frame(country=NA,Year=NA,Index=NA,value=NA)
+  
+      for(u in country_name){
+      
+          force_int <- runif(1,min=low_bound, max=high_bound)
+        
+          ccm_data_out <- make_ccm_data(number_of_chains = 1, time=lg_ts, Sstr = force_int, seednum = round(runif(1,min=1, max=10000)))
+          
+          rancor0 <- data.frame(country=u,Year=na.omit(ccm_data_out$time_ccm),Index=na.omit(ccm_data_out$Accm),value=na.omit(ccm_data_out$Bccm))
+          
+          rancor <- as.data.frame(rbind(rancor,rancor0))
+        }
+        
+      rancor <- na.omit(rancor)
+      rancor$country <- as.factor(rancor$country)
+      
+      result_tempo <- multisp_CCM_test(rancor,niter=nb_iter)
+      
+      result_tempo_tot <- rbind(result_tempo_tot,data.frame(result_tempo,low_bound=low_bound))
+        
+    }
+    
+    return(result_tempo_tot)
+}
+
+# with one time serie with strength != 0
+
+test_ccm_force3 <- function(df_press4, nb_iter2=1000){
+
+  nb_iter <- 100
+
+  lg_ts <- 10
+  
+  nb_country <- length(levels(as.factor(df_press4$country)))
+  
+  country_name <- levels(as.factor(df_press4$country))
+  
+  result_tempo_tot <- data.frame(species_cause_pressure=NA, pressure_cause_species=NA, force_int2=NA)
+  
+  for(row_num in 1:nb_iter2){
+      print(row_num)
+  
+      if(row_num <= round(nb_iter2/5)){force_int2 <- 0.3}
+      if(row_num > round(nb_iter2/5) & row_num <= round(2*nb_iter2/5)){force_int2 <- 0.85}
+      if(row_num > round(2*nb_iter2/5) & row_num <= round(3*nb_iter2/5)){force_int2 <- 1.4}
+      if(row_num > round(3*nb_iter2/5) & row_num <= round(4*nb_iter2/5)){force_int2 <- 1.95}
+      if(row_num > round(4*nb_iter2/5)){force_int2 <- 2.5}
+      
+      rancor <- data.frame(country=NA,Year=NA,Index=NA,value=NA)
+      
+      which_diff_0 <- round(runif(1,-0.49, (nb_country+0.49)))
+  
+      for(u in 1:nb_country){
+      
+          if(u==which_diff_0){
+            force_int <- force_int2
+          }else{
+            force_int <- 0
+          }
+        
+          ccm_data_out <- make_ccm_data(number_of_chains = 1, time=lg_ts, Sstr = force_int, seednum = round(runif(1,min=1, max=10000)))
+          
+          rancor0 <- data.frame(country=country_name[u],Year=na.omit(ccm_data_out$time_ccm),Index=na.omit(ccm_data_out$Accm),value=na.omit(ccm_data_out$Bccm))
+          
+          rancor <- as.data.frame(rbind(rancor,rancor0))
+        }
+        
+      rancor <- na.omit(rancor)
+      rancor$country <- as.factor(rancor$country)
+      
+      result_tempo <- multisp_CCM_test(rancor,niter=nb_iter)
+      
+      result_tempo_tot <- rbind(result_tempo_tot,data.frame(result_tempo,force_int2=force_int2))
+        
+    }
+    
+    return(result_tempo_tot)
+}
+
+res_test1 <- test_ccm_force1(df_press4, nb_iter2=1000)
+res_test2 <- test_ccm_force2(df_press4, nb_iter2=1000)
+res_test3 <- test_ccm_force3(df_press4, nb_iter2=1000)
+
+```
+
 ### Applying PLS on pressure influence vs. species traits
 
 #### Prepare data
