@@ -823,6 +823,7 @@ area_country <- read.csv("output/fao_data_landuse.csv", header = T)
 area_country <- area_country[area_country$Item=="Country area" & area_country$Year==2016, c("Area","Value")]
 area_country$Value <- 10*area_country$Value
 area_country <- area_country[order(area_country$Area),]
+area_country$Value[area_country$Area=="Norway"] <- 385207
 
 # Load data
 # from https://appsso.eurostat.ec.europa.eu/nui/show.do?dataset=lan_lcv_art&lang=en
@@ -874,43 +875,52 @@ country_data <- urban_country
 # Load data
 # from http://surfobs.climate.copernicus.eu/dataaccess/access_eobs.php
 
-r_temp<-brick("tg_ens_mean_0.1deg_reg_v20.0e.nc") 
+r_temp <- brick("raw_data/tg_ens_mean_0.1deg_reg_v20.0e.nc") 
 
 # Average daily data by year
 
-end_year<-0
+end_year <- 0
 for(i in 1:(2019-1950)){
   print(i)
-  beg_year<-end_year+1
-  end_year<-end_year+365
-  year<-paste0("temp_",1949+i)
+  beg_year <- end_year+1
+  end_year <- end_year+365
+  year <- paste0("temp_",1949+i)
   if(i %in% c(seq(1952,2019,4)-1949)){
-    end_year<-end_year+1 # account for bisextil years
+    end_year <- end_year+1 # account for bisextil years
   }
-  assign(year, mean(r_temp[[beg_year:end_year]], na.rm=T))
+  map_year <- assign(year, mean(r_temp[[beg_year:end_year]], na.rm=T))
+  path <- paste0("output/temp_",1949+i,".tif")
+  writeRaster(x=map_year, filename=path, overwrite=T)
+}
+
+for(i in 1:(2019-1950)){
+  print(i)
+  year <- paste0("temp_",1949+i)
+  path <- paste0("output/temp_",1949+i,".tif")
+  assign(year, raster(path))
 }
 
 # Reproject county boundaries
 
-country5<-spTransform(country3, CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0" ))
+country5 <- spTransform(country3, CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0" ))
 
-country6a<-droplevels(subset(map_data("world"), region %in% country_name))
-coordinates(country6a)=~long+lat
-proj4string(country6a)<- CRS("+proj=longlat +datum=WGS84")
-country6a<-spTransform(country6a,CRS("+init=epsg:27572"))
+country6a <- droplevels(subset(map_data("world"), region %in% country_name))
+coordinates(country6a) <- ~long+lat
+proj4string(country6a) <- CRS("+proj=longlat +datum=WGS84")
+country6a <- spTransform(country6a,CRS("+init=epsg:27572"))
 
-country6<-droplevels(subset(map_data("world"), region %in% country_name))
-country6$long<-country6a$long
-country6$lat<-country6a$lat
+country6 <- droplevels(subset(map_data("world"), region %in% country_name))
+country6$long <- country6a$long
+country6$lat <- country6a$lat
 
-country6b<-lapply(split(country6[,c(1:2)], country6$group), Polygon)
-country6b<-SpatialPolygons(lapply(seq_along(country6b),function(i){Polygons(list(country6b[[i]]),ID=row.names(country6[!duplicated(country6$group),])[i])}))
+country6b <- lapply(split(country6[,c(1:2)], country6$group), Polygon)
+country6b <- SpatialPolygons(lapply(seq_along(country6b),function(i){Polygons(list(country6b[[i]]),ID=row.names(country6[!duplicated(country6$group),])[i])}))
 
-country_id<-country6 %>% group_by(region,group) %>% summarize(count=n()) %>% data.frame()
-country_id<-country_id[order(country_id$group),]
+country_id <- country6 %>% group_by(region,group) %>% summarize(count=n()) %>% data.frame()
+country_id <- country_id[order(country_id$group),]
 
-country6b<-unionSpatialPolygons(country6b,country_id[,1])
-proj4string(country6b)<-CRS("+init=epsg:27572")
+country6b <- unionSpatialPolygons(country6b,country_id[,1])
+proj4string(country6b) <- CRS("+init=epsg:27572")
 
 # List dataset of yearly temperature
 
@@ -926,20 +936,20 @@ temp_1950_2018 <- list(temp_1950,temp_1951,temp_1952,temp_1953,temp_1954,temp_19
 
 for(i in 1:length(temp_1950_2018)){ # mean by year by country
   for(j in 1:ncol(country_data)){
-    country_data[i+30,j] <- mean(extract(temp_1950_2018[[i]],country5[j])[[1]],na.rm=T)
+    country_data[i+10,j] <- mean(extract(temp_1950_2018[[i]],country5[j])[[1]],na.rm=T)
   }
 }
-row.names(country_data)[31:99] <- paste0("temp",sep="_",1950:2018)
+row.names(country_data)[11:79] <- paste0("temp",sep="_",1950:2018)
 
 # Mean value over the period
 
-country_data[100,] <- apply(country_data[61:97,], 2, function(x){mean(x, na.rm=T)})
-row.names(country_data)[100] <- "temp_mean"
+country_data[80,] <- apply(country_data[57:77,], 2, function(x){mean(x, na.rm=T)})
+row.names(country_data)[80] <- "temp_mean"
 
 # Trend over the period
 
-country_data[101,] <- apply(country_data[77:97,], 2, function(x){summary(lm(x~c(1996:2016)))$coef[2,1]})/country_data[77,]
-row.names(country_data)[101] <- "d_temp"
+country_data[81,] <- apply(country_data[57:77,], 2, function(x){summary(lm(x~c(1996:2016)))$coef[2,1]})/country_data[57,]
+row.names(country_data)[81] <- "d_temp"
 temp_sig_trend <- apply(country_data[61:97,], 2, function(x){summary(lm(x~c(1980:2016)))$coef[2,4]})
 #country_data[101,which(temp_sig_trend>0.05)] <- 0
 
@@ -1761,6 +1771,68 @@ centroid_warm_cold <- tibble(x=centroid_b$lon2,
                    pie = graph_warm_cold)
                    
 pres_tend_temp + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_warm_cold)
+
+# Get trend for all countries
+
+# High input farm cover
+
+all_hico <- read.csv("raw_data/aei_ps_inp_1_Data_eu2.csv", header = T)
+all_hico <- na.omit(droplevels(all_hico[all_hico$INDIC_AG=="High-input farms" & all_hico$GEO=="EU28" & all_hico$UNIT=="Percentage of area" & all_hico$TIME < 2017,]))
+
+ggplot(all_hico, aes(x=TIME, y=Value)) + # ici
+      geom_line(col="black" ,size=1.5, alpha=0.7)+
+      xlab(NULL) + ylab(NULL) + 
+      theme_modern() +
+      theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
+            axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)
+
+# Urbanisation
+
+all_urb <- urban_country[1:8,]
+all_urb[9,] <- area_country$Value
+all_urb2 <- apply(all_urb,2,FUN=function(y){y2 <- y[1:8]*y[9]})
+all_urb3 <- data.frame(year=2009:2016,value=apply(all_urb2,1,FUN=function(y){y2 <- sum(y[-c(3:5,20,25)])})/(100*sum(area_country$Value[-c(3:5,14,20,22,25,30)])))
+
+ggplot(all_urb3, aes(x=year, y=value)) + # ici
+      geom_line(col="black" ,size=1.5, alpha=0.7)+
+      xlab(NULL) + ylab(NULL) + 
+      theme_modern() +
+      theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
+            axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)
+
+# Forest
+
+all_forest <- forest_country[7:27,]
+all_forest[22,] <- area_country$Value
+all_forest2 <- apply(all_forest,2,FUN=function(y){y2 <- y[1:21]*y[22]})
+all_forest3 <- data.frame(year=1996:2016,value=apply(all_forest2,1,FUN=function(y){y2 <- sum(y[-c(2,14,19)])})/sum(area_country$Value[-c(2,14,19)]))
+
+ggplot(all_forest3, aes(x=year, y=value)) + # ici
+      geom_line(col="black" ,size=1.5, alpha=0.7)+
+      xlab(NULL) + ylab(NULL) + 
+      theme_modern() +
+      theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
+            axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)
+            
+# Temperature
+
+temp_1996_2016 <- list(temp_1996,temp_1997,temp_1998,temp_1999,
+  temp_2000,temp_2001,temp_2002,temp_2003,temp_2004,temp_2005,temp_2006,temp_2007,temp_2008,temp_2009,
+  temp_2010,temp_2011,temp_2012,temp_2013,temp_2014,temp_2015,temp_2016)
+
+all_temp <- data.frame(year=1996:2016,value=NA)  
+
+for(i in 1:length(temp_1996_2016)){
+  print(i)
+  all_temp[i,2] <- mean(unlist(extract(temp_1996_2016[[i]],country5[-c(4,14,20)])),na.rm=T)
+}
+
+ggplot(all_temp, aes(x=year, y=value)) + # ici
+      geom_line(col="black" ,size=1.5, alpha=0.7)+
+      xlab(NULL) + ylab(NULL) + 
+      theme_modern() +
+      theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
+            axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)
 
 ```
 
