@@ -1386,7 +1386,7 @@ pres_tend_temp <- ggplot() + geom_sf(data = europe_map_simpl, fill="transparent"
 ##### Trend
 ```{r}
 
-# Compute coordinate centroids of eahc country
+# Compute coordinate centroids of each country
 
 require("pacman") 
 p_load(ggplot2, ggtree, dplyr, tidyr, sp, maps, pipeR, grid, XML, gtable)
@@ -1514,19 +1514,6 @@ graph_temp <- setNames(lapply(1:length(data_pres_long), function(i){
             axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)}), names(data_pres_long))
                                     
 
-data_pres_wide <- droplevels(country_data_clc2)
-data_pres_wide[c(11,12,121,122,146,151),3] <- NA
-data_pres_wide <- droplevels(country_data_clc_new2)
-country_data_temp3<-country_data_temp2[country_data_temp2$year>=1979,]
-country_data_temp3$year2<-sort(rep(seq(from=1979, to=2018,by=5),5))
-data_pres_wide<-as.data.frame(country_data_temp3 %>% group_by(variable, year2) %>% summarize(sd_val=sd(value),value=mean(value)))
-data_pres_wide<-data.frame(year=10*as.numeric(data_pres_wide$year2), variable=data_pres_wide$variable, value=data_pres_wide$value, sd_val=data_pres_wide$sd_val)
-data_pres_wide<-droplevels(country_data_forest2)
-data_pres_wide<-droplevels(country_bird_trend_agri)
-data_pres_wide<-droplevels(country_bird_trend_forest)
-data_pres_wide<-droplevels(country_bird_trend_build)
-data_pres_wide<-droplevels(country_bird_trend_temp)
-
 #country_data_temp3<-country_data_temp2[country_data_temp2$year>=1975,] #for temperature change graph
 #country_data_temp3<-ddply(country_data_temp3,.(variable),
 #                       .fun=function(x){
@@ -1540,74 +1527,240 @@ data_pres_wide<-droplevels(country_bird_trend_temp)
 #                         })
 #data_pres_wide<-data.frame(year=country_data_temp3$year, variable=country_data_temp3$variable, value=country_data_temp3$part_der)
 
+
+# Get trend by country for farmland species
+
+data_pres_wide <- na.omit(country_bird_trend_agri[,c("year","variable","value")])
+
 names(data_pres_wide)[2] <- "Country"
 data_pres_long <- add_rownames(centroids, "Country") %>% left_join(data_pres_wide) %>% split(., .$Country)
 
-#data_pres_long$Switzerland<-data_pres_long$Norway<-NULL #pour hic
-
-graph <- setNames(lapply(1:length(data_pres_long), function(i){
+graph_agri <- setNames(lapply(1:length(data_pres_long), function(i){
   test <- data_pres_long[[i]]
   
-  ggplot(na.omit(test), aes(x=year, y=value, group=Country)) +
+  test <- test[test$year %in% c(1996:2016),]
+  
+  test$value <- test$value/test$value[1]
+  
+  bound <- max(test$value)-min(test$value)
+  med_val <- bound/2+min(test$value)
+  if(bound<0.30){ylimit <- c((med_val-0.15),(med_val+0.15))
+  }else{ylimit <- c(min(test$value),max(test$value))}
+  
+  ggplot(na.omit(test), aes(x=year, y=value, group=Country)) + # ici
       geom_line(col="black" ,size=1.5, alpha=0.5)+
       xlab(NULL) + 
       ylab(NULL) + 
       theme_modern() + theme_transparent()+
+      scale_y_continuous(limits = ylimit) +
+      scale_x_continuous(limits = c(1996,2016)) +
       theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
             axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)}), names(data_pres_long))
 
-graph <- setNames(lapply(1:length(data_pres_long), function(i){# pour tendance oiseau par country
-  test<-data_pres_long[[i]]
-    
-    ggplot(na.omit(test), aes(x=year, y=value)) +
-      #geom_ribbon(aes(ymin=value-sd(value),ymax=value+sd(value)),alpha=0.5, col="black",fill="white")+
+
+# Get trend by country for forest species
+
+data_pres_wide <- na.omit(country_bird_trend_forest[,c("year","variable","value")])
+
+names(data_pres_wide)[2] <- "Country"
+data_pres_long <- add_rownames(centroids, "Country") %>% left_join(data_pres_wide) %>% split(., .$Country)
+
+graph_wood <- setNames(lapply(1:length(data_pres_long), function(i){
+  test <- data_pres_long[[i]]
+  
+  test <- test[test$year %in% c(1996:2016),]
+  
+  test$value <- test$value/test$value[1]
+  
+  bound <- max(test$value)-min(test$value)
+  med_val <- bound/2+min(test$value)
+  if(bound<0.30){ylimit <- c((med_val-0.15),(med_val+0.15))
+  }else{ylimit <- c(min(test$value),max(test$value))}
+  
+  ggplot(na.omit(test), aes(x=year, y=value, group=Country)) + # ici
       geom_line(col="black" ,size=1.5, alpha=0.5)+
       xlab(NULL) + 
       ylab(NULL) + 
-      theme_modern() +theme_transparent()+
+      theme_modern() + theme_transparent()+
+      scale_y_continuous(limits = ylimit) +
+      scale_x_continuous(limits = c(1996,2016)) +
       theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
-            axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)
-}), names(data_pres_long))
+            axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)}), names(data_pres_long))
 
-graph <- setNames(lapply(1:length(data_pres_long), function(i){# pour tendance oiseau par country temperature
-  test<-data_pres_long[[i]]
+
+# Get trend by country for urban species
+
+data_pres_wide <- na.omit(country_bird_trend_build[,c("year","variable","value")])
+
+names(data_pres_wide)[2] <- "Country"
+data_pres_long <- add_rownames(centroids, "Country") %>% left_join(data_pres_wide) %>% split(., .$Country)
+
+graph_build <- setNames(lapply(1:length(data_pres_long), function(i){
+  test <- data_pres_long[[i]]
   
-  ggplot() +
-    geom_line(data=na.omit(test[,1:5]), aes(x=year, y=scale(value_chaud)),col="black" ,size=1.5, alpha=0.5)+
-    geom_line(data=na.omit(test[,c(1:4,7)]), aes(x=year, y=scale(value_froid)),col="black" ,size=1.5, alpha=0.3)+
-    xlab(NULL) + 
-    ylab(NULL) + 
-    theme_modern() +theme_transparent()+
-    theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
-          axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)
-}), names(data_pres_long))
+  test <- test[test$year %in% c(1996:2016),]
+  
+  test$value <- test$value/test$value[1]
+  
+  bound <- max(test$value)-min(test$value)
+  med_val <- bound/2+min(test$value)
+  if(bound<0.30){ylimit <- c((med_val-0.15),(med_val+0.15))
+  }else{ylimit <- c(min(test$value),max(test$value))}
+  
+  ggplot(na.omit(test), aes(x=year, y=value, group=Country)) + # ici
+      geom_line(col="black" ,size=1.5, alpha=0.5)+
+      xlab(NULL) + 
+      ylab(NULL) + 
+      theme_modern() + theme_transparent()+
+      scale_y_continuous(limits = ylimit) +
+      scale_x_continuous(limits = c(1996,2016)) +
+      theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
+            axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)}), names(data_pres_long))
 
-centroid_b<-data.frame(add_rownames(centroids))
-names(centroid_b)[1]<-"Country"
-centroid_coord<-centroid_b[,c("long","lat")]
-centroid_coord<-SpatialPoints(centroid_coord,proj4string = CRS("+proj=longlat +datum=WGS84"))
-centroid_coord<-spTransform(centroid_coord, CRS("+init=epsg:27572"))
-centroid_b$lon2<- as.data.frame(centroid_coord)[,1]
-centroid_b$lat2<- as.data.frame(centroid_coord)[,2]
 
-#centroid_b<-centroid_b[-c(19,27),] #pour hic
+# Get trend by country for hot and cold species
 
-centroid_c<-tibble(x=centroid_b$lon2,
+data_pres_wide <- country_bird_trend_temp[,c("year","variable","value_warm","value_cold")]
+
+names(data_pres_wide)[2] <- "Country"
+data_pres_long <- add_rownames(centroids, "Country") %>% left_join(data_pres_wide) %>% split(., .$Country)
+
+graph_warm_cold <- setNames(lapply(1:length(data_pres_long), function(i){
+  test <- data_pres_long[[i]]
+  
+  test <- test[test$year %in% c(1996:2016),]
+  
+  test$value_warm <- test$value_warm/test$value_warm[1]
+  test$value_cold <- test$value_cold/test$value_cold[1]
+  
+  if(test$Country[1]=="Sweden"){test$value_warm[test$value_warm>1.5] <- 1.5}
+  
+  bound <- max(c(test$value_warm,test$value_cold), na.rm=T)-min(c(test$value_warm,test$value_cold), na.rm=T)
+  med_val <- bound/2+min(c(test$value_warm,test$value_cold), na.rm=T)
+  if(bound<0.30){ylimit <- c((med_val-0.15),(med_val+0.15))
+  }else{ylimit <- c(min(c(test$value_warm,test$value_cold), na.rm=T),max(c(test$value_warm,test$value_cold), na.rm=T))}
+  
+  ggplot(test, aes(x=year, group=Country)) + # ici
+      geom_line(aes(y=value_warm),col="black" ,size=1.5, alpha=0.7)+
+      geom_line(aes(y=value_cold),col="black" ,size=1.5, alpha=0.3)+
+      xlab(NULL) + 
+      ylab(NULL) + 
+      theme_modern() + theme_transparent()+
+      scale_y_continuous(limits = ylimit) +
+      scale_x_continuous(limits = c(1996,2016)) +
+      theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
+            axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)}), names(data_pres_long))
+            
+# Reproject centroids of countries
+            
+centroid_b <- data.frame(add_rownames(centroids))
+names(centroid_b)[1] <- "Country"
+centroid_coord <- centroid_b[,c("long","lat")]
+centroid_coord <- SpatialPoints(centroid_coord,proj4string = CRS("+proj=longlat +datum=WGS84"))
+centroid_coord <- spTransform(centroid_coord, CRS("+init=epsg:27572"))
+centroid_b$lon2 <- as.data.frame(centroid_coord)[,1]
+centroid_b$lat2 <- as.data.frame(centroid_coord)[,2]
+
+# Avoid overlap
+
+centroid_b$lat2[centroid_b$Country=="Norway"] <- centroid_b$lat2[centroid_b$Country=="Norway"] - 500000
+centroid_b$lon2[centroid_b$Country=="Norway"] <- centroid_b$lon2[centroid_b$Country=="Norway"] - 200000
+
+centroid_b$lat2[centroid_b$Country=="Slovenia"] <- centroid_b$lat2[centroid_b$Country=="Slovenia"] - 100000
+
+centroid_b$lat2[centroid_b$Country=="Hungary"] <- centroid_b$lat2[centroid_b$Country=="Hungary"] - 100000
+
+centroid_b$lat2[centroid_b$Country=="Netherlands"] <- centroid_b$lat2[centroid_b$Country=="Netherlands"] + 100000
+
+centroid_b$lon2[centroid_b$Country=="Belgium"] <- centroid_b$lon2[centroid_b$Country=="Belgium"] - 100000
+
+centroid_b$lat2[centroid_b$Country=="Luxembourg"] <- centroid_b$lat2[centroid_b$Country=="Luxembourg"] - 100000
+centroid_b$lon2[centroid_b$Country=="Luxembourg"] <- centroid_b$lon2[centroid_b$Country=="Luxembourg"] + 100000
+
+centroid_b$lat2[centroid_b$Country=="Estonia"] <- centroid_b$lat2[centroid_b$Country=="Estonia"] + 100000
+
+centroid_b$lat2[centroid_b$Country=="Lithuania"] <- centroid_b$lat2[centroid_b$Country=="Lithuania"] - 100000
+
+centroid_b$lat2[centroid_b$Country=="Italy"] <- centroid_b$lat2[centroid_b$Country=="Italy"] - 100000
+centroid_b$lon2[centroid_b$Country=="Italy"] <- centroid_b$lon2[centroid_b$Country=="Italy"] + 100000
+
+# Remove countries without data 
+
+centroid_b2 <- centroid_b[-c(19,27),]
+
+# Pressures
+# Plot high input farm cover
+
+centroid_hico <- tibble(x=centroid_b2$lon2,
+                   y=centroid_b2$lat2,
+                   width=350000,
+                   pie = graph_hico)
+library(ggimage)
+pres1 + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_hico)
+
+# Plot urbanisation
+
+centroid_urb <- tibble(x=centroid_b2$lon2,
+                   y=centroid_b2$lat2,
+                   width=350000,
+                   pie = graph_urb)
+                   
+pres2 + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_urb)
+
+# Plot temperature
+
+centroid_temp <- tibble(x=centroid_b$lon2,
                    y=centroid_b$lat2,
                    width=350000,
-                   pie = graph)
-library(ggimage)
-pres1 + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
-pres2 + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
-pres5 + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
-pres6 + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
-pres7 + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
-pres_tend_agri + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
-pres_tend_forest + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
-pres_tend_build + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
-pres_tend_chaud + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
-pres_tend_froid + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
-pres_tend_temp + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_c)
+                   pie = graph_temp)
+
+pres3 + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_temp)
+
+# Plot forest
+
+centroid_forest <- tibble(x=centroid_b$lon2,
+                   y=centroid_b$lat2,
+                   width=350000,
+                   pie = graph_forest)
+
+pres4 + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_forest)
+
+# species
+# Plot farmland species
+
+centroid_agri <- tibble(x=centroid_b$lon2,
+                   y=centroid_b$lat2,
+                   width=350000,
+                   pie = graph_agri)
+
+pres_tend_agri + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_agri)
+
+# Plot woodland species
+
+centroid_wood <- tibble(x=centroid_b$lon2,
+                   y=centroid_b$lat2,
+                   width=350000,
+                   pie = graph_wood)
+
+pres_tend_forest + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_wood)
+
+# Plot urban species
+
+centroid_build <- tibble(x=centroid_b$lon2,
+                   y=centroid_b$lat2,
+                   width=350000,
+                   pie = graph_build)
+
+pres_tend_build + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_build)
+
+# Plot hot and cold species
+
+centroid_warm_cold <- tibble(x=centroid_b$lon2,
+                   y=centroid_b$lat2,
+                   width=350000,
+                   pie = graph_warm_cold)
+                   
+pres_tend_temp + geom_subview(aes(x=x, y=y, subview=pie, width=width, height=width), data=centroid_warm_cold)
 
 ```
 
