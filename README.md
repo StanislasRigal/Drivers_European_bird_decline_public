@@ -576,7 +576,7 @@ source("Nonlinear_functions.R")
 
 # Load data
 
-df_pop2<-SI.imputed
+df_pop2 <- SI.imputed
 
 # Compute dynamic estimation
 
@@ -613,7 +613,7 @@ msi_agri_pec_ab <- msi_fun3(df_agri_pec, ref_year = 1980, niter = niter, ref_val
 
 # Plot
 
-ggplot(msi_agri_pec_ab$msi, aes(x = c(1980:2016), y = mean_msi_final)) +
+ggplot(msi_agri_pec_ab$msi[17:37,], aes(x = c(1996:2016), y = mean_msi_final)) +
   geom_ribbon(aes(ymin = mean_msi_final-1.96*sd_msi_final, ymax = mean_msi_final+1.96*sd_msi_final), alpha=0.5, fill = "lightgrey") +
   geom_point() + theme_modern(base_size = 20) +
   labs(x ="Year", y = "Abundance") +
@@ -637,7 +637,7 @@ msi_forest_pec_ab <- msi_fun3(df_forest_pec,ref_year = 1980, niter = niter, ref_
 
 # Plot
 
-ggplot(msi_forest_pec_ab$msi, aes(x = c(1980:2016), y = mean_msi_final)) +
+ggplot(msi_forest_pec_ab$msi[17:37,], aes(x = c(1996:2016), y = mean_msi_final)) +
   geom_ribbon(aes(ymin = mean_msi_final-1.96*sd_msi_final, ymax = mean_msi_final+1.96*sd_msi_final), alpha=0.5,fill = "lightgrey") +
   geom_point() + theme_modern(base_size = 20) +
   labs(x ="Year", y = "Abundance") +
@@ -692,7 +692,7 @@ msi_build_eunis_ab <- msi_fun3(df_build_eunis, ref_year = 1980, niter = niter, r
 
 # Plot
 
-ggplot(msi_build_eunis_ab$msi, aes(x = c(1980:2016), y = mean_msi_final)) +
+ggplot(msi_build_eunis_ab$msi[17:37,], aes(x = c(1996:2016), y = mean_msi_final)) +
   geom_ribbon(aes(ymin = mean_msi_final-sd_msi_final, ymax = mean_msi_final+sd_msi_final), alpha=0.5, fill = "lightgrey") +
   geom_point() + theme_modern(base_size = 20) +
   labs(x ="Year", y = "Abundance") +
@@ -714,7 +714,7 @@ sti_eu <- droplevels(subset(sti, SPECIES %in% df_pop2$Species))
 
 # Select species (hot dwellers)
 
-df_temp <- droplevels(subset(df_pop2, Species %in% as.character(sti$SPECIES[sti_eu$STI > 12.695]))) # 20% hotter dwellers
+df_temp <- droplevels(subset(df_pop2, Species %in% as.character(sti_eu$SPECIES[sti_eu$STI > 12.695]))) # 20% hotter dwellers
 
 # Compute dynamic estimation (hot dwellers)
 
@@ -722,7 +722,7 @@ msi_temp_ab1 <- msi_fun3(df_temp,ref_year = 1980, niter = niter, ref_value = "Ab
 
 # Select species (cold dwellers)
 
-df_temp <- droplevels(subset(df_pop2, Species %in% as.character(sti$SPECIES[sti_eu$STI < 11.15]))) # 20% colder dwellers
+df_temp <- droplevels(subset(df_pop2, Species %in% as.character(sti_eu$SPECIES[sti_eu$STI < 11.15]))) # 20% colder dwellers
 
 # Compute dynamic estimation (cold dwellers)
 
@@ -736,7 +736,7 @@ msi_temp_ab3 <- data.frame(rbind(msi_temp_ab1$msi,msi_temp_ab2$msi),
 
 # Plot
 
-ggplot(msi_temp_ab3, aes(x = year, y = mean_msi_final)) +
+ggplot(msi_temp_ab3[msi_temp_ab3$year %in% 1996:2016,], aes(x = year, y = mean_msi_final)) +
   geom_ribbon(aes(ymin = mean_msi_final - sd_msi_final, ymax = mean_msi_final + sd_msi_final, fill=fact), alpha=0.5) +
   scale_fill_grey(start=0.8,end=0.2) +
   geom_point() + theme_modern(base_size = 20)+theme(legend.title = element_blank(), legend.position = c(0.8, 0.8)) +
@@ -1188,7 +1188,7 @@ country_bird_trend_build <- data.frame(year=NA,variable=NA,value=NA, slope=NA)
 
 for(ii in levels(df_pop$CountryGroup)){
 
-  df_build_1 <- droplevels(df_pop[df_pop$Species %in% levels(as.factor(eunis_hab$speciesname[eunis_hab$season=="B" & eunis_hab$codeeco=="urban"])) & df_pop$CountryGroup==ii,])
+  df_build_1 <- droplevels(df_pop[df_pop$Species %in% levels(droplevels(eunis_hab$speciesname[eunis_hab$season=="B" & eunis_hab$codeeco=="urban"])) & df_pop$CountryGroup==ii,])
   
   df_build_1b <- as.data.frame(df_build_1 %>% group_by(Species) %>% summarize(sum_ab=sum(Abd), count=n()))
   
@@ -1878,7 +1878,7 @@ global_data$is_forest <- as.factor(global_data$Habitat=="Forest")
 
 # Remove outlier trends
 
-global_data = global_data[abs(global_data$slope) < 50,]
+global_data <- global_data[abs(global_data$slope) < 50,]
 
 # Merge with pressures
 
@@ -1886,11 +1886,9 @@ global_data <- merge(global_data,country_data2, by.x="CountryGroup", by.y="count
 
 # Scale
 
-Zscore<-function(x){
+Zscore <- function(x){
   return((x-mean(x,na.rm=T))/sd(x,na.rm=T))
 }
-
-global_data_scale <- data.frame(global_data[,1:57],apply(global_data[,58:ncol(global_data)],2,Zscore))
 
 ```
 
@@ -1900,7 +1898,7 @@ global_data_scale <- data.frame(global_data[,1:57],apply(global_data[,58:ncol(gl
 # Selecting data
 
 data_pls <- global_data_scale[, c("slope","hico_2007","d_hico","for_2000","d_for","urb_2009","d_urb","temp_2000","d_temp")]
-data_pls$slope <- scale(data_pls$slope)
+data_pls <- data.frame(apply(data_pls,2,Zscore))
 
 # Initiate PLS
 
@@ -1935,13 +1933,15 @@ matind <- rbind(YT1b=ind.BCa.YT1b, YT1=ind.BCa.YT1)
 pi.e <- prop.table(res.cv.modpls$CVPress)[2:3] %*% matind
 
 # Plot PLS results
-coef_plot <- data.frame(var=c("High input farm cover", "High input farm cover trend","Forest cover","Forest cover trend","Artificialised cover","Artificialisation trend","Mean temperature","Temperature trend"),val=trend.bootYT1b$t0[-1,1],
-                      inf=pls.cib[,1],sup=pls.cib[,2],t(matind), sig=t(pi.e))
+coef_plot <- data.frame(var=c("High input farm cover", "High input farm cover trend","Forest cover","Forest cover trend","Urbanisation cover","Urbanisation trend","Mean temperature","Temperature trend"),
+val=(cbind(trend.bootYT1$t0[-1,1],trend.bootYT1b$t0[-1,1]) %*% prop.table(res.cv.modpls$CVPress)[2:3]),
+                      inf=apply(cbind(pls.ci[,1],pls.cib[,1]),1,min),
+                      sup=apply(cbind(pls.ci[,2],pls.cib[,2]),1,max),t(matind), sig=t(pi.e))
 coef_plot$col_val <- "ns"
 coef_plot$col_val[which(coef_plot$sig>=0.95 & coef_plot$val>0)] <- "pos"
 coef_plot$col_val[which(coef_plot$sig>=0.95 & coef_plot$val<0)] <- "neg"
 coef_plot$var <- as.character(coef_plot$var)
-coef_plot$var <- factor(coef_plot$var, levels = c("Temperature trend","Mean temperature","Artificialisation trend","Artificialised cover", 
+coef_plot$var <- factor(coef_plot$var, levels = c("Temperature trend","Mean temperature","Urbanisation trend","Urbanisation cover", 
                                                 "Forest cover trend","Forest cover", "High input farm cover trend","High input farm cover"))
                                                 
 ggplot(coef_plot, aes(y=val, x=var)) +
@@ -1949,7 +1949,7 @@ ggplot(coef_plot, aes(y=val, x=var)) +
   geom_rect(fill = "#F5A9A9", xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = 0, alpha = 0.1) +
   geom_bar(stat="identity", position=position_dodge(), alpha=0.7,aes(fill=var)) +
   scale_fill_manual(values=c("High input farm cover"="#D302F9","High input farm cover trend"="#D302F9",
-                             "Artificialised cover"="#196DF6","Artificialisation trend"="#196DF6",
+                             "Urbanisation cover"="#196DF6","Urbanisation trend"="#196DF6",
                              "Forest cover"="#1BAE20","Forest cover trend"="#1BAE20",
                              "Mean temperature"="#FA0900","Temperature trend"="#FA0900"))+
   geom_errorbar(aes(ymin=inf, ymax=sup), width=.2,position=position_dodge(.9)) +
@@ -2235,87 +2235,63 @@ influence_country_hico <- apply(influence_country[,seq(from=6,to=(ncol_test+8),b
 influence_country_forest <- apply(influence_country[,seq(from=8,to=(ncol_test+8),by=8)], 2, function(x){length(na.omit(x[x!=0]))})
 
 
-influence_plot <- melt(influence_country, id.vars="country",measure.vars=c("forest","clc","hic","temp"))
-influence_plotb <- melt(influence_countryb, id.vars="country",measure.vars=c("forest","clc","hic","temp"))
-influence_plot$raw<-influence_plotb$value
-influence_plot<-rbind(influence_plot, data.frame(country="Total",variable=c("forest","clc","hic","temp"),value=c(0,0,0,0),
-                                                 raw=c(influence_country_for2[[29]],influence_country_clc2[[29]],
-                                                       influence_country_hic2[[29]],influence_country_temp2[[29]])))
-ggplot(data = influence_plot, aes(x=country, y=variable, fill=value)) + 
-  geom_tile()+ theme_minimal()+ coord_fixed()+
-  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1,1))+
-  #scale_fill_viridis(option = "C",na.value="white")+
-  scale_y_discrete(labels=c("Forest cover","Artificialisation","High input farm cover","Temperature"))+
-  theme(axis.title = element_blank(), legend.position = "none",
-        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))+geom_text(aes(label = round(raw, 1)))
+influence_plot <- melt(influence_country[,c("Species","temp_nb_nna","temp","urb_nb_nna","urb","forest_nb_nna","forest","hico_nb_nna","hico")], id.vars="Species")
 
+influence_plot$group <- "A"
+influence_plot$group[influence_plot$Species %in% levels(influence_plot$Species)[85:168]] <- "B"
 
-influence_country_for3<-apply(influence_country_for[,2:29], 1, function(x){length(na.omit(x[x!=0]))})
-influence_country_clc3<-apply(influence_country_clc[,2:29], 1, function(x){length(na.omit(x[x!=0]))})
-influence_country_hic3<-apply(influence_country_hic[,2:29], 1, function(x){length(na.omit(x[x!=0]))})
-influence_country_temp3<-apply(influence_country_temp[,2:29], 1, function(x){length(na.omit(x[x!=0]))})
+influence_plot$value2 <- 0
+influence_plot$value2[influence_plot$variable=="hico" & !is.na(influence_plot$value)] <- 3
+influence_plot$value2[influence_plot$variable=="forest" & !is.na(influence_plot$value)] <- 1
+influence_plot$value2[influence_plot$variable=="urb" & !is.na(influence_plot$value)] <- 2
+influence_plot$value2[influence_plot$variable=="temp" & !is.na(influence_plot$value)] <- 4
 
-influence_country2<-data.frame(species=influence_country_clc$Species,
-                              forest=influence_country_for3/28,
-                              forest_all=as.numeric(!is.na(influence_country_for$forest) & influence_country_for$forest!=0),
-                              clc=influence_country_clc3/28,
-                              clc_all=as.numeric(!is.na(influence_country_clc$clc) & influence_country_clc$clc!=0),
-                              hic=influence_country_hic3/28,
-                              hic_all=as.numeric(!is.na(influence_country_hic$hic) & influence_country_hic$hic!=0),
-                              temp=influence_country_temp3/28,
-                              temp_all=as.numeric(!is.na(influence_country_temp$temp) & influence_country_temp$temp!=0))
-influence_country2$group<-c(rep("A",85),rep("B",85))
-influence_country3<-influence_country2
-influence_country3$comb<-paste0(influence_country3$forest_all,sep="-",influence_country3$clc_all,sep="-",influence_country3$hic_all,sep="-",influence_country3$temp_all)
+influence_plot$value2 <- as.character(influence_plot$value2)
 
-influence_plot2 <- melt(influence_country2, id.vars=c("species","group"),measure.vars=c("forest","forest_all","clc","clc_all",
-                                                                                        "hic","hic_all","temp","temp_all"))
-diag_sp1<-ggplot(data = droplevels(influence_plot2[influence_plot2$group=="A",]), aes(x=species, y=variable, fill=value)) + 
-  geom_tile(col="white")+ theme_minimal()+ coord_fixed()+
-  #scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1,1))+
-  #scale_fill_viridis(option = "C",na.value="white")+
-  scale_y_discrete(labels=c("Forest cover (removing 1 country)","Forest cover (all countries)",
-                            "Urbanisation (removing 1 country)","Urbanisation (all countries)",
-                            "High input farm cover (removing 1 country)","High input farm cover (all countries)",
-                            "Temperature (removing 1 country)","Temperature (all countries)"))+
-  scale_fill_gradient2(low = "blue", high = "black", mid = "white", midpoint = 0, limit = c(-1,1))+
-  theme(axis.title = element_blank(), legend.position = "none",plot.margin = unit(c(0, 0, 0, 0), "cm"),
-        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))#+facet_grid(rows = vars(group))
-
-diag_sp2<-ggplot(data = droplevels(influence_plot2[influence_plot2$group=="B",]), aes(x=species, y=variable, fill=value)) + 
-  geom_tile(col="white")+ theme_minimal()+ coord_fixed()+
-  #scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1,1))+
-  #scale_fill_viridis(option = "C",na.value="white")+
-  scale_y_discrete(labels=c("Forest cover (removing 1 country)","Forest cover (all countries)",
-                            "Urbanisation (removing 1 country)","Urbanisation (all countries)",
-                            "High input farm cover (removing 1 country)","High input farm cover (all countries)",
-                            "Temperature (removing 1 country)","Temperature (all countries)"))+
-  scale_fill_gradient2(low = "blue", high = "black", mid = "white", midpoint = 0, limit = c(-1,1))+
-  theme(axis.title = element_blank(), legend.position = "none",plot.margin = unit(c(0, 0, 0, 0), "cm"),
-        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))#+face
-
-
-library(egg)      
-diag_sp3<-ggarrange(diag_sp1,diag_sp2,ncol = 1)
-
-
-
-influence_plot3<-droplevels(influence_plot2[influence_plot2$variable %in% c("forest_all","clc_all","hic_all","temp_all"),])
-influence_plot3$col_var<-as.character(as.numeric(influence_plot3$variable)*influence_plot3$value)
-diag_sp1b<-ggplot(data = droplevels(influence_plot3[influence_plot3$group=="A",]), aes(x=species, y=variable, fill=value)) + 
-  geom_tile(col="white",aes(fill=col_var))+ theme_minimal()+ coord_fixed()+
-  scale_y_discrete(labels=c("Forest cover","Urbanisation","High input farm cover","Temperature"))+
-  scale_fill_manual(values=c("0"="white","1"="#1BAE20","2"="#196DF6","3"="#D302F9","4"="#FA0900"))+
+diag_sp1a <- ggplot(data = droplevels(influence_plot[influence_plot$variable %in% c("hico","forest","urb","temp") & influence_plot$group=="A",]), aes(x=Species, y=variable, fill=value2)) + 
+  geom_tile(col="white") + theme_minimal()+ coord_fixed()+
+  scale_y_discrete(labels=c("Temperature","Urbanisation","Forest cover","High input farm cover"))+
+ scale_fill_manual(values=c("0"="white","1"="#1BAE20","2"="#196DF6","3"="#D302F9","4"="#FA0900"))+
   theme(axis.title = element_blank(), legend.position = "none",plot.margin = unit(c(0, 0, 0, 0), "cm"),
         axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
-diag_sp2b<-ggplot(data = droplevels(influence_plot3[influence_plot3$group=="B",]), aes(x=species, y=variable, fill=value)) + 
-  geom_tile(col="white",aes(fill=col_var))+ theme_minimal()+ coord_fixed()+
-  scale_y_discrete(labels=c("Forest cover","Urbanisation","High input farm cover","Temperature"))+
-  scale_fill_manual(values=c("0"="white","1"="#1BAE20","2"="#196DF6","3"="#D302F9","4"="#FA0900"))+
+        
+diag_sp1b <- ggplot(data = droplevels(influence_plot[influence_plot$variable %in% c("hico","forest","urb","temp") & influence_plot$group=="B",]), aes(x=Species, y=variable, fill=value2)) + 
+  geom_tile(col="white") + theme_minimal()+ coord_fixed()+
+  scale_y_discrete(labels=c("Temperature","Urbanisation","Forest cover","High input farm cover"))+
+ scale_fill_manual(values=c("0"="white","1"="#1BAE20","2"="#196DF6","3"="#D302F9","4"="#FA0900"))+
+  theme(axis.title = element_blank(), legend.position = "none",plot.margin = unit(c(0, 0, 0, 0), "cm"),
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+        
+library(egg) 
+diag_sp1 <- ggarrange(diag_sp1a,diag_sp1b,ncol = 1)
+
+influence_plot$value[influence_plot$variable %in% c("hico_nb_nna","forest_nb_nna","urb_nb_nna","temp_nb_nna")] <- influence_plot$value[influence_plot$variable %in% c("hico_nb_nna","forest_nb_nna","urb_nb_nna","temp_nb_nna")]/24
+
+influence_plot$value[influence_plot$variable %in% c("hico","forest","urb","temp")] <- sign(abs(influence_plot$value[influence_plot$variable %in% c("hico","forest","urb","temp")]))
+
+influence_plot[is.na(influence_plot)] <- 0
+
+diag_sp2a <- ggplot(data = droplevels(influence_plot[influence_plot$group=="A",]), aes(x=Species, y=variable, fill=value)) + 
+  geom_tile(col="white")+ theme_minimal()+ coord_fixed()+
+  scale_y_discrete(labels=c("Temperature (removing 1 country)","Temperature (all countries)",
+  "Urbanisation (removing 1 country)","Urbanisation (all countries)",
+  "Forest cover (removing 1 country)","Forest cover (all countries)",
+  "High input farm cover (removing 1 country)","High input farm cover (all countries)"))+
+  scale_fill_gradient2(low = "blue", high = "black", mid = "white", midpoint = 0, limit = c(-1,1))+
+  theme(axis.title = element_blank(), legend.position = "none",plot.margin = unit(c(0, 0, 0, 0), "cm"),
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+        
+diag_sp2b <- ggplot(data = droplevels(influence_plot[influence_plot$group=="B",]), aes(x=Species, y=variable, fill=value)) + 
+  geom_tile(col="white")+ theme_minimal()+ coord_fixed()+
+  scale_y_discrete(labels=c("Temperature (removing 1 country)","Temperature (all countries)",
+  "Urbanisation (removing 1 country)","Urbanisation (all countries)",
+  "Forest cover (removing 1 country)","Forest cover (all countries)",
+  "High input farm cover (removing 1 country)","High input farm cover (all countries)"))+
+  scale_fill_gradient2(low = "blue", high = "black", mid = "white", midpoint = 0, limit = c(-1,1))+
   theme(axis.title = element_blank(), legend.position = "none",plot.margin = unit(c(0, 0, 0, 0), "cm"),
         axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 
-diag_sp3b<-ggarrange(diag_sp1b,diag_sp2b,ncol = 1)
+diag_sp2 <- ggarrange(diag_sp2a,diag_sp2b,ncol = 1)
 
 ```
 
@@ -2825,6 +2801,209 @@ sankeyNetwork(Links = data_trait_pression2, Nodes = nodes,
               Value = "value", NodeID = "name",  LinkGroup = "col_link", NodeGroup="group",
               sinksRight=FALSE, colourScale=ColourScal, nodeWidth=60, fontSize=13, nodePadding=20, iteration=0)
 
+```
+
+## Supplementary material
+
+### PLSR with farm size as a pressure
+
+```{r}
+
+# Load data
+# https://appsso.eurostat.ec.europa.eu/nui/show.do?dataset=ef_m_farmleg&lang=en
+
+size_farm_country <- read.csv("raw_data/ef_m_farmleg_1_Data.csv", header = T)
+ 
+size_farm_country <- na.omit(droplevels(size_farm_country[size_farm_country$INDIC_AGR %in% c("Utilised agricultural area - hectare","Farm - number"),]))
+size_farm_country$Value <- as.character(size_farm_country$Value)
+size_farm_country$Value <- gsub(",","",size_farm_country$Value)
+size_farm_country$Value <- as.numeric(size_farm_country$Value)
+size_farm_country <- dcast(size_farm_country, INDIC_AGR+TIME~GEO, fun.aggregate=sum, value.var="Value")
+
+size_farm_country$INDIC_AGR <- as.character(size_farm_country$INDIC_AGR)
+size_farm_country$INDIC_AGR[size_farm_country$INDIC_AGR=="Farm - number"] <- "Number"
+size_farm_country$INDIC_AGR[size_farm_country$INDIC_AGR=="Utilised agricultural area - hectare"] <- "UAA"
+
+for(i in 1:5){
+size_farm_country[(i+10),1] <- "Farm size"
+size_farm_country[(i+10),2] <- size_farm_country$TIME[i]
+size_farm_country[(i+10),3:34] <- size_farm_country[(i+5),3:34]/size_farm_country[i,3:34]
+}
+
+size_farm_country <- droplevels(size_farm_country[11:15,2:34])
+
+names(size_farm_country) <- c("Year","Austria","Belgium","Bulgaria","Croatia","Cyprus","Czech Republic","Denmark","Estonia","Finland","France","Germany","Greece","Hungary","Iceland","Ireland","Italy","Latvia","Lithuania","Luxembourg","Malta","Montenegro","Netherlands","Norway","Poland","Portugal","Romania","Slovakia","Slovenia","Spain","Sweden","Switzerland","UK")
+
+row.names(size_farm_country) <- paste0("size_farm",sep="_",size_farm_country$Year)
+ 
+size_farm_country$Year <- size_farm_country$Iceland <- size_farm_country$Montenegro <- NULL
+ 
+size_farm_country[6,] <- apply(size_farm_country[1:5,], 2, function(x){mean(x, na.rm=T)})
+ 
+row.names(size_farm_country)[6] <- "size_farm_mean"
+
+size_farm_country[7,] <- apply(size_farm_country[1:5,], 2, function(x){summary(lm(x~c(2005,2007,2010,2013,2016)))$coef[2,1]})/size_farm_country[1,]
+ 
+row.names(size_farm_country)[7] <- "d_size_farm"
+
+size_farm_country <- size_farm_country[,sort(names(size_farm_country))]
+ 
+size_farm_country <- data.frame(size_farm_country[,c(1:13)], Iceland=NA, size_farm_country[,c(14:30)])
+ 
+names(size_farm_country)[6] <- "Czech Republic"
+
+# Merge data
+
+country_data3 <- rbind(country_data, size_farm_country)
+
+# Clean up the final dataset
+
+country_data3 <- as.data.frame(t(country_data3))
+country_data3$country <- row.names(country_data3)
+country_data3$country[country_data3$country=="UK"]<-"United Kingdom"
+country_data3[country_data3==0] <- NA
+country_data3$country <- as.factor(country_data3$country)
+
+# Merge species trends, traits and pressures
+
+global_data2 <- merge(trend_species, sxi, by.x="Species", by.y="Name",all.x=T)
+global_data2 <- merge(global_data2, sti, by.x="Species", by.y="SPECIES",all.x=T)
+global_data2 <- merge(global_data2, pecbms_hab, by="Species",all.x=T)
+global_data2 <- merge(global_data2, eunis_hab3, by="Species",all.x=T)
+global_data2 <- merge(global_data2,ssi_eu, by="Species",all.x=T)
+global_data2 <- merge(global_data2,trait[,c(3,67:88)], by="Species",all.x=T)
+global_data2[,c("STI")] <- scale(global_data2[,c("STI")])
+global_data2$is_farmland <- as.factor(global_data2$Habitat=="Farmland")
+global_data2$is_forest <- as.factor(global_data2$Habitat=="Forest")
+global_data2 <- global_data2[abs(global_data2$slope) < 50,]
+global_data2 <- merge(global_data2,country_data3, by.x="CountryGroup", by.y="country",all.x=T)
+
+# Selecting data
+
+data_pls2 <- global_data2[, c("slope","hico_2007","d_hico","for_2000","d_for","urb_2009","d_urb","temp_2000","d_temp","size_farm_2005","d_size_farm")]
+
+data_pls2 <- data.frame(apply(data_pls2,2,Zscore))
+
+# Initiate PLS
+
+cv.modpls <- cv.plsR(data_pls2$slope,data_pls2[,-1],K=10,nt=10)
+res.cv.modpls <- cvtable(summary(cv.modpls))
+res1 <- plsR(data_pls2$slope,data_pls2[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative as NA in data
+colSums(res1$pvalstep)
+
+# Searching the best number of component to keep via CV
+
+cv.modpls <- cv.plsR(slope~.,data=data_pls2,K=10,nt=10,NK=100)
+res.cv.modpls <- cvtable(summary(cv.modpls))
+
+# Using CV PRESS, 4 components must be kept
+
+# Run PLS with 4 components
+res <- plsR(slope~.,data=data_pls2,nt=4,pvals.expli=TRUE)
+trend.bootYT1 <- bootpls(res,typeboot="fmodel_np",R=2000)
+pls.ci <- confints.bootpls(trend.bootYT1,indices=2:ncol(data_pls2))
+plots.confints.bootpls(pls.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),legendpos ="topright")
+
+# Using the empirical distribution of the best number of component, we can obtain an empircal measure of the significance of each effect
+ind.BCa.YT1 <- (pls.ci[,7] < 0 & pls.ci[,8] < 0)|(pls.ci[,7] > 0 & pls.ci[,8] > 0) 
+matind <- rbind(YT1=ind.BCa.YT1)
+pi.e <- (prop.table(res.cv.modpls$CVPress)[4] %*% matind)/prop.table(res.cv.modpls$CVPress)[4]
+
+# Plot PLS results
+coef_plot <- data.frame(var=c("High input farm cover", "High input farm cover trend","Forest cover","Forest cover trend","Urbanisation cover","Urbanisation trend","Mean temperature","Temperature trend","Farm size","Farm size trend"),val=trend.bootYT1$t0[-1,1],
+                      inf=pls.ci[,1],sup=pls.ci[,2],t(matind), sig=t(pi.e))
+coef_plot$col_val <- "ns"
+coef_plot$col_val[which(coef_plot$sig>=0.95 & coef_plot$val>0)] <- "pos"
+coef_plot$col_val[which(coef_plot$sig>=0.95 & coef_plot$val<0)] <- "neg"
+coef_plot$var <- as.character(coef_plot$var)
+coef_plot$var <- factor(coef_plot$var, levels = c("Temperature trend","Mean temperature","Urbanisation trend","Urbanisation cover", 
+                                                "Forest cover trend","Forest cover", "High input farm cover trend","High input farm cover", "Farm size", "Farm size trend"))
+                                                
+ggplot(coef_plot, aes(y=val, x=var)) +
+  geom_rect(fill = "#DDF9DD", xmin = -Inf, xmax = Inf, ymin = 0, ymax = Inf, alpha = 0.1) +
+  geom_rect(fill = "#F5A9A9", xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = 0, alpha = 0.1) +
+  geom_bar(stat="identity", position=position_dodge(), alpha=0.7,aes(fill=var)) +
+  scale_fill_manual(values=c("High input farm cover"="#D302F9","High input farm cover trend"="#D302F9",
+                             "Urbanisation cover"="#196DF6","Urbanisation trend"="#196DF6",
+                             "Forest cover"="#1BAE20","Forest cover trend"="#1BAE20",
+                             "Mean temperature"="#FA0900","Temperature trend"="#FA0900", "Farm size" = "grey", "Farm size trend"="grey"))+
+  geom_errorbar(aes(ymin=inf, ymax=sup), width=.2,position=position_dodge(.9)) +
+  theme_modern() +
+  theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank()) +
+  geom_hline(yintercept=0, linetype="dashed", size=1) + 
+  coord_flip()
+
+```
+
+### Trait syndrome
+
+```{r}
+# Merge species trends, traits and pressures
+
+global_data3 <- merge(trend_species, sxi, by.x="Species", by.y="Name",all.x=T)
+global_data3 <- merge(global_data3, sti, by.x="Species", by.y="SPECIES",all.x=T)
+global_data3 <- merge(global_data3, pecbms_hab, by="Species",all.x=T)
+global_data3 <- merge(global_data3, eunis_hab3, by="Species",all.x=T)
+global_data3 <- merge(global_data3,ssi_eu, by="Species",all.x=T)
+global_data3 <- merge(global_data3,trait[,c(3,67:90)], by="Species",all.x=T)
+global_data3[,c("STI")] <- scale(global_data3[,c("STI")])
+global_data3$is_farmland <- as.factor(global_data3$Habitat=="Farmland")
+global_data3$is_forest <- as.factor(global_data3$Habitat=="Forest")
+global_data3 <- global_data3[abs(global_data3$slope) < 50,]
+
+# Selecting data
+
+data_pls3 <- global_data3[, c("slope","is_farmland","is_forest","is_urban","STI","SSI","is_migrant","is_granivore","is_insectivore")]
+data_pls3$is_farmland <- as.numeric(data_pls3$is_farmland)-1
+data_pls3$is_forest <- as.numeric(data_pls3$is_forest)-1
+data_pls3$is_urban <- as.numeric(data_pls3$is_urban)
+data_pls3$is_urban[is.na(data_pls3$is_urban)] <- 0
+
+data_pls3[,c(1,5,6)] <- data.frame(apply(data_pls3[,c(1,5,6)],2,Zscore))
+
+# Initiate PLS
+
+cv.modpls <- cv.plsR(data_pls3$slope,data_pls3[,-1],K=10,nt=10)
+res.cv.modpls <- cvtable(summary(cv.modpls))
+res1 <- plsR(data_pls3$slope,data_pls3[,-1], nt=10, typeVC="adaptative", pvals.expli=TRUE) # adaptative as NA in data
+colSums(res1$pvalstep)
+
+# Searching the best number of component to keep via CV
+
+cv.modpls <- cv.plsR(slope~.,data=data_pls3,K=10,nt=10,NK=100)
+res.cv.modpls <- cvtable(summary(cv.modpls))
+
+# Using CV PRESS, 3 components must be kept
+
+# Run PLS with 3 components
+res <- plsR(slope~.,data=data_pls3,nt=3,pvals.expli=TRUE)
+trend.bootYT1 <- bootpls(res,typeboot="fmodel_np",R=2000)
+pls.ci <- confints.bootpls(trend.bootYT1,indices=2:ncol(data_pls3))
+plots.confints.bootpls(pls.ci,typeIC="BCa",colIC=c("blue","blue","blue","blue"),legendpos ="topright")
+
+# Using the empirical distribution of the best number of component, we can obtain an empircal measure of the significance of each effect
+ind.BCa.YT1 <- (pls.ci[,7] < 0 & pls.ci[,8] < 0)|(pls.ci[,7] > 0 & pls.ci[,8] > 0) 
+matind <- rbind(YT1=ind.BCa.YT1)
+pi.e <- (prop.table(res.cv.modpls$CVPress)[3] %*% matind)/prop.table(res.cv.modpls$CVPress)[3]
+
+# Plot PLS results
+coef_plot <- data.frame(var=c("Farmland","Woodland","Urban","Species Temperature Index","Species Specialisation Index","Long distance migrant","Granivorous","Invertebrate-based diet"),val=trend.bootYT1$t0[-1,1],
+                      inf=pls.ci[,1],sup=pls.ci[,2],t(matind), sig=t(pi.e))
+coef_plot$col_val <- "ns"
+coef_plot$col_val[which(coef_plot$sig>=0.95 & coef_plot$val>0)] <- "pos"
+coef_plot$col_val[which(coef_plot$sig>=0.95 & coef_plot$val<0)] <- "neg"
+coef_plot$var <- as.character(coef_plot$var)
+coef_plot$var <- factor(coef_plot$var, levels = c("Farmland","Invertebrate-based diet","Urban","Long distance migrant","Granivorous","Woodland","Species Specialisation Index","Species Temperature Index"))
+                                                
+ggplot(coef_plot, aes(y=val, x=var)) +
+  geom_rect(fill = "#DDF9DD", xmin = -Inf, xmax = Inf, ymin = 0, ymax = Inf, alpha = 0.1) +
+  geom_rect(fill = "#F5A9A9", xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = 0, alpha = 0.1) +
+  geom_bar(stat="identity", position=position_dodge(), alpha=0.7,fill="grey") +
+  geom_errorbar(aes(ymin=inf, ymax=sup), width=.2,position=position_dodge(.9)) +
+  theme_modern() +
+  theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank()) +
+  geom_hline(yintercept=0, linetype="dashed", size=1) + 
+  coord_flip()
 ```
 
 # References
