@@ -224,11 +224,11 @@ S <- unique(df_pop$Species)
 Code <- unique(df_pop$Code)
 C <- unique(df_pop$CountryGroup)
 
-# assign countries with a number
+# Assign countries with a number
 
 stratum_number <- data.frame(code_sp = C, site = 1:length(C))
 
-# assign species with their EURING code
+# Assign species with their EURING code
 
 species_code <- df_pop[, .SD[1], by = .(Code)][, .(Code,Species)]
 
@@ -426,8 +426,7 @@ overview <- overview[order(overview$species_number, overview$stratum_number), ]
 listsuccessfullAnalyses <- overview$ss_combinations[overview$success == "yes"]
 listSpeciesStratumCombinations <- paste(listsuccessfullAnalyses, "_arg_input_stratum.csv", sep = "")
 
-# Determine how many combinations of species and stratum have been analysed 
-# successfully.
+# Determine how many combinations of species and stratum have been analysed successfully.
 
 numberSpeciesStratumCombinations <- length (listSpeciesStratumCombinations)
 
@@ -475,7 +474,7 @@ for(j in 1:numberSpeciesStratumCombinations){
 
   naam_Indices_TT_file <- paste(arguments$File, "_indices_TT.csv", sep = "")
   
-# storage
+# Storage
 
   write.csv2(indices_TT_file, naam_Indices_TT_file, row.names = FALSE)
 
@@ -484,16 +483,16 @@ for(j in 1:numberSpeciesStratumCombinations){
 
   naam_arg_output_file <- paste(arguments$File, "_arg_output.csv", sep = "")
   
-# storage
+# Storage
 
   write.csv2(arg_output_file, naam_arg_output_file, row.names = FALSE)
 
-# covariant matrix
+# Covariant matrix
 # name & file extension
 
   naam_covariant_matrix <- paste(arguments$File, "_ocv.csv", sep = "")
   
-# storage
+# Storage
 
   write.csv2(covariant_matrix, naam_covariant_matrix, row.names = FALSE)
 
@@ -501,7 +500,7 @@ for(j in 1:numberSpeciesStratumCombinations){
 
   if (arguments$Save_fitted_values){
   
-# storage
+# Storage
 
     naam_Fitted_Values_File <- paste(arguments$File, "_fitted_values.csv", sep = "")
     write.csv2(FI, naam_Fitted_Values_File, row.names = FALSE)
@@ -518,7 +517,7 @@ write.csv2(all_Indices_All_Trends, "all_Indices_All_Trends.csv", row.names = FAL
 
 Code <- unique(all_Indices_All_Trends$Species_number)
 
-# gather imputed COUNTRYWIDE species' ABUNDANCE time series into one file
+# Gather imputed COUNTRYWIDE species' ABUNDANCE time series into one file
 
 df.imputed <- data.table(Code=integer(), Species=factor(), CountryGroup=factor(),
                          Year=integer(), Abundance=integer(), data=character(),
@@ -540,7 +539,7 @@ for (k in Code){
 
 write.csv2(df.imputed, file = "Imputed-abundance.csv", row.names = FALSE)
 
-# gather imputed SUPRANATIONAL species' INDEX time series into one file
+# Gather imputed SUPRANATIONAL species' INDEX time series into one file
 
 SI.imputed <- data.table(Code=integer(), Species=factor(), Year=integer(), Abundance=integer(),
                          Abundance_SE=integer(), Index_imputed=integer(), Index_imputed_SE=integer())
@@ -744,29 +743,9 @@ ggplot(msi_temp_ab3[msi_temp_ab3$year %in% 1996:2016,], aes(x = year, y = mean_m
   
 ```
 
-## Trend analysis
+## Pressures
 
-### Estimate trends for each species
-
-```{r}
-
-# Select species with data bewteen 1995 and 2016 (+- tw0 years)
-
-df_trend <- droplevels(subset(df, start_year<=1997))
-df_trend <- droplevels(subset(df_trend, end_year>=2014))
-df_trend <- droplevels(subset(df_trend, Year %in% c(1995:2016)))
-
-# Estimate trends
-
-#trend_species <- ddply(df_trend, .(Species, CountryGroup), .fun=res_trend2, niter=1000, correction=T, mid="first", .parallel = F, .progress = "text")
-
-trend_species <- ddply(df_trend, .(Species, CountryGroup), .fun=function(x){re=summary(lm(Index~Year, x))$coef;return(data.frame(slope=re[2,1],pval=re[2,4],slope_pe=re[2,1]/x$Index[1]))}, .parallel = F, .progress = "text")
-
-```
-
-### Pressures
-
-#### Geographical data
+### Geographical data
 
 ```{r}
 
@@ -796,7 +775,7 @@ proj4string(country3) <- CRS("+init=epsg:27572")
 
 ```
 
-#### Urban cover
+### Urban cover
 
 ```{r}
 
@@ -823,7 +802,7 @@ area_country <- read.csv("output/fao_data_landuse.csv", header = T)
 area_country <- area_country[area_country$Item=="Country area" & area_country$Year==2016, c("Area","Value")]
 area_country$Value <- 10*area_country$Value
 area_country <- area_country[order(area_country$Area),]
-area_country$Value[area_country$Area=="Norway"] <- 385207
+area_country$Value[area_country$Area=="Norway"] <- 385178 # there is an abrubt change for Norway in data series of surface area from 385,000 to 625,000 sq km after 2013
 
 # Load data
 # from https://appsso.eurostat.ec.europa.eu/nui/show.do?dataset=lan_lcv_art&lang=en
@@ -868,7 +847,7 @@ country_data <- urban_country
 
 ```
 
-#### Temperature
+### Temperature
 
 ```{r}
 
@@ -950,12 +929,10 @@ row.names(country_data)[80] <- "temp_mean"
 
 country_data[81,] <- apply(country_data[57:77,], 2, function(x){summary(lm(x~c(1996:2016)))$coef[2,1]})/country_data[57,]
 row.names(country_data)[81] <- "d_temp"
-temp_sig_trend <- apply(country_data[61:97,], 2, function(x){summary(lm(x~c(1980:2016)))$coef[2,4]})
-#country_data[101,which(temp_sig_trend>0.05)] <- 0
 
 ```
 
-#### High input cover data
+### High input cover data
 
 ```{r}
 
@@ -981,6 +958,8 @@ country_data <- rbind(country_data, uaa_country)
 # High input farm cover
 
 input_country <- read.csv("raw_data/aei_ps_inp_1_Data.csv", header = T)
+# from https://appsso.eurostat.ec.europa.eu/nui/submitViewTableAction.do 
+# Notice that this dataset has been downloaded in 2020, the current version (2022) contains some slight changes, which lead to opposite trends for Belgium, Greece, Latvia and Spain. Based on previous releases about agriculture intensification in the EU (https://www.eea.europa.eu/publications/eea_report_2005_6 and https://link.springer.com/article/10.1007/s11356-021-17655-4), we focus on the dataset from 2020 ("aei_ps_inp_1_Data.csv") which is more consistant with these releases.
  
 input_country <- na.omit(droplevels(input_country[input_country$INDIC_AG=="High-input farms",]))
 input_country$Value <- as.character(input_country$Value)
@@ -1011,14 +990,14 @@ input_country <- data.frame(input_country[,c(1:13)], Iceland=0, input_country[,c
  
 names(input_country)[6] <- "Czech Republic"
 
-country_data <- rbind(country_data, input_country) # opposite sign for names(input_country)[c(2,12,17,28)] we choose this old dataset as it is more coherent with https://www.eea.europa.eu/publications/eea_report_2005_6 but see also https://link.springer.com/article/10.1007/s11356-021-17655-4
+country_data <- rbind(country_data, input_country) 
 
 country_data[115,] <- country_data[113,]/country_data[102,]
 row.names(country_data)[115] <- "hico_mean_perc"
 
 ```
 
-#### Forest cover data
+### Forest cover data
 
 ```{r}
 
@@ -1072,9 +1051,9 @@ country_data2$country <- as.factor(country_data2$country)
 
 ```
 
-#### Plot pressures and species trends
+## Plot pressures and species trends
 
-##### Map pressures
+### Map pressures
 
 ```{r}
 
@@ -1111,7 +1090,7 @@ europe_cropped[europe_cropped$sovereignt=="Croatia",c("Urbanisation","High_input
                                                         
 ```
 
-# Map species trends
+### Map species trends
 
 ```{r}
 
@@ -1442,7 +1421,7 @@ pres_tend_temp <- ggplot() + geom_sf(data = europe_map_simpl, fill="transparent"
 
 ```
 
-##### Trend
+### Plot trends
 ```{r}
 
 # Compute coordinate centroids of each country
@@ -1871,6 +1850,30 @@ ggplot(all_temp, aes(x=year, y=value)) + # ici
 
 ```
 
+## Trend analysis
+
+### Estimate trends for each species
+
+```{r}
+
+# Select species with data bewteen 1995 and 2016 (+- tw0 years)
+
+df_trend <- droplevels(subset(df, start_year<=1997))
+df_trend <- droplevels(subset(df_trend, end_year>=2014))
+df_trend <- droplevels(subset(df_trend, Year %in% c(1995:2016)))
+
+# Estimate trends
+
+# Accounting for uncertainty
+
+trend_species <- ddply(df_trend, .(Species, CountryGroup), .fun=res_trend2, niter=1000, correction=T, mid="first", .parallel = F, .progress = "text")
+
+# Linear slope (similar results and faster)
+
+trend_species <- ddply(df_trend, .(Species, CountryGroup), .fun=function(x){re=summary(lm(Index~Year, x))$coef;return(data.frame(slope=re[2,1],pval=re[2,4],slope_pe=re[2,1]/x$Index[1]))}, .parallel = F, .progress = "text")
+
+```
+
 ### Preparing data for partial least square regression (PLS)
 
 #### Species data
@@ -1879,17 +1882,28 @@ ggplot(all_temp, aes(x=year, y=value)) + # ici
 
 # Load data
 
+# Species specialisation index
 ssi_eu <- read.csv("raw_data/SSI_EU.csv") # from LeViol et al. (2012)
 sxi <- read.csv("raw_data/SXI_EU.csv") # from Godet et al. (2015)
+
+# Species complete name
 species_name_data <- read.csv("raw_data/species_name_data.csv", header=T)
+
+# Species temperature index
 sti<-read.csv("raw_data/STI_Devictor.csv") 
+
+# Species habitat
 pecbms_hab <- read.csv2("raw_data/Habitat_class_PECBMS.csv") # available on https://pecbms.info/
 
+# Species life history traits
 trait <- read.csv("raw_data/life_history_bird_2018.csv",header = TRUE) # from Storchová et al. (2018)
+
 trait$is_migrant <- rep(0, nrow(trait))
 trait$is_migrant[which(trait$Short.distance.migrant==1 | trait$Long.distance.migrant==1)] <- 1
+
 trait$is_insectivore <- rep(0, nrow(trait))
 trait$is_insectivore[which(trait$Arthropods_B==1 & trait$Other.invertebrates_B==1 & trait$Granivore_B==0 & trait$Folivore_B==0 & trait$Frugivore_B==0 & trait$Fish_B==0 & trait$Other.vertebrates_B==0 & trait$Carrion_B==0 & trait$Omnivore_B==0)] <- 1
+
 trait$is_granivore <- rep(0, nrow(trait))
 trait$is_granivore[which(trait$Granivore_B==1 & trait$Folivore_B==0 & trait$Frugivore_B==0 & trait$Arthropods_B==0 & trait$Other.invertebrates_B==0 & trait$Fish_B==0 & trait$Other.vertebrates_B==0 & trait$Carrion_B==0 & trait$Omnivore_B==0)] <- 1
 
@@ -1918,7 +1932,7 @@ global_data <- global_data[abs(global_data$slope) < 50,]
 
 global_data <- merge(global_data,country_data2, by.x="CountryGroup", by.y="country",all.x=T)
 
-# Scale
+# Scale function
 
 Zscore <- function(x){
   return((x-mean(x,na.rm=T))/sd(x,na.rm=T))
@@ -1931,7 +1945,7 @@ Zscore <- function(x){
 
 # Selecting data
 
-data_pls <- global_data[, c("slope","hico_2007","d_hico","for_2000","d_for","urb_2009","d_urb","temp_2000","d_temp")]
+data_pls <- global_data[, c("slope","hico_mean","d_hico","for_mean","d_for","urb_mean","d_urb","temp_mean","d_temp")]
 data_pls <- data.frame(apply(data_pls,2,Zscore))
 
 # Initiate PLS
