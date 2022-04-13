@@ -1114,6 +1114,8 @@ europe_cropped[europe_cropped$sovereignt=="Croatia",c("Urbanisation","High_input
 # Map species trends
 
 ```{r}
+
+# Slope by country for farmland species
                                                         
 country_bird_trend_agri <- data.frame(year=NA,variable=NA,value=NA, slope=NA)
 
@@ -1153,6 +1155,8 @@ for(ii in levels(df_pop$CountryGroup)){
 }
 
 
+# Slope by country for woodland species
+
 country_bird_trend_forest <- data.frame(year=NA,variable=NA,value=NA, slope=NA)
 
 for(ii in levels(df_pop$CountryGroup)){
@@ -1183,6 +1187,8 @@ for(ii in levels(df_pop$CountryGroup)){
   country_bird_trend_forest <- rbind(country_bird_trend_forest,country_bird_trend_forest2)
 }
 
+
+# Slope by country for urban species
 
 country_bird_trend_build <- data.frame(year=NA,variable=NA,value=NA, slope=NA)
 
@@ -1219,6 +1225,9 @@ for(ii in levels(df_pop$CountryGroup)){
   if(ii=="United Kingdom"){country_bird_trend_build2$variable <- "UK"}
   country_bird_trend_build <- rbind(country_bird_trend_build,country_bird_trend_build2)
 }
+
+
+# Slope by country for hot dwellers
 
 country_bird_trend_temp_warm <- data.frame(year=NA,variable=NA,value=NA,slope=NA)
 
@@ -1261,6 +1270,9 @@ for(ii in levels(df_pop$CountryGroup)){
   
   country_bird_trend_temp_warm <- rbind(country_bird_trend_temp_warm,country_bird_trend_temp_warm2)
 }
+
+
+# Slope by country for cold dwellers
 
 country_bird_trend_temp_cold <- data.frame(year=NA,variable=NA,value=NA, slope=NA)
 
@@ -1308,18 +1320,30 @@ for(ii in levels(df_pop$CountryGroup)[-c(2,3,9)]){
   country_bird_trend_temp_cold <- rbind(country_bird_trend_temp_cold,country_bird_trend_temp_cold2)
 }
 
+
+# Merge hot and cold dwellers
+
 country_bird_trend_temp <- merge(country_bird_trend_temp_warm,country_bird_trend_temp_cold, by=c("year","variable"), all=T)
 names(country_bird_trend_temp)[3:6]<-c("value_warm","slope_warm","value_cold","slope_cold")
+
+
+# Summarise data
 
 country_bird_trend_agrib <- data.frame(droplevels(country_bird_trend_agri) %>% group_by(variable) %>% summarize(slope_agri2=mean(slope)))
 country_bird_trend_buildb <- data.frame(droplevels(country_bird_trend_build) %>% group_by(variable) %>% summarize(slope_build2=mean(slope)))
 country_bird_trend_forestb <- data.frame(droplevels(country_bird_trend_forest) %>% group_by(variable) %>% summarize(slope_forest2=mean(slope)))
 country_bird_trend_tempb <- data.frame(droplevels(country_bird_trend_temp) %>% group_by(variable) %>% summarize(slope_warm2=mean(slope_warm),slope_cold2=mean(slope_cold)))
 
+
+# Update country names
+
 country_bird_trend_agrib$variable[country_bird_trend_agrib$variable=="UK"] <- country_bird_trend_buildb$variable[country_bird_trend_buildb$variable=="UK"] <-
   country_bird_trend_forestb$variable[country_bird_trend_forestb$variable=="UK"] <- country_bird_trend_tempb$variable[country_bird_trend_tempb$variable=="UK"] <- "United Kingdom"
 country_bird_trend_agrib$variable[country_bird_trend_agrib$variable=="Czech.Republic"] <- country_bird_trend_buildb$variable[country_bird_trend_buildb$variable=="Czech.Republic"] <-
   country_bird_trend_forestb$variable[country_bird_trend_forestb$variable=="Czech.Republic"] <- country_bird_trend_tempb$variable[country_bird_trend_tempb$variable=="Czech.Republic"] <- "Czech Republic"
+
+
+# Add slopes to geographical data
 
 europe_cropped$slope_agri <- country_bird_trend_agrib$slope_agri2[match(europe_cropped$sovereignt,country_bird_trend_agrib$variable)]
 
@@ -1347,21 +1371,33 @@ europe_map <- sf::st_transform(
 library(rmapshaper)
 europe_map_simpl <- ms_simplify(europe_map, keep = 0.07,
                                 keep_shapes = FALSE)
+                                
+                                
+# Map of high input farm cover
 
 pres1 <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = High_input_farm_cover)) + scale_fill_gradient(low="white",high="#D302F9",na.value="lightgrey")+
   theme_void()+ coord_sf(datum = NA)+
   annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = High_input_farm_cover)) + scale_fill_gradient(low="white",high="#D302F9",na.value="lightgrey")+
                                                                       theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
+
+
+# Map of urbanisation
                                                                       
 pres2 <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = Urbanisation)) + scale_fill_gradient(low="white",high="#196DF6",na.value="lightgrey")+
   theme_void()+ coord_sf(datum = NA)+
   annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = Urbanisation)) +scale_fill_gradient(low="white",high="#196DF6",na.value="lightgrey")+
                                                                       theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
+
+
+# Map of temperature
                                                                       
 pres3 <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = Temperature)) + scale_fill_gradient(low="white",high="#FA0900",na.value="lightgrey")+
   theme_void()+ coord_sf(datum = NA)+
   annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = Temperature)) + scale_fill_gradient(low="white",high="#FA0900",na.value="lightgrey")+
                                                                       theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
+
+
+# Map of forest cover
 
 pres4 <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = Forest_cover)) + scale_fill_gradient(low="white",high="#1BAE20",na.value="lightgrey")+
   theme_void()+ coord_sf(datum = NA)+
@@ -1369,21 +1405,34 @@ pres4 <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = Forest_cover)) +
                                                                       theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
 
 
+# Map of farmland bird trends
+
 pres_tend_agri <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_agri)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20", mid="white",midpoint = 0,na.value="lightgrey")+theme_void()+ coord_sf(datum = NA)+
   annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_agri)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20",mid="white",midpoint = 0,na.value="white")+#scale_fill_viridis(option = "C",na.value="lightgrey")+
                                                                       theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
+
+
+# Map of woodland bird trends
 
 pres_tend_forest <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_forest)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20", mid="white",midpoint = 0,na.value="lightgrey")+
   theme_void()+ coord_sf(datum = NA)+
   annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_forest)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20",mid="white",midpoint = 0,na.value="white")+                                                                      theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
 
+
+# Map of urban bird trends
+
 pres_tend_build <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_build)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20", mid="white",midpoint = 0,na.value="lightgrey")+
   theme_void()+ coord_sf(datum = NA)+
   annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_build)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20",mid="white",midpoint = 0,na.value="lightgrey")+                                                                      theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
 
+
+# Map of hot dweller trends
+
 pres_tend_warm <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_warm)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20", mid="white",midpoint = 0,na.value="lightgrey")+
   theme_void()+ coord_sf(datum = NA)+
   annotation_custom(grob = gtable_filter(ggplot_gtable(ggplot_build(ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_warm)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20",mid="white",midpoint = 0,na.value="lightgrey")+                                                                      theme_void()+  theme(legend.title=element_blank())+ coord_sf(datum = NA))), "guide-box") , xmin = 0, xmax = 432734.7, ymin = 4000000, ymax = 5000000) +theme(legend.position = "none")
+
+# Map of cold dweller trends
 
 pres_tend_cold <- ggplot() + geom_sf(data = europe_map_simpl, aes(fill = slope_cold)) + scale_fill_gradient2(low="#FA0900",high="#1BAE20", mid="white",midpoint = 0,na.value="lightgrey")+
   theme_void()+ coord_sf(datum = NA)+
@@ -1523,20 +1572,6 @@ graph_temp <- setNames(lapply(1:length(data_pres_long), function(i){
       theme(plot.margin=unit(c(0,0,0,0),"mm"),axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank(),
             axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank(),aspect.ratio = 2/3)}), names(data_pres_long))
                                     
-
-#country_data_temp3<-country_data_temp2[country_data_temp2$year>=1975,] #for temperature change graph
-#country_data_temp3<-ddply(country_data_temp3,.(variable),
-#                       .fun=function(x){
-#                         y<-data.frame(year=NA,part_der=NA)
-#                         for(i in 1:8){
-#                           y[i,1]<-(1975+5*i-1)
-#                           y[i,2]<-summary(lm(value~year,x[x$year %in% c((1975+5*i-1-4):(1975+5*i-1+4)),]))$coef[2,1]
-#                         }
-#                         y2<-summary(lm(value~year,x))$coef[2,1]
-#                         return(data.frame(y,mean_der=rep(y2,length(y))))
-#                         })
-#data_pres_wide<-data.frame(year=country_data_temp3$year, variable=country_data_temp3$variable, value=country_data_temp3$part_der)
-
 
 # Get trend by country for farmland species
 
