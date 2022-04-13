@@ -1871,8 +1871,7 @@ global_data <- merge(global_data, sti, by.x="Species", by.y="SPECIES",all.x=T)
 global_data <- merge(global_data, pecbms_hab, by="Species",all.x=T)
 global_data <- merge(global_data, eunis_hab3, by="Species",all.x=T)
 global_data <- merge(global_data,ssi_eu, by="Species",all.x=T)
-global_data <- merge(global_data,trait[,c(3,67:88)], by="Species",all.x=T)
-global_data[,c("STI")] <- scale(global_data[,c("STI")])
+global_data <- merge(global_data,trait[,c(3,67:90)], by="Species",all.x=T)
 global_data$is_farmland <- as.factor(global_data$Habitat=="Farmland")
 global_data$is_forest <- as.factor(global_data$Habitat=="Forest")
 
@@ -1897,7 +1896,7 @@ Zscore <- function(x){
 
 # Selecting data
 
-data_pls <- global_data_scale[, c("slope","hico_2007","d_hico","for_2000","d_for","urb_2009","d_urb","temp_2000","d_temp")]
+data_pls <- global_data[, c("slope","hico_2007","d_hico","for_2000","d_for","urb_2009","d_urb","temp_2000","d_temp")]
 data_pls <- data.frame(apply(data_pls,2,Zscore))
 
 # Initiate PLS
@@ -2805,6 +2804,59 @@ sankeyNetwork(Links = data_trait_pression2, Nodes = nodes,
 
 ## Supplementary material
 
+### Data correlation
+
+```{r}
+
+library(GGally)
+
+data_sp_trait <- merge(data.frame(Species=levels(df$Species)), sxi, by.x="Species", by.y="Name",all.x=T)
+data_sp_trait <- merge(data_sp_trait, sti, by.x="Species", by.y="SPECIES",all.x=T)
+data_sp_trait <- merge(data_sp_trait, pecbms_hab, by="Species",all.x=T)
+data_sp_trait <- merge(data_sp_trait, eunis_hab3, by="Species",all.x=T)
+data_sp_trait <- merge(data_sp_trait,ssi_eu, by="Species",all.x=T)
+data_sp_trait <- merge(data_sp_trait,trait[,c(3,67:90)], by="Species",all.x=T)
+data_sp_trait$is_farmland <- as.factor(data_sp_trait$Habitat=="Farmland")
+data_sp_trait$is_forest <- as.factor(data_sp_trait$Habitat=="Forest")
+
+pair_to_plot <- data_sp_trait[!duplicated(data_sp_trait$Species),]
+pair_to_plot <- pair_to_plot[,c("is_farmland","is_forest","is_urban","STI","SSI","is_migrant","is_granivore","is_insectivore")]
+
+pair_to_plot$is_migrant <- as.character(pair_to_plot$is_migrant)
+pair_to_plot$is_migrant[pair_to_plot$is_migrant=="0"] <- "FALSE"
+pair_to_plot$is_migrant[pair_to_plot$is_migrant=="1"] <- "TRUE"
+pair_to_plot$is_migrant <- as.factor(pair_to_plot$is_migrant)
+
+pair_to_plot$is_granivore <- as.character(pair_to_plot$is_granivore)
+pair_to_plot$is_granivore[pair_to_plot$is_granivore=="0"] <- "FALSE"
+pair_to_plot$is_granivore[pair_to_plot$is_granivore=="1"] <- "TRUE"
+pair_to_plot$is_granivore <- as.factor(pair_to_plot$is_granivore)
+
+pair_to_plot$is_insectivore <- as.character(pair_to_plot$is_insectivore)
+pair_to_plot$is_insectivore[pair_to_plot$is_insectivore=="0"] <- "FALSE"
+pair_to_plot$is_insectivore[pair_to_plot$is_insectivore=="1"] <- "TRUE"
+pair_to_plot$is_insectivore <- as.factor(pair_to_plot$is_insectivore)
+
+pair_to_plot$is_urban[is.na(pair_to_plot$is_urban)] <- "FALSE"
+pair_to_plot$SSI[is.na(pair_to_plot$SSI)] <- median(na.omit(pair_to_plot$SSI))
+
+names(pair_to_plot) <- c("Farmland","Woodland","Urban","Species Temperature Index","Species Specialisation Index","Long distance migrant","Granivore diet",
+                        "Invertebrate-based diet")
+                        
+ggpairs(droplevels(na.omit(pair_to_plot)))
+
+ggsave("colin1.png",
+       width = 15,
+       height = 15,
+       dpi = 400)
+pair_to_plot2<-global_data3b[,c("high_input_cover2","d_hic","forest","d_forest","clc_mean","d_clc","temp_mean","d_temp")]
+names(pair_to_plot2)<-c("High input farm cover","High input cover trend","Forest cover","Forest cover trend","Artificialised cover",
+                       "Artificialisation trend","Temperature","Temperature trend")
+ggpairs(pair_to_plot2)
+
+
+```
+
 ### PLSR with farm size as a pressure
 
 ```{r}
@@ -2872,7 +2924,6 @@ global_data2 <- merge(global_data2, pecbms_hab, by="Species",all.x=T)
 global_data2 <- merge(global_data2, eunis_hab3, by="Species",all.x=T)
 global_data2 <- merge(global_data2,ssi_eu, by="Species",all.x=T)
 global_data2 <- merge(global_data2,trait[,c(3,67:88)], by="Species",all.x=T)
-global_data2[,c("STI")] <- scale(global_data2[,c("STI")])
 global_data2$is_farmland <- as.factor(global_data2$Habitat=="Farmland")
 global_data2$is_forest <- as.factor(global_data2$Habitat=="Forest")
 global_data2 <- global_data2[abs(global_data2$slope) < 50,]
@@ -2946,7 +2997,6 @@ global_data3 <- merge(global_data3, pecbms_hab, by="Species",all.x=T)
 global_data3 <- merge(global_data3, eunis_hab3, by="Species",all.x=T)
 global_data3 <- merge(global_data3,ssi_eu, by="Species",all.x=T)
 global_data3 <- merge(global_data3,trait[,c(3,67:90)], by="Species",all.x=T)
-global_data3[,c("STI")] <- scale(global_data3[,c("STI")])
 global_data3$is_farmland <- as.factor(global_data3$Habitat=="Farmland")
 global_data3$is_forest <- as.factor(global_data3$Habitat=="Forest")
 global_data3 <- global_data3[abs(global_data3$slope) < 50,]
