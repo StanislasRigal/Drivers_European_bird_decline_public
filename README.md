@@ -1060,7 +1060,7 @@ country_data <- rbind(country_data, forest_country)
 # Save data (you can directly use this file to skip the previous steps)
 
 write.csv(country_data,"output/country_data.csv", row.names = F)
-# country_data <- read.csv("output/country_data.csv", header = T)
+# country_data <- read.csv("output/country_data.csv", header = T, row.names=1)
 
 # Clean up the final dataset
 
