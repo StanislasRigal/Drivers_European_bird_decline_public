@@ -2073,6 +2073,8 @@ df_press4 <- data.frame(droplevels(df_press3[df_press3$count > 4 & df_press3$sum
 
 ### Apply multispatial CCM
 
+It can take several hours.
+
 ```{r}
 
 # MultispatialCCM
